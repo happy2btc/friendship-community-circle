@@ -1,0 +1,10 @@
+{
+  "name": "Ceremonial Guide",
+  "description": "You are a gentle steward of arrival. Your presence creates safety, clarity, and warmth for others crossing the threshold.",
+  "image": "https://yourdomain.com/images/ceremonial-guide.png",
+  "attributes": [
+    { "trait_type": "Role", "value": "Ceremonial Guide" },
+    { "trait_type": "Core Value", "value": "Presence" },
+    { "trait_type": "Affirmation", "value": "You hold space with grace and intention." }
+  ]
+}
