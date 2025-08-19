@@ -7,112 +7,69 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #fdf6f0;
-      color: #2d2d2d;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
-      padding: 40px 20px;
-      text-align: center;
-      color: #fff;
-    }
-
-    header h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-    }
-
-    header p {
-      font-size: 1.2em;
-      margin: 0;
-    }
-
-    main {
-      padding: 30px 20px;
+      background-color: #fdfaf6;
+      color: #333;
+      padding: 40px;
       max-width: 800px;
       margin: auto;
     }
-
+    h1 {
+      text-align: center;
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
     .token-box {
       border-radius: 12px;
       padding: 20px;
-      margin: 20px 0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-      color: #2d2d2d;
+      margin-bottom: 24px;
+      border: 1px solid #ccc;
     }
-
-    .token-box:hover {
-      transform: scale(1.02);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    .first-arrival {
+      background-color: #FCE8D5;
+      border-color: #F4CBA4;
     }
-
-    .token1 {
-      background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    .ceremonial-guide {
+      background-color: #E8F5E9;
+      border-color: #AED9B2;
     }
-
-    .token2 {
-      background: linear-gradient(135deg, #d4fc79, #96e6a1);
+    .community-steward {
+      background-color: #E3F2FD;
+      border-color: #90CAF9;
     }
-
-    .token3 {
-      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
-    }
-
-    .token-title {
-      font-size: 1.5em;
+    a {
+      color: #0066cc;
+      text-decoration: none;
       font-weight: bold;
-      margin-bottom: 10px;
-      color: #4b2e83;
     }
-
-    .token-description {
-      font-size: 1em;
-      line-height: 1.6;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 0.9em;
-      color: #888;
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Welcome to the New Paradigm Friendship Community</h1>
-    <p>You are seen. You are held. You belong.</p>
-  </header>
 
-  <main>
-    <div class="token-box token1">
-      <div class="token-title">🌀 Token of Arrival</div>
-      <div class="token-description">
-        Your journey begins here. This token marks your sacred entry into a space of care, curiosity, and connection.
-      </div>
-    </div>
+  <h1>🌟 Welcome to the New Paradigm Friendship Community</h1>
+  <p style="text-align:center; font-size:1.2em;">
+    You are seen. You are valued. You belong here.
+  </p>
 
-    <div class="token-box token2">
-      <div class="token-title">🌿 Token of Belonging</div>
-      <div class="token-description">
-        You are not alone. This token affirms your place in our circle—a gentle reminder that your presence matters.
-      </div>
-    </div>
+  <div class="token-box first-arrival">
+    <strong>🌅 First Arrival Token</strong><br>
+    You've crossed the threshold. You belong here.<br><br>
+    🔗 <a href="token/first-arrival.json" target="_blank">View Metadata</a>
+  </div>
 
-    <div class="token-box token3">
-      <div class="token-title">🔥 Token of Becoming</div>
-      <div class="token-description">
-        You are unfolding. This token honors your growth, your gifts, and the path you are shaping with intention.
-      </div>
-    </div>
-  </main>
+  <div class="token-box ceremonial-guide">
+    <strong>🕯️ Ceremonial Guide Token</strong><br>
+    You hold space for others. You guide with care.<br><br>
+    🔗 <a href="token/ceremonial-guide.json" target="_blank">View Metadata</a>
+  </div>
 
-  <footer>
-    &copy; 2025 New Paradigm Friendship Community. All tokens are soulbound and sacred.
-  </footer>
+  <div class="token-box community-steward">
+    <strong>🌿 Community Steward Token</strong><br>
+    You protect the garden. You nurture connection.<br><br>
+    🔗 <a href="token/community-steward.json" target="_blank">View Metadata</a>
+  </div>
+
 </body>
 </html>
