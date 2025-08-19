@@ -6,53 +6,113 @@
   <title>New Paradigm Friendship Community</title>
   <style>
     body {
-      background-color: #fef6f0;
       font-family: 'Segoe UI', sans-serif;
+      background: #fdf6f0;
+      color: #2d2d2d;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+      padding: 40px 20px;
       text-align: center;
-      padding: 50px;
-      color: #333;
+      color: #fff;
     }
-    h1 {
+
+    header h1 {
       font-size: 2.5em;
-      margin-bottom: 0.5em;
+      margin-bottom: 10px;
     }
-    .token {
-      margin: 20px auto;
-      padding: 20px;
-      border: 2px solid #ccc;
+
+    header p {
+      font-size: 1.2em;
+      margin: 0;
+    }
+
+    main {
+      padding: 30px 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .token-box {
       border-radius: 12px;
-      max-width: 600px;
-      background-color: #fff;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+      color: #2d2d2d;
     }
-    a {
-      color: #0077cc;
-      text-decoration: none;
+
+    .token-box:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
-    a:hover {
-      text-decoration: underline;
+
+    .token1 {
+      background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    }
+
+    .token2 {
+      background: linear-gradient(135deg, #d4fc79, #96e6a1);
+    }
+
+    .token3 {
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+    }
+
+    .token-title {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #4b2e83;
+    }
+
+    .token-description {
+      font-size: 1em;
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9em;
+      color: #888;
     }
   </style>
 </head>
 <body>
-  <h1>🌈 Welcome to the New Paradigm Friendship Community</h1>
-  <p>This space honors your arrival, your role, and your belonging. Each token below is a moment of affirmation — a soulbound symbol of who you are in our community.</p>
+  <header>
+    <h1>Welcome to the New Paradigm Friendship Community</h1>
+    <p>You are seen. You are held. You belong.</p>
+  </header>
 
-  <div class="token">
-    <h2>🌟 First Arrival Token</h2>
-    <p>You’ve crossed the threshold. You belong here.</p>
-    <a href="tokens/first-arrival.json">View Metadata</a>
-  </div>
+  <main>
+    <div class="token-box token1">
+      <div class="token-title">🌀 Token of Arrival</div>
+      <div class="token-description">
+        Your journey begins here. This token marks your sacred entry into a space of care, curiosity, and connection.
+      </div>
+    </div>
 
-  <div class="token">
-    <h2>🌀 Ceremonial Guide Token</h2>
-    <p>You hold space for others. You guide with care.</p>
-    <a href="tokens/ceremonial-guide.json">View Metadata</a>
-  </div>
+    <div class="token-box token2">
+      <div class="token-title">🌿 Token of Belonging</div>
+      <div class="token-description">
+        You are not alone. This token affirms your place in our circle—a gentle reminder that your presence matters.
+      </div>
+    </div>
 
-  <div class="token">
-    <h2>🌿 Community Steward Token</h2>
-    <p>You protect the garden. You nurture connection.</p>
-    <a href="tokens/community-steward.json">View Metadata</a>
-  </div>
+    <div class="token-box token3">
+      <div class="token-title">🔥 Token of Becoming</div>
+      <div class="token-description">
+        You are unfolding. This token honors your growth, your gifts, and the path you are shaping with intention.
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 New Paradigm Friendship Community. All tokens are soulbound and sacred.
+  </footer>
 </body>
 </html>
