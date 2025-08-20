@@ -51,7 +51,7 @@
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           const walletAddress = accounts[0];
-          document.getElementById("walletDisplay").innerText = `Connected: ${walletAddress}`;
+          window.location.href = "affirmation.html";
           // Optional: redirect to form with walletAddress as query param
           // window.location.href = `form.html?wallet=${walletAddress}`;
         } catch (error) {
