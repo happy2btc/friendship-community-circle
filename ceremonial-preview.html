@@ -2,57 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SMILIE Coin Ceremony</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to the Circle</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #fefcf9;
-      color: #333;
+      background: linear-gradient(to bottom, #f5f0e6, #dcd6c9);
+      font-family: 'Georgia', serif;
+      color: #3b2f2f;
       text-align: center;
-      padding: 2rem;
+      padding: 4em 2em;
     }
-    .container {
-      max-width: 600px;
-      margin: auto;
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.2em;
     }
-    .button {
-      background: #ffd966;
+    p {
+      font-size: 1.2em;
+      margin-bottom: 2em;
+    }
+    button {
+      background-color: #6b4f3f;
+      color: white;
       border: none;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      cursor: pointer;
+      padding: 1em 2em;
+      font-size: 1em;
       border-radius: 8px;
-      margin-top: 1rem;
+      cursor: pointer;
     }
-    .scroll {
-      margin-top: 2rem;
-      font-style: italic;
-      color: #555;
+    button:hover {
+      background-color: #8c6a54;
+    }
+    #walletDisplay {
+      margin-top: 2em;
+      font-weight: bold;
+      font-size: 1.1em;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🌞 Welcome to the SMILIE Coin Ceremony</h1>
-    <p>Each step you take here is witnessed, affirmed, and soulbound with care.</p>
-    <button class="button" onclick="connectWallet()">Connect Wallet</button>
-    <div class="scroll">
-      <p>“You are seen. You are valued. This coin carries your light.”</p>
-    </div>
-  </div>
+  <h1>🌕 Welcome, Keeper of the Flame</h1>
+  <p>Your presence is felt. Connect your wallet to begin the ritual of belonging.</p>
+  <button onclick="connectWallet()">Connect Wallet</button>
+  <div id="walletDisplay"></div>
 
   <script>
     async function connectWallet() {
       if (window.ethereum) {
         try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          alert('Wallet connected 🌿');
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const walletAddress = accounts[0];
+          document.getElementById("walletDisplay").innerText = `Connected: ${walletAddress}`;
+          // Optional: redirect to form with walletAddress as query param
+          // window.location.href = `form.html?wallet=${walletAddress}`;
         } catch (error) {
-          alert('Connection failed. Try again with intention.');
+          document.getElementById("walletDisplay").innerText = "Connection failed. Please try again.";
         }
       } else {
-        alert('No wallet found. Please install MetaMask.');
+        alert("Please install MetaMask to connect.");
       }
     }
   </script>
