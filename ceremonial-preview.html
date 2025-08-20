@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMILIE Coin Ceremony</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fefcf9;
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .button {
+      background: #ffd966;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+    .scroll {
+      margin-top: 2rem;
+      font-style: italic;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌞 Welcome to the SMILIE Coin Ceremony</h1>
+    <p>Each step you take here is witnessed, affirmed, and soulbound with care.</p>
+    <button class="button" onclick="connectWallet()">Connect Wallet</button>
+    <div class="scroll">
+      <p>“You are seen. You are valued. This coin carries your light.”</p>
+    </div>
+  </div>
+
+  <script>
+    async function connectWallet() {
+      if (window.ethereum) {
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          alert('Wallet connected 🌿');
+        } catch (error) {
+          alert('Connection failed. Try again with intention.');
+        }
+      } else {
+        alert('No wallet found. Please install MetaMask.');
+      }
+    }
+  </script>
+</body>
+</html>
