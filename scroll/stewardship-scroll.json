@@ -1,0 +1,10 @@
+{
+  "name": "🛡️ Stewardship Scroll",
+  "description": "You are a guardian of care. Your presence nurtures this space. Tend the garden. Protect what matters. Uplift the voices around you.",
+  "image": "https://yourdomain.com/images/stewardship-scroll.png",
+  "attributes": [
+    { "trait_type": "Ceremony", "value": "Stewardship" },
+    { "trait_type": "Affirmation", "value": "You protect and nurture" },
+    { "trait_type": "Witnessed By", "value": "New Paradigm Friendship Community" }
+  ]
+}
