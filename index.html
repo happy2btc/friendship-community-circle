@@ -116,18 +116,7 @@
       const contractAddress = "0xYourContractAddressHere"; // ← Replace with your deployed contract address
       const contractABI = [/* Your ABI goes here */]; // ← Replace with your contract ABI
 
-      document.getElementById('connectWalletBtn').onclick = async () => {
-        if (window.ethereum) {
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          await provider.send("eth_requestAccounts", []);
-          signer = provider.getSigner();
-          const address = await signer.getAddress();
-          document.getElementById('walletStatus').innerText = `👋 Welcome, ${address.slice(0, 6)}... You are witnessed.`;
-          contract = new ethers.Contract(contractAddress, contractABI, signer);
-        } else {
-          document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
-        }
-      };
+     
 
       document.getElementById('joinBtn').onclick = async () => {
         if (!contract) {
