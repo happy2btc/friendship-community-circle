@@ -1,0 +1,10 @@
+{
+  "name": "🌞 Welcome Scroll",
+  "description": "You’ve arrived. We honor your autonomy and celebrate your presence. This space is yours to shape.",
+  "image": "https://yourdomain.com/images/welcome-scroll.png",
+  "attributes": [
+    { "trait_type": "Ceremony", "value": "Arrival" },
+    { "trait_type": "Affirmation", "value": "You belong here" },
+    { "trait_type": "Witnessed By", "value": "New Paradigm Friendship Community" }
+  ]
+}
