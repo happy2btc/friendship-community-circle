@@ -108,44 +108,46 @@
   <!-- Wallet & Contract Logic -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
   <script>
-    let provider;
-    let signer;
-    let contract;
+    window.onload = () => {
+      let provider;
+      let signer;
+      let contract;
 
-    const contractAddress = "0xYourContractAddressHere"; // ← Replace with your deployed contract address
-    const contractABI = [/* Your ABI goes here */]; // ← Replace with your contract ABI
+      const contractAddress = "0xYourContractAddressHere"; // ← Replace with your deployed contract address
+      const contractABI = [/* Your ABI goes here */]; // ← Replace with your contract ABI
 
-    document.getElementById('connectWalletBtn').onclick = async () => {
-      if (window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        const address = await signer.getAddress();
-        document.getElementById('walletStatus').innerText = `👋 Welcome, ${address.slice(0, 6)}... You are witnessed.`;
-        contract = new ethers.Contract(contractAddress, contractABI, signer);
-      } else {
-        document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
-      }
-    };
+      document.getElementById('connectWalletBtn').onclick = async () => {
+        if (window.ethereum) {
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          signer = provider.getSigner();
+          const address = await signer.getAddress();
+          document.getElementById('walletStatus').innerText = `👋 Welcome, ${address.slice(0, 6)}... You are witnessed.`;
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+        } else {
+          document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
+        }
+      };
 
-    document.getElementById('joinBtn').onclick = async () => {
-      if (!contract) {
-        document.getElementById('joinStatus').innerText = `🙈 Please connect your wallet first.`;
-        return;
-      }
+      document.getElementById('joinBtn').onclick = async () => {
+        if (!contract) {
+          document.getElementById('joinStatus').innerText = `🙈 Please connect your wallet first.`;
+          return;
+        }
 
-      try {
-        const recipient = await signer.getAddress();
-        const message = "You are seen, you are sacred, you belong.";
-        const tokenURI = "ipfs://your-poetic-scroll-metadata.json"; // ← Replace with actual IPFS URI
+        try {
+          const recipient = await signer.getAddress();
+          const message = "You are seen, you are sacred, you belong.";
+          const tokenURI = "ipfs://your-poetic-scroll-metadata.json"; // ← Replace with actual IPFS URI
 
-        const tx = await contract.witnessAffirmation(recipient, message, tokenURI);
-        await tx.wait();
-        document.getElementById('joinStatus').innerText = `🌸 You have affirmed your place. A scroll now bears your light.`;
-      } catch (error) {
-        console.error(error);
-        document.getElementById('joinStatus').innerText = `🙀 Something interrupted the ritual. Try again or rest for now.`;
-      }
+          const tx = await contract.witnessAffirmation(recipient, message, tokenURI);
+          await tx.wait();
+          document.getElementById('joinStatus').innerText = `🌸 You have affirmed your place. A scroll now bears your light.`;
+        } catch (error) {
+          console.error(error);
+          document.getElementById('joinStatus').innerText = `🙀 Something interrupted the ritual. Try again or rest for now.`;
+        }
+      };
     };
   </script>
 </body>
