@@ -32,7 +32,7 @@
             color: #6b4f1d;
         }
 
-        .action-button {
+        .action-button, button {
             background-color: #d64d35;
             color: #fff;
             padding: 12px 20px;
@@ -41,7 +41,7 @@
             font-weight: bold;
             text-decoration: none;
             display: inline-block;
-            margin: 20px auto;
+            margin: 10px auto;
             cursor: pointer;
         }
 
@@ -51,13 +51,28 @@
             text-align: center;
             color: #555;
         }
+
+        #walletStatus, #joinStatus {
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <h1>🌞 Welcome to the New Paradigm Friendship Community</h1>
     <p>You are seen. You are valued. You belong here.</p>
 
-    <!-- Scrolls come first -->
+    <!-- Connect Wallet & Join Flow -->
+    <div style="text-align:center; margin-top:40px;">
+        <button id="connectWalletBtn">🌈 Connect Wallet</button>
+        <p id="walletStatus"></p>
+
+        <button id="joinBtn">💖 Join & Affirm</button>
+        <p id="joinStatus"></p>
+    </div>
+
+    <!-- Scrolls -->
     <div class="scroll-box">
         <strong>🌞 Welcome Scroll</strong><br><br>
         You’ve arrived. We honor your autonomy and celebrate your presence.<br><br>
@@ -76,7 +91,7 @@
         Tend the garden. Protect what matters. Uplift the voices around you.
     </div>
 
-    <!-- Community Actions section -->
+    <!-- Community Actions -->
     <h2>🌿 Community Actions: Honoring Care</h2>
     <p>This is where we witness each other.</p>
     <p>Every act of care—whether it's a quiet check-in, a shared resource, or a moment of emotional support—deserves to be seen. This form is not a transaction. It's a lantern.</p>
@@ -89,5 +104,46 @@
     <div class="coin-total">
         🌞 Total Smilie Coins Earned: <em>(coming soon)</em>
     </div>
+
+    <!-- Wallet & Contract Logic -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+    <script>
+        let provider;
+        let signer;
+        let contract;
+
+        const contractAddress = "https://happy2btc.github.io/smilie-coin-contract/"; // ← Replace with your deployed contract address
+        const contractABI = [/* YOUR_ABI_HERE */]; // ← Replace with your contract ABI
+
+        document.getElementById('connectWalletBtn').onclick = async () => {
+            if (window.ethereum) {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                const address = await signer.getAddress();
+                document.getElementById('walletStatus').innerText = `✨ Welcome, ${address.slice(0, 6)}... You are witnessed.`;
+
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+            } else {
+                document.getElementById('walletStatus').innerText = '🦊 Please install MetaMask to connect.';
+            }
+        };
+
+        document.getElementById('joinBtn').onclick = async () => {
+            if (!contract) {
+                document.getElementById('joinStatus').innerText = '🔍 Please connect your wallet first.';
+                return;
+            }
+
+            try {
+                const tx = await contract.witnessAffirmation(); // Assumes no arguments; adjust if needed
+                await tx.wait();
+                document.getElementById('joinStatus').innerText = '🌸 You have affirmed your place. A scroll now bears your light.';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('joinStatus').innerText = '⚠️ Something interrupted the ritual. Try again or rest for now.';
+            }
+        };
+    </script>
 </body>
 </html>
