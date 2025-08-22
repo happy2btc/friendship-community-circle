@@ -74,6 +74,12 @@
 
   <!-- Scrolls -->
   <div class="scroll-box">
+    <strong>🦁 Welcome Scroll</strong><br><br>
+    You’ve arrived. We honor your autonomy and celebrate your presence.<br><br>
+    This space is yours to shape. Share what you carry and how you wish to grow.
+  </div>
+
+  <div class="scroll-box">
     <strong>🌿 Connection Scroll</strong><br><br>
     You are not alone. We witness your intention and invite your participation.<br><br>
     Show up in your rhythm. Share your rituals. Co-create with care.
@@ -95,13 +101,14 @@
     <a href="https://docs.google.com/forms/d/1NpSbk263oNrYwQ6bYsxeF2nsmakJs9otb7iU34pzoz0/viewform" target="_blank" class="action-button">Honor a Community Action</a>
   </div>
 
-  <div class="coin-total">
-    🌞 Total Smilie Coins Earned: <em>(coming soon)</em>
+  <div class="coin-total" id="coinTotal">
+    🌞 Total Smilie Coins Earned: <strong>0</strong>
   </div>
 
   <!-- Simulated Wallet & Scroll Logic -->
   <script>
     let walletAddress = null;
+    let coinCount = 0;
 
     document.getElementById('connectWalletBtn').onclick = async () => {
       if (window.ethereum) {
@@ -124,6 +131,8 @@
       }
 
       document.getElementById('joinStatus').innerText = `🌸 You have affirmed your place. A scroll now bears your light.`;
+      coinCount++;
+      document.getElementById('coinTotal').innerHTML = `🌞 Total Smilie Coins Earned: <strong>${coinCount}</strong>`;
     };
   </script>
 </body>
