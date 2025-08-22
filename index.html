@@ -45,7 +45,7 @@
       cursor: pointer;
     }
 
-    #walletStatus {
+    #walletStatus, #joinStatus {
       text-align: center;
       margin-top: 10px;
       font-style: italic;
@@ -63,10 +63,13 @@
   <h1>🌞 Welcome to the New Paradigm Friendship Community</h1>
   <p>You are seen. You are valued. You belong here.</p>
 
-  <!-- Connect Wallet -->
+  <!-- Connect Wallet & Join Flow -->
   <div style="text-align:center; margin-top:40px;">
     <button id="connectWalletBtn">🌈 Connect Wallet</button>
     <p id="walletStatus"></p>
+
+    <button id="joinBtn">💖 Join & Affirm</button>
+    <p id="joinStatus"></p>
   </div>
 
   <!-- Scrolls -->
@@ -96,25 +99,65 @@
     🌞 Total Smilie Coins Earned: <em>(coming soon)</em>
   </div>
 
-  <!-- Simplified Wallet Logic -->
+  <!-- Wallet & Scroll Logic -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
   <script>
-    window.onload = () => {
-      document.getElementById('connectWalletBtn').onclick = async () => {
-        if (window.ethereum) {
-          try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            const signer = provider.getSigner();
-            const address = await signer.getAddress();
-            document.getElementById('walletStatus').innerText = `👋 Welcome, ${address} — your wallet is connected.`;
-          } catch (error) {
-            document.getElementById('walletStatus').innerText = `⚠️ Connection declined. You are still held in care.`;
-          }
-        } else {
-          document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
+    let provider;
+    let signer;
+    let contract;
+
+    const contractAddress = "0xYourContractAddressHere"; // ← Replace with your deployed contract address
+    const contractABI = [
+      {
+        "inputs": [
+          { "internalType": "address", "name": "recipient", "type": "address" },
+          { "internalType": "string", "name": "message", "type": "string" },
+          { "internalType": "string", "name": "tokenURI", "type": "string" }
+        ],
+        "name": "witnessAffirmation",
+        "outputs": [
+          { "internalType": "uint256", "name": "", "type": "uint256" }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+
+    document.getElementById('connectWalletBtn').onclick = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          signer = provider.getSigner();
+          const address = accounts[0];
+          document.getElementById('walletStatus').innerText = `👋 Welcome, ${address.slice(0, 6)}... You are witnessed.`;
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+        } catch (error) {
+          document.getElementById('walletStatus').innerText = `⚠️ Connection declined. You are still held in care.`;
         }
-      };
+      } else {
+        document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
+      }
+    };
+
+    document.getElementById('joinBtn').onclick = async () => {
+      if (!contract) {
+        document.getElementById('joinStatus').innerText = `🙈 Please connect your wallet first.`;
+        return;
+      }
+
+      try {
+        const recipient = await signer.getAddress();
+        const message = "You are seen, you are sacred, you belong.";
+        const tokenURI = "ipfs://your-poetic-scroll-metadata.json"; // ← Replace with actual IPFS URI
+
+        const tx = await contract.witnessAffirmation(recipient, message, tokenURI);
+        await tx.wait();
+        document.getElementById('joinStatus').innerText = `🌸 You have affirmed your place. A scroll now bears your light.`;
+      } catch (error) {
+        console.error(error);
+        document.getElementById('joinStatus').innerText = `🙀 Something interrupted the ritual. Try again or rest for now.`;
+      }
     };
   </script>
 </body>
