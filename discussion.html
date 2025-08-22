@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Discussion – New Paradigm Friendship Community</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f8ff;
+      color: #333;
+      margin: 40px;
+      font-size: 1.2em;
+      text-align: center;
+    }
+
+    .discussion-box {
+      background-color: #fff;
+      border: 1px solid #add8e6;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      width: 80%;
+      max-width: 700px;
+    }
+
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🗣️ Community Discussion</h1>
+  <div class="discussion-box" id="discussionContent">
+    <p>Loading discussion...</p>
+  </div>
+
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script>
+    async function loadDiscussion() {
+      const params = new URLSearchParams(window.location.search);
+      const topicId = params.get("topic");
+
+      const response = await fetch("suggestions.json");
+      const suggestions = await response.json();
+
+      const topic = suggestions.find(s => s.id === topicId && s.status === "discussion");
+
+      const container = document.getElementById("discussionContent");
+
+      if (!topic) {
+        container.innerHTML = "<p>❌ Discussion not found.</p>";
+        return;
+      }
+
+      container.innerHTML = `
+        <h2>${topic.title}</h2>
+        <p>${topic.description}</p>
+        <p><em>Status: ${topic.status}</em></p>
+      `;
+    }
+
+    loadDiscussion();
+  </script>
+</body>
+</html>
