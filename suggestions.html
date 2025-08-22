@@ -1,113 +1,117 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Make a Suggestion – New Paradigm Friendship Community</title>
+  <title>Community Suggestions – Friendship Community</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #fffaf0;
-      color: #333;
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
       margin: 40px;
       font-size: 1.2em;
-    }
-
-    h1, h2, p {
+      line-height: 1.6;
       text-align: center;
     }
-.menu-button {
-  background-color: #6b4f1d;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  display: inline-block;
-}
-    .suggestion-box {
-      background-color: #fff;
-      border: 1px solid #f4c97b;
-      border-radius: 12px;
-      padding: 30px;
-      margin: 40px auto;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      width: 80%;
-      max-width: 700px;
+
+    h1 {
+      color: #6b4f1d;
     }
 
-    label {
-      display: block;
-      margin: 10px 0 5px;
+    .filter-buttons {
+      margin-bottom: 30px;
     }
 
-    input[type="text"], textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-    }
-
-    textarea {
-      height: 120px;
-    }
-
-    button {
-      background-color: #d64d35;
+    .filter-buttons button {
+      background-color: #2e8b57;
       color: #fff;
-      padding: 12px 20px;
+      padding: 10px 16px;
       border: none;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-      display: block;
-      margin: 20px auto;
+      margin: 0 10px;
     }
 
-    #submitStatus {
-      text-align: center;
-      font-style: italic;
-      margin-top: 10px;
+    .suggestion-box {
+      background-color: #fff;
+      border: 1px solid #d8bfa3;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      width: 80%;
+      max-width: 700px;
+      text-align: left;
+    }
+
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>🌟 Make a Suggestion</h1>
-  <p>Your voice matters. Propose an idea that could help us grow, connect, or care more deeply.</p>
+  <h1>🌟 Community Suggestions</h1>
+  <p>Every voice matters. Explore ideas shared by members of the circle.</p>
 
-  <div class="suggestion-box">
-    <form id="suggestionForm">
-      <label for="title">📝 Title of Your Suggestion</label>
-      <input type="text" id="title" name="title" required>
-
-      <label for="description">📖 Description</label>
-      <textarea id="description" name="description" required></textarea>
-
-      <label for="tags">🏷️ Tags (optional, comma-separated)</label>
-      <input type="text" id="tags" name="tags">
-
-      <button type="button" onclick="submitSuggestion()">Submit Suggestion</button>
-    </form>
-
-    <p id="submitStatus"></p>
+  <div class="filter-buttons">
+    <button onclick="filterSuggestions('all')">🌿 All</button>
+    <button onclick="filterSuggestions('suggestion')">💡 Suggestions</button>
+    <button onclick="filterSuggestions('discussion')">🗣️ Discussions</button>
+    <button onclick="filterSuggestions('agreement')">📜 Agreements</button>
   </div>
-<div style="text-align:center; margin-top:30px;">
-  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
-</div>
-  <script>
-    function submitSuggestion() {
-      const title = document.getElementById('title').value.trim();
-      const description = document.getElementById('description').value.trim();
 
-      if (!title || !description) {
-        document.getElementById('submitStatus').innerText = "🌸 Please fill out both title and description.";
+  <div id="suggestionContainer">
+    <p>Loading suggestions...</p>
+  </div>
+
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script>
+    let allSuggestions = [];
+
+    async function loadSuggestions() {
+      const response = await fetch("suggestions.json");
+      allSuggestions = await response.json();
+      displaySuggestions("all");
+    }
+
+    function filterSuggestions(status) {
+      displaySuggestions(status);
+    }
+
+    function displaySuggestions(status) {
+      const container = document.getElementById("suggestionContainer");
+      container.innerHTML = "";
+
+      const filtered = status === "all"
+        ? allSuggestions
+        : allSuggestions.filter(s => s.status === status);
+
+      if (filtered.length === 0) {
+        container.innerHTML = "<p>🌸 No suggestions found for this category.</p>";
         return;
       }
 
-      document.getElementById('submitStatus').innerText = `✅ Your suggestion has been received. Thank you for contributing.`;
-
-      // Future: send to backend or spreadsheet
-      document.getElementById('suggestionForm').reset();
+      filtered.forEach(s => {
+        const box = document.createElement("div");
+        box.className = "suggestion-box";
+        box.innerHTML = `
+          <h3>${s.title}</h3>
+          <p>${s.description}</p>
+          <p><strong>Status:</strong> ${s.status}</p>
+        `;
+        container.appendChild(box);
+      });
     }
+update suggestions.html with filtering and display logic
+    loadSuggestions();
   </script>
 </body>
 </html>
