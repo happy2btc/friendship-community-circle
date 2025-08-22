@@ -17,4 +17,10 @@
     "description": "How do we hold each other with care when agreements are broken?",
     "status": "agreement"
   }
-]
+],
+{
+  "id": "faye-ritual",
+  "title": "Rituals for Newcomers",
+  "description": "Can we create a gentle ceremony for first-time visitors?",
+  "status": "suggestion"
+}
