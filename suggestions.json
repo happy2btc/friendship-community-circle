@@ -6,15 +6,15 @@
     "status": "discussion"
   },
   {
-    "id": "accountability",
-    "title": "Accountability Without Punishment",
-    "description": "How do we hold each other with care when agreements are broken?",
-    "status": "discussion"
+    "id": "rituals",
+    "title": "Welcoming Rituals",
+    "description": "What ceremonies help people feel truly seen when they arrive?",
+    "status": "suggestion"
   },
   {
-    "id": "rituals",
-    "title": "Rituals for Welcoming New Members",
-    "description": "What ceremonies help people feel truly seen when they arrive?",
-    "status": "discussion"
+    "id": "accountability",
+    "title": "Restorative Accountability",
+    "description": "How do we hold each other with care when agreements are broken?",
+    "status": "agreement"
   }
 ]
