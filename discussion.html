@@ -23,6 +23,40 @@
       max-width: 700px;
     }
 
+    .comment-log {
+      text-align: left;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f9f9ff;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .proposal-box {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      height: 100px;
+    }
+
+    .submit-button {
+      background-color: #2e8b57;
+      color: #fff;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
     .menu-button {
       background-color: #6b4f1d;
       color: #fff;
@@ -60,11 +94,48 @@
         return;
       }
 
+      const emojiMap = {
+        membership: "🌿",
+        accountability: "🛡️",
+        rituals: "🌸",
+        welcoming: "🦁"
+      };
+
+      const emoji = emojiMap[topic.id] || "🔍";
+
       container.innerHTML = `
-        <h2>${topic.title}</h2>
+        <h2>${emoji} ${topic.title}</h2>
         <p>${topic.description}</p>
-        <p><em>Status: ${topic.status}</em></p>
+        <p><strong>Discussion Path:</strong> ${topic.id}</p>
+
+        <div class="comment-log">
+          <h3>📝 Community Reflections</h3>
+          <ul>
+            <li><strong>Thomas:</strong> I believe membership should be earned through ritual, not just wallet connection.</li>
+            <li><strong>Ada:</strong> Accountability must feel like care, not punishment.</li>
+            <li><strong>Jules:</strong> Welcoming rituals help me feel seen when I arrive.</li>
+          </ul>
+        </div>
+
+        <div class="proposal-box">
+          <h3>📜 Propose an Agreement</h3>
+          <textarea id="proposalText" placeholder="Write your proposed agreement here..."></textarea>
+          <button class="submit-button" onclick="submitProposal('${topic.id}')">Submit Proposal</button>
+          <p id="proposalStatus"></p>
+        </div>
       `;
+    }
+
+    function submitProposal(topicId) {
+      const proposal = document.getElementById("proposalText").value.trim();
+      if (!proposal) {
+        document.getElementById("proposalStatus").innerText = "🌸 Please write a proposal before submitting.";
+        return;
+      }
+
+      // Future: send to backend or agreements.json
+      document.getElementById("proposalStatus").innerText = `✅ Proposal submitted for "${topicId}". Ready for review.`;
+      document.getElementById("proposalText").value = "";
     }
 
     loadDiscussion();
