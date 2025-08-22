@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Agreements & Voting – New Paradigm Friendship Community</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fffaf0;
+      color: #333;
+      margin: 40px;
+      font-size: 1.2em;
+      text-align: center;
+    }
+
+    .agreement-box {
+      background-color: #fff;
+      border: 1px solid #f4c97b;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      width: 80%;
+      max-width: 700px;
+    }
+
+    .vote-buttons {
+      margin-top: 20px;
+    }
+
+    .vote-buttons button {
+      background-color: #2e8b57;
+      color: #fff;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0 10px;
+    }
+
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 30px;
+    }
+
+    .vote-count {
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>📜 Agreements & Voting</h1>
+  <p>Review proposals and help shape our shared commitments.</p>
+
+  <div class="agreement-box" id="agreement1">
+    <h3>🌿 Proposed Agreement: Membership Ritual</h3>
+    <p>All new members must affirm values and participate in a welcoming ritual before voting.</p>
+
+    <div class="vote-buttons">
+      <button onclick="vote('agreement1', 'affirm')">✅ Affirm</button>
+      <button onclick="vote('agreement1', 'decline')">❌ Decline</button>
+    </div>
+    <p class="vote-count" id="agreement1Votes">Affirm: 0 | Decline: 0</p>
+  </div>
+
+  <div class="agreement-box" id="agreement2">
+    <h3>🛡️ Proposed Agreement: Restorative Accountability</h3>
+    <p>When agreements are broken, members will be invited into a restorative circle before consequences are considered.</p>
+
+    <div class="vote-buttons">
+      <button onclick="vote('agreement2', 'affirm')">✅ Affirm</button>
+      <button onclick="vote('agreement2', 'decline')">❌ Decline</button>
+    </div>
+    <p class="vote-count" id="agreement2Votes">Affirm: 0 | Decline: 0</p>
+  </div>
+
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script>
+    const voteCounts = {
+      agreement1: { affirm: 0, decline: 0 },
+      agreement2: { affirm: 0, decline: 0 }
+    };
+
+    function vote(id, type) {
+      voteCounts[id][type]++;
+      document.getElementById(id + "Votes").innerText =
+        `Affirm: ${voteCounts[id].affirm} | Decline: ${voteCounts[id].decline}`;
+    }
+  </script>
+</body>
+</html>
