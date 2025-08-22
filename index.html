@@ -107,28 +107,21 @@
 
   <!-- Wallet & Contract Logic -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-  <script>
-    window.onload = () => {
-      let provider;
-      let signer;
-      let contract;
-
-      const contractAddress = "0xYourContractAddressHere"; // ← Replace with your deployed contract address
-      const contractABI = [
-        {
-          "inputs": [
-            { "internalType": "address", "name": "recipient", "type": "address" },
-            { "internalType": "string", "name": "message", "type": "string" },
-            { "internalType": "string", "name": "tokenURI", "type": "string" }
-          ],
-          "name": "witnessAffirmation",
-          "outputs": [
-            { "internalType": "uint256", "name": "", "type": "uint256" }
-          ],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }
-      ];
+ <script>
+  window.onload = () => {
+    document.getElementById('connectWalletBtn').onclick = async () => {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        document.getElementById('walletStatus').innerText = `👋 Welcome, ${address} — your wallet is connected.`;
+      } else {
+        document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
+      }
+    };
+  };
+</script>
 
       document.getElementById('connectWalletBtn').onclick = async () => {
         if (window.ethereum) {
