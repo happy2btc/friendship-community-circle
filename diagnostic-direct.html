@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MetaMask Direct Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fffbe6;
+      color: #333;
+      text-align: center;
+      padding: 60px;
+    }
+
+    button {
+      background-color: #d64d35;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1.2em;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 30px;
+      font-style: italic;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 MetaMask Direct Connection Test</h1>
+  <p>This test uses MetaMask’s native request method to connect your wallet.</p>
+
+  <button id="connectBtn">🌈 Connect Wallet</button>
+  <div id="status"></div>
+
+  <script>
+    document.getElementById('connectBtn').onclick = async () => {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          document.getElementById('status').innerText = `✅ Connected: ${accounts[0]}`;
+        } catch (error) {
+          document.getElementById('status').innerText = `⚠️ Connection declined or failed.`;
+          console.error(error);
+        }
+      } else {
+        document.getElementById('status').innerText = `😿 MetaMask not detected. Please install it.`;
+      }
+    };
+  </script>
+</body>
+</html>
