@@ -46,7 +46,6 @@
     .next-buttons {
       text-align: center;
       margin-top: 30px;
-      display: none;
     }
 
     .next-buttons a {
@@ -69,9 +68,9 @@
 </head>
 <body>
   <h1>🌱 Affirm Your Values</h1>
-  <p>You’ve already joined by connecting your wallet. Now affirm what you stand for.</p>
+  <p id="introText">You’ve already joined by connecting your wallet. Now affirm what you stand for.</p>
 
-  <div class="affirm-box">
+  <div class="affirm-box" id="affirmBox">
     <h2>🧭 What Do You Believe In?</h2>
     <form id="affirmForm">
       <label><input type="checkbox" name="value" value="authenticity"> I value authenticity in how I show up.</label>
@@ -84,15 +83,21 @@
 
     <button onclick="affirmValues()">✅ Affirm & Continue</button>
     <p id="affirmStatus"></p>
+  </div>
 
-    <div class="next-buttons" id="nextButtons">
-      <a href="suggestions.html">🌟 Make a Suggestion</a>
-      <a href="discussions.html">🗣️ View Current Discussions</a>
-      <a href="agreements.html">📜 View Agreements & Voting</a>
-    </div>
+  <div class="next-buttons" id="nextButtons" style="display:none;">
+    <a href="suggestions.html">🌟 Make a Suggestion</a>
+    <a href="discussions.html">🗣️ View Current Discussions</a>
+    <a href="agreements.html">📜 View Agreements & Voting</a>
   </div>
 
   <script>
+    if (localStorage.getItem("affirmed") === "true") {
+      document.getElementById("affirmBox").style.display = "none";
+      document.getElementById("introText").innerText = "🌸 You’ve already affirmed your values. Choose how to engage:";
+      document.getElementById("nextButtons").style.display = "block";
+    }
+
     function affirmValues() {
       const checkboxes = document.querySelectorAll('input[name="value"]:checked');
       if (checkboxes.length === 0) {
@@ -101,8 +106,11 @@
       }
 
       const affirmed = Array.from(checkboxes).map(cb => cb.value);
+      localStorage.setItem("affirmed", "true");
       document.getElementById('affirmStatus').innerText = `✅ You’ve affirmed: ${affirmed.join(", ")}. Welcome to the circle.`;
-      document.getElementById('nextButtons').style.display = "block";
+      document.getElementById("affirmBox").style.display = "none";
+      document.getElementById("introText").innerText = "🌸 You’ve affirmed your values. Choose how to engage:";
+      document.getElementById("nextButtons").style.display = "block";
     }
   </script>
 </body>
