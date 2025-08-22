@@ -84,16 +84,38 @@
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
   <script>
-    const voteCounts = {
-      agreement1: { affirm: 0, decline: 0 },
-      agreement2: { affirm: 0, decline: 0 }
-    };
+  const voteCounts = {
+    agreement1: { affirm: 0, decline: 0 },
+    agreement2: { affirm: 0, decline: 0 }
+  };
 
-    function vote(id, type) {
-      voteCounts[id][type]++;
-      document.getElementById(id + "Votes").innerText =
-        `Affirm: ${voteCounts[id].affirm} | Decline: ${voteCounts[id].decline}`;
+  function vote(id, type) {
+    voteCounts[id][type]++;
+    updateVoteDisplay(id);
+  }
+
+  function updateVoteDisplay(id) {
+    const affirm = voteCounts[id].affirm;
+    const decline = voteCounts[id].decline;
+    const total = affirm + decline;
+
+    let status = "🕯️ Awaiting votes";
+
+    if (total > 0) {
+      const affirmPercent = Math.round((affirm / total) * 100);
+
+      if (affirmPercent >= 75) {
+        status = "✅ Passed – Affirmed by community";
+      } else if (affirmPercent >= 50) {
+        status = "🔄 Needs revision – Not enough consensus";
+      } else {
+        status = "❌ Rejected – Majority declined";
+      }
     }
-  </script>
+
+    document.getElementById(id + "Votes").innerText =
+      `Affirm: ${affirm} | Decline: ${decline} → ${status}`;
+  }
+</script>>
 </body>
 </html>
