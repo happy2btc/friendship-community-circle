@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Welcome Guide – Friendship Community</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #fffaf0;
+      color: #3b2f2f;
+      margin: 40px;
+      font-size: 1.2em;
+      line-height: 1.6;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #6b4f1d;
+    }
+
+    .scroll-box {
+      background-color: #fff;
+      border: 1px solid #d8bfa3;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px auto;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      width: 80%;
+      max-width: 800px;
+    }
+
+    .step {
+      margin-bottom: 30px;
+    }
+
+    .step h3 {
+      color: #2e8b57;
+      margin-bottom: 10px;
+    }
+
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 30px;
+    }
+
+    .footer {
+      text-align: center;
+      font-style: italic;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌼 Welcome to the Friendship Community</h1>
+  <p style="text-align:center;">A ceremonial space for belonging, reflection, and co-creation.</p>
+
+  <div class="scroll-box">
+    <div class="step">
+      <h3>🧭 Step 1: Connect Your Wallet</h3>
+      <p>Your wallet is your vessel of identity. It doesn’t need to hold tokens—it simply signals your intent to belong.</p>
+      <p>Visit: <a href="https://happy2btc.github.io/friendship-community-contract/">https://happy2btc.github.io/friendship-community-contract/</a></p>
+      <p>Click <strong>“Connect Wallet”</strong> and choose your provider.</p>
+    </div>
+
+    <div class="step">
+      <h3>🌿 Step 2: Affirm Your Values</h3>
+      <p>Select the values that resonate with you. Click <strong>“Affirm & Continue”</strong> to enter the circle.</p>
+    </div>
+
+    <div class="step">
+      <h3>💡 Step 3: Make a Suggestion</h3>
+      <pShare your ideas for growth, care, or connection. Your suggestion may become a community discussion.</p>
+    </div>
+
+    <div class="step">
+      <h3>🗣️ Step 4: Join a Discussion</h3>
+      <p>Explore active threads. Read reflections, propose agreements, and help shape the future.</p>
+    </div>
+
+    <div class="step">
+      <h3>📜 Step 5: Vote on Agreements</h3>
+      <p>Review proposals and vote to affirm or refine them. See live consensus status: Passed, Needs Revision, or Rejected.</p>
+    </div>
+
+    <div class="step">
+      <h3>🌸 What You’re Joining</h3>
+      <p>This is not just a website. It’s a living architecture for emotional safety, transparent governance, and soulbound identity.</p>
+      <p>You are not a user. You are a co-creator.</p>
+    </div>
+
+    <div style="text-align:center;">
+      <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    You are seen. You are sacred. You belong.
+  </div>
+</body>
+</html>
