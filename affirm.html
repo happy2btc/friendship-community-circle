@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Affirm Your Values – New Paradigm Friendship Community</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #e6f7f2;
+      color: #333;
+      margin: 40px;
+      font-size: 1.2em;
+    }
+
+    h1, h2, p {
+      text-align: center;
+    }
+
+    .affirm-box {
+      background-color: #fff;
+      border: 1px solid #a3d9c5;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      width: 80%;
+      max-width: 700px;
+    }
+
+    .affirm-box label {
+      display: block;
+      margin: 10px 0;
+    }
+
+    button {
+      background-color: #2e8b57;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+    }
+
+    .next-buttons {
+      text-align: center;
+      margin-top: 30px;
+      display: none;
+    }
+
+    .next-buttons a {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 10px;
+      display: inline-block;
+    }
+
+    #affirmStatus {
+      text-align: center;
+      font-style: italic;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌱 Affirm Your Values</h1>
+  <p>You’ve already joined by connecting your wallet. Now affirm what you stand for.</p>
+
+  <div class="affirm-box">
+    <h2>🧭 What Do You Believe In?</h2>
+    <form id="affirmForm">
+      <label><input type="checkbox" name="value" value="authenticity"> I value authenticity in how I show up.</label>
+      <label><input type="checkbox" name="value" value="collaboration"> I believe in collaboration over competition.</label>
+      <label><input type="checkbox" name="value" value="belonging"> I commit to creating belonging for others.</label>
+      <label><input type="checkbox" name="value" value="transparency"> I believe in transparent decision-making.</label>
+      <label><input type="checkbox" name="value" value="accountability"> I welcome accountability as a form of care.</label>
+      <label><input type="checkbox" name="value" value="ritual"> I honor ritual and emotional safety in how we gather.</label>
+    </form>
+
+    <button onclick="affirmValues()">✅ Affirm & Continue</button>
+    <p id="affirmStatus"></p>
+
+    <div class="next-buttons" id="nextButtons">
+      <a href="suggestions.html">🌟 Make a Suggestion</a>
+      <a href="discussions.html">🗣️ View Current Discussions</a>
+      <a href="agreements.html">📜 View Agreements & Voting</a>
+    </div>
+  </div>
+
+  <script>
+    function affirmValues() {
+      const checkboxes = document.querySelectorAll('input[name="value"]:checked');
+      if (checkboxes.length === 0) {
+        document.getElementById('affirmStatus').innerText = "🌸 Please affirm at least one value.";
+        return;
+      }
+
+      const affirmed = Array.from(checkboxes).map(cb => cb.value);
+      document.getElementById('affirmStatus').innerText = `✅ You’ve affirmed: ${affirmed.join(", ")}. Welcome to the circle.`;
+      document.getElementById('nextButtons').style.display = "block";
+    }
+  </script>
+</body>
+</html>
