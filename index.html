@@ -99,39 +99,16 @@
     🌞 Total Smilie Coins Earned: <em>(coming soon)</em>
   </div>
 
-  <!-- Wallet & Scroll Logic -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <!-- Simulated Wallet & Scroll Logic -->
   <script>
-    let provider;
-    let signer;
-    let contract;
-
-    const contractAddress = "0xYourContractAddressHere"; // ← Replace with your deployed contract address
-    const contractABI = [
-      {
-        "inputs": [
-          { "internalType": "address", "name": "recipient", "type": "address" },
-          { "internalType": "string", "name": "message", "type": "string" },
-          { "internalType": "string", "name": "tokenURI", "type": "string" }
-        ],
-        "name": "witnessAffirmation",
-        "outputs": [
-          { "internalType": "uint256", "name": "", "type": "uint256" }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
-    ];
+    let walletAddress = null;
 
     document.getElementById('connectWalletBtn').onclick = async () => {
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          signer = provider.getSigner();
-          const address = accounts[0];
-          document.getElementById('walletStatus').innerText = `👋 Welcome, ${address.slice(0, 6)}... You are witnessed.`;
-          contract = new ethers.Contract(contractAddress, contractABI, signer);
+          walletAddress = accounts[0];
+          document.getElementById('walletStatus').innerText = `👋 Welcome, ${walletAddress.slice(0, 6)}... You are witnessed.`;
         } catch (error) {
           document.getElementById('walletStatus').innerText = `⚠️ Connection declined. You are still held in care.`;
         }
@@ -140,24 +117,13 @@
       }
     };
 
-    document.getElementById('joinBtn').onclick = async () => {
-      if (!contract) {
+    document.getElementById('joinBtn').onclick = () => {
+      if (!walletAddress) {
         document.getElementById('joinStatus').innerText = `🙈 Please connect your wallet first.`;
         return;
       }
 
-      try {
-        const recipient = await signer.getAddress();
-        const message = "You are seen, you are sacred, you belong.";
-        const tokenURI = "ipfs://your-poetic-scroll-metadata.json"; // ← Replace with actual IPFS URI
-
-        const tx = await contract.witnessAffirmation(recipient, message, tokenURI);
-        await tx.wait();
-        document.getElementById('joinStatus').innerText = `🌸 You have affirmed your place. A scroll now bears your light.`;
-      } catch (error) {
-        console.error(error);
-        document.getElementById('joinStatus').innerText = `🙀 Something interrupted the ritual. Try again or rest for now.`;
-      }
+      document.getElementById('joinStatus').innerText = `🌸 You have affirmed your place. A scroll now bears your light.`;
     };
   </script>
 </body>
