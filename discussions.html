@@ -68,38 +68,54 @@
   <h1>🗣️ Current Discussions</h1>
   <p>Explore active threads and join the conversations shaping our community.</p>
 
-  <div class="discussion-box">
-  <h3>🌿 How Do We Define Membership?</h3>
-  <p>Should wallet connection be enough, or do we need deeper rituals?</p>
-  <a href="discussion.html?topic=membership" class="join-button">Join Discussion</a>
-</div>
+ 
+<p>Explore topics the community is actively engaging with.</p>
 
-  <div class="discussion-box">
-    <h3>🛡️ Accountability Without Punishment</h3>
-    <p>How do we hold each other with care when agreements are broken? What does restorative practice look like?</p>
-    <a href="discussion.html?topic=accountability" class="join-button">Join Discussion</a>
+<div id="discussionContainer"></div>
 
-
-</div>
-
-  <div class="discussion-box">
-    <h3>🌸 Rituals for Welcoming New Members</h3>
-    <p>What ceremonies or affirmations help people feel truly seen when they arrive?</p>
-     <a href="discussion.html?topic=rituals" class="join-button">Join Discussion</a>
-
-
-</div>
-
-  <p id="joinStatus"></p>
+<a href="menu.html" class="menu-button">⟵ Return to Menu</a>
 
   <div style="text-align:center;">
     <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
   </div>
 
-  <script>
-    function joinDiscussion(topic) {
-      document.getElementById('joinStatus').innerText = `✅ You’ve joined the "${topic}" discussion. Your voice is welcome.`;
+ <script>
+  async function loadDiscussions() {
+    try {
+      const response = await fetch("suggestions.json");
+      if (!response.ok) {
+        throw new Error("Failed to fetch suggestions.json");
+      }
+
+      const suggestions = await response.json();
+      const discussions = suggestions.filter(s => s.status === "discussion");
+
+      const container = document.getElementById("discussionContainer");
+      container.innerHTML = "";
+
+      if (discussions.length === 0) {
+        container.innerHTML = "<p>🌿 No current discussions yet. Be the first to suggest one!</p>";
+        return;
+      }
+
+      discussions.forEach(d => {
+        const box = document.createElement("div");
+        box.className = "discussion-box";
+        box.innerHTML = `
+          <h3>${d.title}</h3>
+          <p>${d.description}</p>
+          <a href="discussion.html?topic=${d.id}" class="menu-button">Join Discussion</a>
+        `;
+        container.appendChild(box);
+      });
+    } catch (error) {
+      document.getElementById("discussionContainer").innerHTML =
+        "<p>⚠️ Unable to load discussions. Please check the file path or try again later.</p>";
+      console.error("Error loading discussions:", error);
     }
-  </script>
+  }
+
+  loadDiscussions();
+</script>
 </body>
 </html>
