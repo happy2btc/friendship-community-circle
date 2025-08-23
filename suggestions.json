@@ -1,27 +1,9 @@
 [
-  {
-    "id": "membership",
-    "title": "How Do we Define Membership?",
-    "description": "Should wallet connection be enough, or do we need deeper rituals?",
-    "status": "discussion"
-  },
-  {
-    "id": "rituals",
-    "title": "Welcoming Rituals",
-    "description": "What ceremonies help people feel truly seen when they arrive?",
-    "status": "suggestion"
-  },
-  {
-    "id": "accountability",
-    "title": "Restorative Accountability",
-    "description": "How do we hold each other with care when agreements are broken?",
-    "status": "agreement"
-  },
-  {
+   {
   "id": "faye-ubi",
   "title": "UBI as a Ritual of Care",
   "description": "Could we explore Universal Basic Income not just as economics, but as a ceremonial act of belonging and trust?",
   "status": "discussion"
 }
 ]
-Fix JSON format to enable suggestion display
+
