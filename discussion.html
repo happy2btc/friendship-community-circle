@@ -87,7 +87,7 @@
           </div>
         `;
 
-        loadReflections(topicId);
+        loadReflections(topic.id);
       } catch (error) {
         document.getElementById("discussionContent").innerHTML =
           "⚠️ Unable to load discussion. Please try again later.";
@@ -117,6 +117,8 @@
           container.appendChild(voice);
         });
       } catch (error) {
+        document.getElementById("reflectionContainer").innerHTML =
+          "<p>⚠️ Unable to load reflections. Please try again later.</p>";
         console.error("Error loading reflections:", error);
       }
     }
