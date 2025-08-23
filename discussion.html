@@ -42,12 +42,44 @@
     #discussionContent {
       margin-top: 30px;
     }
+    #reflectionForm {
+      margin-top: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+    #reflectionForm input,
+    #reflectionForm textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    #reflectionForm button {
+      padding: 10px 20px;
+      background-color: #2e8b57;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <h1>Community Discussion</h1>
   <div id="discussionContent">⏳ Loading discussion...</div>
   <div id="reflectionContainer"></div>
+
+  <div id="reflectionForm">
+    <h3>🌱 Share Your Reflection</h3>
+    <input type="text" id="reflectionName" placeholder="Your name" />
+    <textarea id="reflectionText" placeholder="What does this topic mean to you?" rows="4"></textarea>
+    <button onclick="submitReflection()">Submit Reflection</button>
+  </div>
 
   <a href="menu.html" class="menu-button">⟵ Return to Menu</a>
 
@@ -121,6 +153,27 @@
           "<p>⚠️ Unable to load reflections. Please try again later.</p>";
         console.error("Error loading reflections:", error);
       }
+    }
+
+    function submitReflection() {
+      const name = document.getElementById("reflectionName").value.trim();
+      const text = document.getElementById("reflectionText").value.trim();
+
+      if (!name || !text) {
+        alert("Please enter both your name and reflection.");
+        return;
+      }
+
+      const container = document.getElementById("reflectionContainer");
+
+      const newVoice = document.createElement("p");
+      newVoice.innerHTML = `<strong>${name}:</strong> ${text}`;
+      container.appendChild(newVoice);
+
+      document.getElementById("reflectionName").value = "";
+      document.getElementById("reflectionText").value = "";
+
+      alert("🌸 Your reflection has been added. Thank you for sharing.");
     }
 
     loadDiscussion();
