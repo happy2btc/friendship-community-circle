@@ -1,3 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Community Suggestions</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f9f9;
+      color: #282d3f;
+      padding: 20px;
+      font-size: 1.2em;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .filter-buttons button {
+      background-color: #e28b75;
+      color: #fff;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0 10px;
+    }
+    .suggestion-box {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    <h1>Community Suggestions</h1>
+<p>Every voice matters. Explore ideas shared by members of the circle.</p>
+
+<div class="filter-buttons">
+  <button onclick="filterSuggestions('all')">All</button>
+  <button onclick="filterSuggestions('suggestion')">Suggestions</button>
+  <button onclick="filterSuggestions('discussion')">Discussions</button>
+  <button onclick="filterSuggestions('agreement')">Agreements</button>
+</div>
+
+<div id="suggestionContainer"></div>
+
+<a href="menu.html" class="menu-button">Return to Menu</a>
+  </style>
+</head>
+<body>
 <script>
   let allSuggestions = [];
 
@@ -47,3 +95,5 @@
 
   loadSuggestions();
 </script>
+  </body>
+</html>
