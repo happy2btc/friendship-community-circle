@@ -1,183 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Discussion – New Paradigm Friendship Community</title>
+  <title>Community Discussion</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #f0f8ff;
+      font-family: Georgia, serif;
+      background-color: #f9f9f9;
       color: #333;
-      margin: 40px;
-      font-size: 1.2em;
+      padding: 20px;
       text-align: center;
     }
-
     .discussion-box {
       background-color: #fff;
-      border: 1px solid #add8e6;
-      border-radius: 12px;
-      padding: 30px;
-      margin: 40px auto;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      width: 80%;
-      max-width: 700px;
-    }
-
-    .comment-log {
-      text-align: left;
-      margin-top: 20px;
-      padding: 10px;
-      background-color: #f9f9ff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin: 20px auto;
       border-radius: 8px;
-      border: 1px solid #ccc;
+      max-width: 600px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-
-    .proposal-box {
-      margin-top: 30px;
-      text-align: left;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-      height: 100px;
-    }
-
-    .submit-button {
+    .menu-button {
       background-color: #2e8b57;
       color: #fff;
       padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    .menu-button {
-      background-color: #6b4f1d;
-      color: #fff;
-      padding: 12px 20px;
       border-radius: 6px;
       text-decoration: none;
       font-weight: bold;
       display: inline-block;
+      margin-top: 20px;
+    }
+    #reflectionContainer {
+      margin-top: 40px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #reflectionContainer h2 {
+      text-align: center;
+    }
+    #discussionContent {
       margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>🗣️ Community Discussion</h1>
-  <div class="discussion-box" id="discussionContent">
-    <p>Loading discussion...</p>
-  </div>
-<div id="reflectionContainer"></div>
-  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  <h1>Community Discussion</h1>
+  <div id="discussionContent">⏳ Loading discussion...</div>
+  <div id="reflectionContainer"></div>
+
+  <a href="menu.html" class="menu-button">⟵ Return to Menu</a>
 
   <script>
+    const emojiMap = {
+      membership: "🌿",
+      accountability: "🔍",
+      rituals: "🌸",
+      welcoming: "👋",
+      "faye-ubi": "💫"
+    };
+
     async function loadDiscussion() {
       const params = new URLSearchParams(window.location.search);
       const topicId = params.get("topic");
-<script>
-  async function loadDiscussion() {
-    const params = new URLSearchParams(window.location.search);
-    const topicId = params.get("topic");
 
-    // Your existing logic to load the topic from suggestions.json
-    // and display title/description
-  }
+      try {
+        const response = await fetch("suggestions.json");
+        if (!response.ok) throw new Error("Failed to fetch suggestions.json");
 
-  async function loadReflections(topicId) {
-    try {
-      const response = await fetch("reflections.json");
-      if (!response.ok) {
-        throw new Error("Failed to fetch reflections.json");
+        const suggestions = await response.json();
+        const topic = suggestions.find(s => s.id === topicId && s.status === "discussion");
+
+        const container = document.getElementById("discussionContent");
+
+        if (!topic) {
+          container.innerHTML = "❌ Discussion not found.";
+          return;
+        }
+
+        const emoji = emojiMap[topic.id] || "🔍";
+        container.innerHTML = `
+          <div class="discussion-box">
+            <h2>${emoji} ${topic.title}</h2>
+            <p>${topic.description}</p>
+            <p><em>Discussion Path:</em> ${topic.id}</p>
+          </div>
+        `;
+
+        loadReflections(topicId);
+      } catch (error) {
+        document.getElementById("discussionContent").innerHTML =
+          "⚠️ Unable to load discussion. Please try again later.";
+        console.error("Error loading discussion:", error);
       }
-
-      const allReflections = await response.json();
-      const match = allReflections.find(r => r.topic === topicId);
-
-      const container = document.getElementById("reflectionContainer");
-      container.innerHTML = "<h2>📝 Community Reflections</h2>";
-
-      if (!match || match.voices.length === 0) {
-        container.innerHTML += "<p>No reflections yet. Be the first to share.</p>";
-        return;
-      }
-
-      match.voices.forEach(v => {
-        const voice = document.createElement("p");
-        voice.innerHTML = `<strong>${v.name}:</strong> ${v.text}`;
-        container.appendChild(voice);
-      });
-    } catch (error) {
-      console.error("Error loading reflections:", error);
-    }
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const topicId = params.get("topic");
-
-  loadDiscussion();
-  loadReflections(topicId);
-</script>
-      const response = await fetch("suggestions.json");
-      const suggestions = await response.json();
-
-      const topic = suggestions.find(s => s.id === topicId && s.status === "discussion");
-
-      const container = document.getElementById("discussionContent");
-
-      if (!topic) {
-        container.innerHTML = "<p>❌ Discussion not found.</p>";
-        return;
-      }
-
-      const emojiMap = {
-        membership: "🌿",
-        accountability: "🛡️",
-        rituals: "🌸",
-        welcoming: "🦁"
-      };
-
-      const emoji = emojiMap[topic.id] || "🔍";
-
-      container.innerHTML = `
-        <h2>${emoji} ${topic.title}</h2>
-        <p>${topic.description}</p>
-        <p><strong>Discussion Path:</strong> ${topic.id}</p>
-
-        <div class="comment-log">
-          <h3>📝 Community Reflections</h3>
-          <ul>
-            <li><strong>Thomas:</strong> I believe membership should be earned through ritual, not just wallet connection.</li>
-            <li><strong>Ada:</strong> Accountability must feel like care, not punishment.</li>
-            <li><strong>Jules:</strong> Welcoming rituals help me feel seen when I arrive.</li>
-          </ul>
-        </div>
-
-        <div class="proposal-box">
-          <h3>📜 Propose an Agreement</h3>
-          <textarea id="proposalText" placeholder="Write your proposed agreement here..."></textarea>
-          <button class="submit-button" onclick="submitProposal('${topic.id}')">Submit Proposal</button>
-          <p id="proposalStatus"></p>
-        </div>
-      `;
     }
 
-    function submitProposal(topicId) {
-      const proposal = document.getElementById("proposalText").value.trim();
-      if (!proposal) {
-        document.getElementById("proposalStatus").innerText = "🌸 Please write a proposal before submitting.";
-        return;
-      }
+    async function loadReflections(topicId) {
+      try {
+        const response = await fetch("reflections.json");
+        if (!response.ok) throw new Error("Failed to fetch reflections.json");
 
-      // Future: send to backend or agreements.json
-      document.getElementById("proposalStatus").innerText = `✅ Proposal submitted for "${topicId}". Ready for review.`;
-      document.getElementById("proposalText").value = "";
+        const allReflections = await response.json();
+        const match = allReflections.find(r => r.topic === topicId);
+
+        const container = document.getElementById("reflectionContainer");
+        container.innerHTML = "<h2>📝 Community Reflections</h2>";
+
+        if (!match || match.voices.length === 0) {
+          container.innerHTML += "<p>No reflections yet. Be the first to share.</p>";
+          return;
+        }
+
+        match.voices.forEach(v => {
+          const voice = document.createElement("p");
+          voice.innerHTML = `<strong>${v.name}:</strong> ${v.text}`;
+          container.appendChild(voice);
+        });
+      } catch (error) {
+        console.error("Error loading reflections:", error);
+      }
     }
 
     loadDiscussion();
