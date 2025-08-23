@@ -18,10 +18,10 @@
     "status": "agreement"
   },
   {
-    "id": "faye-ritual",
-    "title": "Rituals for Newcomers",
-    "description": "Can we create a gentle ceremony for first-time visitors?",
-    "status": "suggestion"
-  }
+  "id": "faye-ubi",
+  "title": "UBI as a Ritual of Care",
+  "description": "Could we explore Universal Basic Income not just as economics, but as a ceremonial act of belonging and trust?",
+  "status": "discussion"
+}
 ]
 Fix JSON format to enable suggestion display
