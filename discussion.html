@@ -74,14 +74,56 @@
   <div class="discussion-box" id="discussionContent">
     <p>Loading discussion...</p>
   </div>
-
+<div id="reflectionContainer"></div>
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
   <script>
     async function loadDiscussion() {
       const params = new URLSearchParams(window.location.search);
       const topicId = params.get("topic");
+<script>
+  async function loadDiscussion() {
+    const params = new URLSearchParams(window.location.search);
+    const topicId = params.get("topic");
 
+    // Your existing logic to load the topic from suggestions.json
+    // and display title/description
+  }
+
+  async function loadReflections(topicId) {
+    try {
+      const response = await fetch("reflections.json");
+      if (!response.ok) {
+        throw new Error("Failed to fetch reflections.json");
+      }
+
+      const allReflections = await response.json();
+      const match = allReflections.find(r => r.topic === topicId);
+
+      const container = document.getElementById("reflectionContainer");
+      container.innerHTML = "<h2>📝 Community Reflections</h2>";
+
+      if (!match || match.voices.length === 0) {
+        container.innerHTML += "<p>No reflections yet. Be the first to share.</p>";
+        return;
+      }
+
+      match.voices.forEach(v => {
+        const voice = document.createElement("p");
+        voice.innerHTML = `<strong>${v.name}:</strong> ${v.text}`;
+        container.appendChild(voice);
+      });
+    } catch (error) {
+      console.error("Error loading reflections:", error);
+    }
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const topicId = params.get("topic");
+
+  loadDiscussion();
+  loadReflections(topicId);
+</script>
       const response = await fetch("suggestions.json");
       const suggestions = await response.json();
 
