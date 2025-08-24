@@ -34,6 +34,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: setup_env
 
+    env:
+      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+
     steps:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
@@ -47,8 +50,13 @@ jobs:
           name: dbmate
           path: ${{ env.HOME }}/bin
 
-      - name: 🧪 Run dbmate migration
+      - name: 🧪 Run dbmate migration and log output
         run: |
           chmod +x $HOME/bin/dbmate
-          $HOME/bin/dbmate --help
-          $HOME/bin/dbmate up
+          $HOME/bin/dbmate up | tee migration-scroll.txt
+
+      - name: 📜 Upload migration scroll
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-scroll
+          path: migration-scroll.txt
