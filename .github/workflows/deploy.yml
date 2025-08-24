@@ -11,11 +11,13 @@ jobs:
     steps:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
-
-      - name: 🔍 Print $HOME and ${{ env.HOME }} (setup)
+        
+      - name: 🔍 Print $HOME and ${{ env.HOME }}
         run: |
           echo "Shell \$HOME: $HOME"
-          echo "Workflow \${{ env.HOME }}: ${{ env.HOME }}"
+          echo "Workflow \${{ env.HOME }}: $WF_HOME"
+        env:
+          WF_HOME: ${{ env.HOME }}
 
       - name: 🛠️ Install dbmate to $HOME/bin
         run: |
