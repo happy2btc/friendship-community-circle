@@ -36,6 +36,8 @@ jobs:
 
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DB_SESSION_URL }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
     steps:
       - name: 🧾 Checkout repository
@@ -50,13 +52,18 @@ jobs:
           name: dbmate
           path: ${{ env.HOME }}/bin
 
-      - name: 🧪 Run dbmate migration and log output
+      - name: 📜 Run database migrations and log output
         run: |
           chmod +x $HOME/bin/dbmate
           $HOME/bin/dbmate up | tee migration-scroll.txt
 
-      - name: 📜 Upload migration scroll
+      - name: 📦 Upload migration scroll
         uses: actions/upload-artifact@v4
         with:
           name: migration-scroll
           path: migration-scroll.txt
+
+      - name: 🚀 Deploy Edge Function: submit-suggestion
+        run: supabase functions deploy submit-suggestion --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+        env:
+          SUPABASE_ACCESS_TOKEN: $SUPABASE_ACCESS_TOKEN
