@@ -35,7 +35,7 @@ jobs:
     needs: setup_env
 
     env:
-      DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+      DATABASE_URL: ${{ secrets.SUPABASE_SESSION_DB_URL }}
 
     steps:
       - name: 🧾 Checkout repository
