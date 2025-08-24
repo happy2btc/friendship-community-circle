@@ -1,18 +1,10 @@
 let walletAddress = null;
 
-async function connectWallet() {
-  if (window.ethereum) {
-    try {
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      walletAddress = accounts[0];
-      document.getElementById('walletStatus').innerText = `Connected: ${walletAddress}`;
-      fetchExistingOffering();
-    } catch (err) {
-      console.error('Wallet connection failed:', err);
-    }
-  } else {
-    alert('MetaMask not found. Please install it to continue.');
-  }
+function connectWallet() {
+  // Simulated wallet connection
+  walletAddress = "demo_wallet_123";
+  document.getElementById("walletStatus").textContent = `Connected: ${walletAddress}`;
+  fetchExistingOffering();
 }
 
 async function fetchExistingOffering() {
@@ -29,6 +21,7 @@ async function fetchExistingOffering() {
       const entry = data[0];
       document.getElementById('want').value = entry.want || '';
       document.getElementById('give').value = entry.give || '';
+      document.getElementById('passion').value = entry.passion || '';
       document.getElementById('visible').checked = entry.visible;
     }
   } catch (err) {
@@ -45,34 +38,31 @@ document.getElementById('exchangeForm').addEventListener('submit', async functio
 
   const want = document.getElementById('want').value;
   const give = document.getElementById('give').value;
-  const visible = document.getElementById('visible').checked;
   const passion = document.getElementById('passion').value;
+  const visible = document.getElementById('visible').checked;
 
-const payload = {
-  want,
-  give,
-  passion,
-  visible,
-  wallet_address: walletAddress
-};
+  const payload = {
+    want,
+    give,
+    passion,
+    visible,
+    wallet_address: walletAddress
+  };
 
   try {
-    const upsertUrl = `https://your-supabase-url/rest/v1/member_offerings`;
-    const response = await fetch(upsertUrl, {
+    const response = await fetch(`https://your-supabase-url/rest/v1/member_offerings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': 'your-supabase-anon-key',
-        'Authorization': 'Bearer your-supabase-anon-key',
-        'Prefer': 'resolution=merge-duplicates'
+        'Authorization': 'Bearer your-supabase-anon-key'
       },
       body: JSON.stringify(payload)
     });
-
     if (response.ok) {
-      alert('Your offering has been updated 🌿');
+      alert('Offering submitted successfully.');
     } else {
-      console.error('Failed to update offering:', await response.text());
+      alert('Error submitting offering.');
     }
   } catch (err) {
     console.error('Error submitting offering:', err);
