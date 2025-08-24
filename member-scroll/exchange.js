@@ -46,13 +46,15 @@ document.getElementById('exchangeForm').addEventListener('submit', async functio
   const want = document.getElementById('want').value;
   const give = document.getElementById('give').value;
   const visible = document.getElementById('visible').checked;
+  const passion = document.getElementById('passion').value;
 
-  const payload = {
-    wallet_address: walletAddress,
-    want,
-    give,
-    visible
-  };
+const payload = {
+  want,
+  give,
+  passion,
+  visible,
+  wallet_address: walletAddress
+};
 
   try {
     const upsertUrl = `https://your-supabase-url/rest/v1/member_offerings`;
