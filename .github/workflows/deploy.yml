@@ -6,33 +6,31 @@ on:
 
 jobs:
   setup:
+    name: 🛠️ Setup Environment
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 🧾 Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Install dbmate
-        if: steps.cache-dbmate.outputs.cache-hit != 'true'
+      - name: 🛠️ Install dbmate to $HOME/bin
         run: |
-          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o /usr/local/bin/dbmate
-          chmod +x /usr/local/bin/dbmate
-          echo "/usr/local/bin" >> $GITHUB_PATH
-          
-      - name: Add /usr/local/bin to PATH
+          mkdir -p $HOME/bin
+          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o $HOME/bin/dbmate
+          chmod +x $HOME/bin/dbmate
 
-      - name: Cache Supabase CLI
-        id: cache-supabase
-        uses: actions/cache@v3
+      - name: 📦 Upload dbmate binary
+        uses: actions/upload-artifact@v3
         with:
-          path: ~/.supabase
-          key: supabase-cli-v1
+          name: dbmate
+          path: $HOME/bin/dbmate
 
-      - name: Setup Supabase CLI if not cached
-        if: steps.cache-supabase.outputs.cache-hit != 'true'
+      - name: 🧙‍♂️ Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
   deploy:
+    name: 🔮 Build & Deploy Ritual
     needs: setup
     runs-on: ubuntu-latest
     env:
@@ -40,15 +38,25 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Confirm dbmate installation
+      - name: 🧾 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Download dbmate binary
+        uses: actions/download-artifact@v3
+        with:
+          name: dbmate
+          path: $HOME/bin
+
+      - name: 🛤️ Add $HOME/bin to PATH
+        run: echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: ✅ Confirm dbmate installation
         run: dbmate --version
-        
-      - name: Run database migrations
+
+      - name: 📜 Run database migrations
         run: dbmate --url "$SUPABASE_DB_URL" up
 
-      - name: Deploy Edge Functions
+      - name: 🔮 Deploy Supabase Edge Functions
         run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
 
         
