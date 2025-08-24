@@ -63,7 +63,15 @@ jobs:
           name: migration-scroll
           path: migration-scroll.txt
 
-      - name: 🚀 Deploy Edge Functions
-        run: supabase functions deploy submit-suggestion --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+      - name: 📦 Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: "🚀 Auto-deploy all Edge Functions"
+        run: |
+          for dir in supabase/functions/*/; do
+            fname=$(basename "$dir")
+            echo "Deploying function: $fname"
+            supabase functions deploy "$fname" --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+          done
         env:
           SUPABASE_ACCESS_TOKEN: $SUPABASE_ACCESS_TOKEN
