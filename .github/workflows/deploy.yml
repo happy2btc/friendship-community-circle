@@ -11,8 +11,8 @@ jobs:
     steps:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
-        
-      - name: 🔍 Print $HOME and ${{ env.HOME }}
+
+      - name: 🔍 Print $HOME and ${{ env.HOME }} (setup)
         run: |
           echo "Shell \$HOME: $HOME"
           echo "Workflow \${{ env.HOME }}: $WF_HOME"
@@ -54,7 +54,9 @@ jobs:
       - name: 🔍 Print $HOME and ${{ env.HOME }} (deploy)
         run: |
           echo "Shell \$HOME: $HOME"
-          echo "Workflow \${{ env.HOME }}: ${{ env.HOME }}"
+          echo "Workflow \${{ env.HOME }}: $WF_HOME"
+        env:
+          WF_HOME: ${{ env.HOME }}
 
       - name: 📦 Download dbmate binary (v4)
         uses: actions/download-artifact@v4
@@ -73,3 +75,4 @@ jobs:
 
       - name: 🔮 Deploy Supabase Edge Functions
         run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
+        
