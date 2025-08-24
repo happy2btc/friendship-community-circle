@@ -34,10 +34,12 @@ jobs:
           curl -sL https://github.com/supabase/cli/releases/download/v2.39.2/supabase_2.39.2_linux_amd64.deb -o supabase.deb
           sudo dpkg -i supabase.deb
 
-      - name: 📦 Upload Supabase CLI binary
+      - name: 📦 Copy Supabase CLI to $HOME/bin
         run: |
           mkdir -p $HOME/bin
           cp /usr/bin/supabase $HOME/bin/supabase
+
+      - name: 📦 Upload Supabase CLI binary
         uses: actions/upload-artifact@v4
         with:
           name: supabase-cli
