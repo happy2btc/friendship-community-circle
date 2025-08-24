@@ -29,6 +29,17 @@ jobs:
           name: dbmate
           path: ${{ env.HOME }}/bin/dbmate
 
+      - name: 🛠️ Install Supabase CLI to $HOME/bin
+        run: |
+          curl -sL https://github.com/supabase/cli/releases/latest/download/supabase-linux-x64 -o $HOME/bin/supabase
+          chmod +x $HOME/bin/supabase
+
+      - name: 📦 Upload Supabase CLI binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-cli
+          path: ${{ env.HOME }}/bin/supabase
+
   deploy_ritual:
     name: 🔮 Deploy Ritual
     runs-on: ubuntu-latest
@@ -52,6 +63,12 @@ jobs:
           name: dbmate
           path: ${{ env.HOME }}/bin
 
+      - name: 📥 Download Supabase CLI binary
+        uses: actions/download-artifact@v4
+        with:
+          name: supabase-cli
+          path: ${{ env.HOME }}/bin
+
       - name: 📜 Run database migrations and log output
         run: |
           chmod +x $HOME/bin/dbmate
@@ -63,15 +80,13 @@ jobs:
           name: migration-scroll
           path: migration-scroll.txt
 
-      - name: 📦 Install Supabase CLI
-        run: npm install -g supabase
-
       - name: "🚀 Auto-deploy all Edge Functions"
         run: |
+          chmod +x $HOME/bin/supabase
           for dir in supabase/functions/*/; do
             fname=$(basename "$dir")
             echo "Deploying function: $fname"
-            supabase functions deploy "$fname" --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+            $HOME/bin/supabase functions deploy "$fname" --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
           done
         env:
           SUPABASE_ACCESS_TOKEN: $SUPABASE_ACCESS_TOKEN
