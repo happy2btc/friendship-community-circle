@@ -29,24 +29,15 @@ jobs:
           name: dbmate
           path: ${{ env.HOME }}/bin/dbmate
 
-      - name: 🛠️ Download Supabase CLI archive
+      - name: 🛠️ Install Supabase CLI via .deb
         run: |
-          curl -sL https://github.com/supabase/cli/releases/download/v1.178.2/supabase_1.178.2_linux_amd64.tar.gz -o supabase.tar.gz
-
-      - name: 🧪 List contents of Supabase CLI archive
-        run: tar -tzf supabase.tar.gz
-
-      - name: 🛠️ Extract and move Supabase CLI to $HOME/bin
-        run: |
-          mkdir -p $HOME/bin
-          tar -xzf supabase.tar.gz
-          mv supabase*/supabase $HOME/bin/supabase
-          chmod +x $HOME/bin/supabase
-
-      - name: 🧪 Verify Supabase CLI
-        run: $HOME/bin/supabase --version
+          curl -sL https://github.com/supabase/cli/releases/download/v2.39.2/supabase_2.39.2_linux_amd64.deb -o supabase.deb
+          sudo dpkg -i supabase.deb
 
       - name: 📦 Upload Supabase CLI binary
+        run: |
+          mkdir -p $HOME/bin
+          cp /usr/bin/supabase $HOME/bin/supabase
         uses: actions/upload-artifact@v4
         with:
           name: supabase-cli
