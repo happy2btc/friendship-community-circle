@@ -1,12 +1,15 @@
 name: Ritual Deploy to Supabase
 
+# 🌿 Fresh invocation marker — August 23, 2025
+# This version includes debug echoes and artifact path confirmation
+
 on:
   push:
     branches: [main]
 
 jobs:
-  setup:
-    name: 🛠️ Setup Environment
+  setup_env:
+    name: 🛠️ Ritual Setup Environment
     runs-on: ubuntu-latest
     steps:
       - name: 🧾 Checkout repository
@@ -39,9 +42,9 @@ jobs:
         with:
           version: latest
 
-  deploy:
-    name: 🔮 Build & Deploy Ritual
-    needs: setup
+  deploy_ritual:
+    name: 🔮 Ritual Build & Deploy
+    needs: setup_env
     runs-on: ubuntu-latest
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
@@ -75,4 +78,3 @@ jobs:
 
       - name: 🔮 Deploy Supabase Edge Functions
         run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
-        
