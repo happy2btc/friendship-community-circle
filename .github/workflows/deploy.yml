@@ -20,8 +20,8 @@ jobs:
       - name: Install dbmate if not cached
         if: steps.cache-dbmate.outputs.cache-hit != 'true'
         run: |
-          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o dbmate
-          chmod +x dbmate
+          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o /usr/local/bin/dbmate
+          chmod +x /usr/local/bin/dbmate
 
       - name: Cache Supabase CLI
         id: cache-supabase
