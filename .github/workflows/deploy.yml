@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run database migrations
-        run: ./dbmate --url "$SUPABASE_DB_URL" up
+        run: dbmate --url "$SUPABASE_DB_URL" up
 
       - name: Deploy Edge Functions
         run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
