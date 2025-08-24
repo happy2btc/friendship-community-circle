@@ -11,13 +11,19 @@ jobs:
     steps:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
-
+        
+      - name: 🔍 Echo HOME
+        run: echo $HOME
+        
       - name: 🛠️ Install dbmate to $HOME/bin
         run: |
           mkdir -p $HOME/bin
           curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o $HOME/bin/dbmate
           chmod +x $HOME/bin/dbmate
-
+          
+      - name: 🔍 Confirm dbmate exists
+        run: ls -l $HOME/bin/dbmate
+  
       - name: 📦 Upload dbmate binary
         uses: actions/upload-artifact@v4
         with:
