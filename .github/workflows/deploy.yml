@@ -63,7 +63,7 @@ jobs:
           name: migration-scroll
           path: migration-scroll.txt
 
-      - name: 🚀 Deploy Edge Function: submit-suggestion
+      - name: 🚀 Deploy Edge Functions
         run: supabase functions deploy submit-suggestion --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: $SUPABASE_ACCESS_TOKEN
