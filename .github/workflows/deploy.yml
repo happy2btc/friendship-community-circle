@@ -15,9 +15,9 @@ jobs:
         run: |
           curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o /usr/local/bin/dbmate
           chmod +x /usr/local/bin/dbmate
+          echo "/usr/local/bin" >> $GITHUB_PATH
           
       - name: Add /usr/local/bin to PATH
-        run: echo "/usr/local/bin" >> $GITHUB_PATH
 
       - name: Cache Supabase CLI
         id: cache-supabase
@@ -41,7 +41,10 @@ jobs:
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
     steps:
       - uses: actions/checkout@v4
-
+      
+      - name: Confirm dbmate installation
+        run: dbmate --version
+        
       - name: Run database migrations
         run: dbmate --url "$SUPABASE_DB_URL" up
 
