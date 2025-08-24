@@ -91,7 +91,9 @@ jobs:
           for dir in supabase/functions/*/; do
             fname=$(basename "$dir")
             echo "Deploying function: $fname"
-            $HOME/bin/supabase functions deploy "$fname" --project-ref $SUPABASE_PROJECT_ID --no-verify-jwt
+            $HOME/bin/supabase functions deploy "$fname" \
+              --project-ref "${SUPABASE_PROJECT_ID}" \
+              --no-verify-jwt
           done
         env:
-          SUPABASE_ACCESS_TOKEN: $SUPABASE_ACCESS_TOKEN
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
