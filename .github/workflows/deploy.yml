@@ -1,26 +1,21 @@
-name: Ritual Deploy to Supabase
-
-# 🌿 Fresh invocation marker — August 23, 2025
-# This version includes debug echoes and artifact path confirmation
+name: 🪄 Deploy Ritual
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   setup_env:
-    name: 🛠️ Ritual Setup Environment
+    name: 🧱 Setup Environment
     runs-on: ubuntu-latest
+
     steps:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔍 Print $HOME and ${{ env.HOME }} (setup)
-        run: |
-          echo "Shell \$HOME: $HOME"
-          echo "Workflow \${{ env.HOME }}: $WF_HOME"
-        env:
-          WF_HOME: ${{ env.HOME }}
+      - name: 🌿 Export HOME for workflow context
+        run: echo "HOME=$HOME" >> $GITHUB_ENV
 
       - name: 🛠️ Install dbmate to $HOME/bin
         run: |
@@ -28,53 +23,32 @@ jobs:
           curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o $HOME/bin/dbmate
           chmod +x $HOME/bin/dbmate
 
-      - name: 🔍 Confirm dbmate exists
-        run: ls -l $HOME/bin/dbmate
-
-      - name: 📦 Upload dbmate binary (v4)
+      - name: 📦 Upload dbmate binary
         uses: actions/upload-artifact@v4
         with:
           name: dbmate
           path: ${{ env.HOME }}/bin/dbmate
 
-      - name: 🧙‍♂️ Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
   deploy_ritual:
-    name: 🔮 Ritual Build & Deploy
-    needs: setup_env
+    name: 🔮 Deploy Ritual
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    needs: setup_env
+
     steps:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔍 Print $HOME and ${{ env.HOME }} (deploy)
-        run: |
-          echo "Shell \$HOME: $HOME"
-          echo "Workflow \${{ env.HOME }}: $WF_HOME"
-        env:
-          WF_HOME: ${{ env.HOME }}
+      - name: 🌿 Export HOME for workflow context
+        run: echo "HOME=$HOME" >> $GITHUB_ENV
 
-      - name: 📦 Download dbmate binary (v4)
+      - name: 📥 Download dbmate binary
         uses: actions/download-artifact@v4
         with:
           name: dbmate
           path: ${{ env.HOME }}/bin
 
-      - name: 🛤️ Add $HOME/bin to PATH
-        run: echo "$HOME/bin" >> $GITHUB_PATH
-
-      - name: ✅ Confirm dbmate installation
-        run: dbmate --version
-
-      - name: 📜 Run database migrations
-        run: dbmate --url "$SUPABASE_DB_URL" up
-
-      - name: 🔮 Deploy Supabase Edge Functions
-        run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
+      - name: 🧪 Run dbmate migration
+        run: |
+          chmod +x $HOME/bin/dbmate
+          $HOME/bin/dbmate --help
+          $HOME/bin/dbmate up
