@@ -10,14 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache dbmate
-        id: cache-dbmate
-        uses: actions/cache@v3
-        with:
-          path: dbmate
-          key: dbmate-v1
-
-      - name: Install dbmate if not cached
+      - name: Install dbmate
         if: steps.cache-dbmate.outputs.cache-hit != 'true'
         run: |
           curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o /usr/local/bin/dbmate
