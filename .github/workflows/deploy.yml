@@ -31,7 +31,7 @@ jobs:
 
       - name: 🛠️ Install Supabase CLI to $HOME/bin
         run: |
-          curl -sL https://github.com/supabase/cli/releases/latest/download/supabase-linux-x64 -o $HOME/bin/supabase
+          curl -sL https://github.com/supabase/cli/releases/download/v2.39.2/supabase_linux_amd64.tar.gz -o $HOME/bin/supabase
           chmod +x $HOME/bin/supabase
 
       - name: 📦 Upload Supabase CLI binary
