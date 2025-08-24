@@ -14,14 +14,14 @@ jobs:
 
       - name: 🛠️ Install dbmate to $HOME/bin
         run: |
-          mkdir -p $HOME/bin
-          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o $HOME/bin/dbmate
+          mkdir -p ${{ env.HOME }}/bin
+          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o ${{ env.HOME }}/bin/dbmate
 
       - name: 📦 Upload dbmate binary
         uses: actions/upload-artifact@v4
         with:
           name: dbmate
-          path: $HOME/bin/dbmate
+          path: ${{ env.HOME }}/bin/dbmate
 
       - name: 🧙‍♂️ Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -44,12 +44,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dbmate
-          path: $HOME/bin
+          path: ${{ env.HOME }}E/bin
 
       - name: 🛤️ Add $HOME/bin to PATH
         run: |
-          chmod +x $HOME/bin/dbmate
-          echo "$HOME/bin" >> $GITHUB_PATH
+          chmod +x ${{ env.HOME }}/bin/dbmate
+          echo "${{ env.HOME }}/bin" >> $GITHUB_PATH
 
       - name: ✅ Confirm dbmate installation
         run: dbmate --version
