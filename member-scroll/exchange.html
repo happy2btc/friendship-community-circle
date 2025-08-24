@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Circle of Exchange</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <style>
+    body { font-family: 'Georgia', serif; background: #fdf6e3; padding: 2rem; }
+    .container { max-width: 600px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 1rem; }
+    input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.5rem; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #4b3f72; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>🌿 Circle of Exchange</h2>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <p id="walletStatus">Not connected</p>
+
+    <form id="exchangeForm">
+      <label for="want">What do you seek?</label>
+      <textarea id="want" name="want" rows="3"></textarea>
+
+      <label for="give">What do you offer?</label>
+      <textarea id="give" name="give" rows="3"></textarea>
+
+      <label>
+        <input type="checkbox" id="visible" checked>
+        Make this visible to others
+      </label>
+
+      <button type="submit">Update My Offering</button>
+    </form>
+  </div>
+
+  <script src="exchange.js"></script>
+</body>
+</html>
