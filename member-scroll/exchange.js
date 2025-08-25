@@ -42,12 +42,12 @@ document.getElementById('exchangeForm').addEventListener('submit', async functio
   const visible = document.getElementById('visible').checked;
 
   const payload = {
-    want,
-    give,
-    passion,
-    visible,
-    wallet_address: walletAddress
-  };
+  wallet_address: walletAddress,
+  want,
+  give,
+  passion,
+  visible
+};
 
   try {
     const response = await fetch(`https://your-supabase-url/rest/v1/member_offerings`, {
