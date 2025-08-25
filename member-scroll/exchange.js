@@ -54,7 +54,7 @@ document.getElementById('exchangeForm').addEventListener('submit', async (e) => 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',  // full anon key
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',
         'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...'
       },
       body: JSON.stringify(payload)
