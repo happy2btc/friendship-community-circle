@@ -10,14 +10,15 @@ function connectWallet() {
 }
 
 async function fetchExistingOffering() {
-  const url = `https://your-supabase-url/rest/v1/member_offerings?wallet_address=eq.${walletAddress}`;
+  const url = `https://guykaykfekwabnuhqcqv.supabase.co/rest/v1/member_offerings?wallet_address=eq.${walletAddress}`;
   try {
     const response = await fetch(url, {
       headers: {
-        'apikey': 'your-supabase-anon-key',
-        'Authorization': 'Bearer your-supabase-anon-key'
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',  // your full anon key
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...'
       }
     });
+
     const data = await response.json();
     if (data.length > 0) {
       const entry = data[0];
