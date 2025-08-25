@@ -29,7 +29,7 @@ async function fetchExistingOffering() {
   } catch (error) {
     console.error('Error fetching offering:', error);
   }
-}document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
+document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!walletAddress) {
     alert('Please connect your wallet first.');
@@ -65,7 +65,7 @@ async function fetchExistingOffering() {
     } else {
       alert('Error submitting offering.');
     }
-  } catch (err) {
-    console.error('Error submitting offering:', err);
+  } catch (error) {
+    console.error('Error submitting offering:', error);
   }
 });
