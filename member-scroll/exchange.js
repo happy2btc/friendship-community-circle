@@ -31,7 +31,6 @@ async function fetchExistingOffering() {
     console.error('Error fetching offering:', err);
   }
 }
-
 document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!walletAddress) {
