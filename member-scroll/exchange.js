@@ -1,3 +1,5 @@
+console.log("exchange.js loaded");
+
 let walletAddress = null;
 
 function connectWallet() {
