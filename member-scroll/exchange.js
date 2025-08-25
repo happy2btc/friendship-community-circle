@@ -26,9 +26,10 @@ async function fetchExistingOffering() {
       document.getElementById('passion').value = entry.passion || '';
       document.getElementById('visible').checked = entry.visible;
     }
-  } catch (error) {
+    } catch (error) {
     console.error('Error fetching offering:', error);
   }
+}  
 document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!walletAddress) {
