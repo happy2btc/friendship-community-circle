@@ -29,7 +29,7 @@ async function fetchExistingOffering() {
   }
 }
 
-document.getElementById('exchangeForm').addEventListener('submit', async function (e) {
+document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!walletAddress) {
     alert('Please connect your wallet first.');
@@ -42,23 +42,24 @@ document.getElementById('exchangeForm').addEventListener('submit', async functio
   const visible = document.getElementById('visible').checked;
 
   const payload = {
-  wallet_address: walletAddress,
-  want,
-  give,
-  passion,
-  visible
-};
+    wallet_address: walletAddress,
+    want,
+    give,
+    passion,
+    visible
+  };
 
   try {
-    const response = await fetch(`https://your-supabase-url/rest/v1/member_offerings`, {
+    const response = await fetch(`https://guykaykfekwabnuhqcqv.supabase.co/rest/v1/member_offerings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'your-supabase-anon-key',
-        'Authorization': 'Bearer your-supabase-anon-key'
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',  // full anon key
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...'
       },
       body: JSON.stringify(payload)
     });
+
     if (response.ok) {
       alert('Offering submitted successfully.');
     } else {
