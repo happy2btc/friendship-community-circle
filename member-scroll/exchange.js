@@ -2,7 +2,7 @@ console.log("exchange.js loaded");
 
 let walletAddress = null;
 
-function connectinitialize() { ... }
+function connectInitialize() {
   walletAddress = "demo_wallet_123";
   document.getElementById("walletStatus").textContent = `Connected: ${walletAddress}`;
   fetchExistingOffering();
