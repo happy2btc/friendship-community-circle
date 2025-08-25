@@ -3,7 +3,6 @@ console.log("exchange.js loaded");
 let walletAddress = null;
 
 function connectWallet() {
-  // Simulated wallet connection
   walletAddress = "demo_wallet_123";
   document.getElementById("walletStatus").textContent = `Connected: ${walletAddress}`;
   fetchExistingOffering();
