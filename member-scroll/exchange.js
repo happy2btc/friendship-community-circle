@@ -14,7 +14,7 @@ async function fetchExistingOffering() {
   try {
     const response = await fetch(url, {
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',  // your full anon key
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',  // full anon key
         'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...'
       }
     });
@@ -27,11 +27,10 @@ async function fetchExistingOffering() {
       document.getElementById('passion').value = entry.passion || '';
       document.getElementById('visible').checked = entry.visible;
     }
- catch (error) {
-  console.error('Error fetching offering:', error);
-}
-}
-document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
+  } catch (error) {
+    console.error('Error fetching offering:', error);
+  }
+}document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!walletAddress) {
     alert('Please connect your wallet first.');
