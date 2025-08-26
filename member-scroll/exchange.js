@@ -23,8 +23,8 @@ async function fetchExistingOffering() {
   try {
     const response = await fetch(url, {
       headers: {
-        'apikey': 'YOUR_SUPABASE_ANON_KEY',
-        'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY'
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI,
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI'
       }
     });
 
@@ -66,8 +66,8 @@ document.getElementById('exchangeForm').addEventListener('submit', async (e) => 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'YOUR_SUPABASE_ANON_KEY',
-        'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY'
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI'
       },
       body: JSON.stringify(payload)
     });
