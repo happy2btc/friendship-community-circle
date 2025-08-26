@@ -2,10 +2,20 @@ console.log("exchange.js loaded");
 
 let walletAddress = null;
 
-function connectInitialize() {
-  walletAddress = "demo_wallet_123";
-  document.getElementById("walletStatus").textContent = `Connected: ${walletAddress}`;
-  fetchExistingOffering();
+async function connectInitialize() {
+  if (typeof window.ethereum !== 'undefined') {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      walletAddress = accounts[0];
+      document.getElementById("walletStatus").textContent = `Connected: ${walletAddress}`;
+      fetchExistingOffering();
+    } catch (error) {
+      console.error("Wallet connection failed:", error);
+      alert("Could not connect wallet.");
+    }
+  } else {
+    alert("MetaMask not detected. Please install it to continue.");
+  }
 }
 
 async function fetchExistingOffering() {
@@ -13,8 +23,8 @@ async function fetchExistingOffering() {
   try {
     const response = await fetch(url, {
       headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',  // full anon key
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...'
+        'apikey': 'YOUR_SUPABASE_ANON_KEY',
+        'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY'
       }
     });
 
@@ -26,10 +36,11 @@ async function fetchExistingOffering() {
       document.getElementById('passion').value = entry.passion || '';
       document.getElementById('visible').checked = entry.visible;
     }
-    } catch (error) {
+  } catch (error) {
     console.error('Error fetching offering:', error);
   }
-}  
+}
+
 document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!walletAddress) {
@@ -55,8 +66,8 @@ document.getElementById('exchangeForm').addEventListener('submit', async (e) => 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV...'
+        'apikey': 'YOUR_SUPABASE_ANON_KEY',
+        'Authorization': 'Bearer YOUR_SUPABASE_ANON_KEY'
       },
       body: JSON.stringify(payload)
     });
