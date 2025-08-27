@@ -81,16 +81,16 @@
       return;
     }
 
-    filtered.forEach(s => {
-      const box = document.createElement("div");
-      box.className = "suggestion-box";
-      box.innerHTML = `
-        <h3><a href="discussion.html?suggestion=${s.id}">${s.title}</a></h3>
-        <p>${s.description}</p>
-        <p><strong>Status:</strong> ${s.status}</p>
-      `;
-      container.appendChild(box);
-    });
+   filtered.forEach(s => {
+  const box = document.createElement("div");
+  box.className = "suggestion-box";
+  box.innerHTML = `
+    <h3><a href="discussion.html?suggestion=${s.id}">${s.title}</a></h3>
+    <p>${s.description}</p>
+    <p><strong>Status:</strong> ${s.status}</p>
+  `;
+  container.appendChild(box);
+});
   }
 
   loadSuggestions();
