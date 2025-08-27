@@ -19,7 +19,7 @@ async function connectInitialize() {
 }
 
 async function fetchExistingOffering() {
-  const url = `https://guykaykfekwabnuhqcqv.supabase.co/rest/v1/member_offerings?wallet_address=eq.${walletAddress}`;
+  const url = `https://guykaykkefwabnuhqcyv.supabase.co/rest/v1/member_offerings?wallet_address=eq.${walletAddress}`;
   try {
     const response = await fetch(url, {
       headers: {
@@ -62,7 +62,7 @@ document.getElementById('exchangeForm').addEventListener('submit', async (e) => 
   };
 
   try {
-    const response = await fetch(`https://guykaykfekwabnuhqcqv.supabase.co/rest/v1/member_offerings`, {
+    const response = await fetch(`https://guykaykkefwabnuhqcyv.supabase.co/rest/v1/member_offerings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
