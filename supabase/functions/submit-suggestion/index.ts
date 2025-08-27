@@ -1,16 +1,20 @@
-// index.ts
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// supabase/functions/submit-suggestion/index.ts
+import { serve } from 'https://deno.land/std@0.192.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
 serve(async (req) => {
-  const body = await req.json();
-  const { title, description } = body;
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!
+  )
 
-  if (!title || !description) {
-    return new Response(JSON.stringify({ error: "Missing fields" }), { status: 400 });
-  }
+  const { title, description, status } = await req.json()
+  const id = title.toLowerCase().replace(/\s+/g, '-')
 
-  // TODO: Insert into Supabase DB using REST or client
-  return new Response(JSON.stringify({ message: "📝 Suggestion received and remembered." }), {
-    headers: { "Content-Type": "application/json" },
-  });
-});
+  const { data, error } = await supabase
+    .from('suggestions')
+    .insert([{ id, title, description, status }])
+
+  if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+  return new Response(JSON.stringify({ success: true, data }), { status: 200 })
+})
