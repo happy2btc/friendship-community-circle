@@ -1,182 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Community Discussion</title>
+  <title>Discussion – Friendship Community</title>
   <style>
     body {
       font-family: Georgia, serif;
-      background-color: #f9f9f9;
-      color: #333;
-      padding: 20px;
-      text-align: center;
+      background-color: #fefaf6;
+      color: #3b2f2f;
+      padding: 40px;
+      font-size: 1.2em;
+      line-height: 1.6;
     }
-    .discussion-box {
+    .suggestion-box {
       background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 20px;
-      margin: 20px auto;
-      border-radius: 8px;
-      max-width: 600px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border: 1px solid #d8bfa3;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 40px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
-    .menu-button {
-      background-color: #2e8b57;
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      display: inline-block;
+    .comment-box {
       margin-top: 20px;
     }
-    #reflectionContainer {
-      margin-top: 40px;
-      text-align: left;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    #reflectionContainer h2 {
-      text-align: center;
-    }
-    #discussionContent {
-      margin-top: 30px;
-    }
-    #reflectionForm {
-      margin-top: 40px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: left;
-    }
-    #reflectionForm input,
-    #reflectionForm textarea {
+    textarea {
       width: 100%;
       padding: 10px;
-      margin-bottom: 10px;
-      font-size: 1em;
-      border: 1px solid #ccc;
       border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
     }
-    #reflectionForm button {
-      padding: 10px 20px;
+    button {
       background-color: #2e8b57;
-      color: white;
+      color: #fff;
+      padding: 12px 20px;
       border: none;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Community Discussion</h1>
-  <div id="discussionContent">⏳ Loading discussion...</div>
-  <div id="reflectionContainer"></div>
-
-  <div id="reflectionForm">
-    <h3>🌱 Share Your Reflection</h3>
-    <input type="text" id="reflectionName" placeholder="Your name" />
-    <textarea id="reflectionText" placeholder="What does this topic mean to you?" rows="4"></textarea>
-    <button onclick="submitReflection()">Submit Reflection</button>
+  <div class="suggestion-box">
+    <h2 id="suggestionTitle">Loading...</h2>
+    <p id="suggestionDescription"></p>
+    <p><strong>Status:</strong> <span id="suggestionStatus"></span></p>
   </div>
 
-  <a href="menu.html" class="menu-button">⟵ Return to Menu</a>
+  <div class="comment-box">
+    <h3>🌿 Add Your Thoughts</h3>
+    <textarea id="commentInput" rows="4" placeholder="Share your reflection or response..."></textarea>
+    <button onclick="submitComment()">Submit Comment</button>
+    <div id="commentList"></div>
+  </div>
 
   <script>
-    const emojiMap = {
-      membership: "🌿",
-      accountability: "🔍",
-      rituals: "🌸",
-      welcoming: "👋",
-      "faye-ubi": "💫"
-    };
+    const params = new URLSearchParams(window.location.search);
+    const suggestionId = params.get('suggestion');
 
-    async function loadDiscussion() {
-      const params = new URLSearchParams(window.location.search);
-      const topicId = params.get("topic");
-
-      try {
-        const response = await fetch("suggestions.json");
-        if (!response.ok) throw new Error("Failed to fetch suggestions.json");
-
-        const suggestions = await response.json();
-        const topic = suggestions.find(s => s.id === topicId && s.status === "discussion");
-
-        const container = document.getElementById("discussionContent");
-
-        if (!topic) {
-          container.innerHTML = "❌ Discussion not found.";
-          return;
+    fetch('suggestions.json')
+      .then(res => res.json())
+      .then(data => {
+        const suggestion = data.find(s => s.id === suggestionId);
+        if (suggestion) {
+          document.getElementById('suggestionTitle').textContent = suggestion.title;
+          document.getElementById('suggestionDescription').textContent = suggestion.description;
+          document.getElementById('suggestionStatus').textContent = suggestion.status;
+        } else {
+          document.querySelector('.suggestion-box').innerHTML = '<p>⚠️ Suggestion not found.</p>';
         }
+      });
 
-        const emoji = emojiMap[topic.id] || "🔍";
-        container.innerHTML = `
-          <div class="discussion-box">
-            <h2>${emoji} ${topic.title}</h2>
-            <p>${topic.description}</p>
-            <p><em>Discussion Path:</em> ${topic.id}</p>
-          </div>
-        `;
-
-        loadReflections(topic.id);
-      } catch (error) {
-        document.getElementById("discussionContent").innerHTML =
-          "⚠️ Unable to load discussion. Please try again later.";
-        console.error("Error loading discussion:", error);
+    function submitComment() {
+      const input = document.getElementById('commentInput');
+      const comment = input.value.trim();
+      if (comment) {
+        const commentDiv = document.createElement('div');
+        commentDiv.innerHTML = `<p>🗣️ ${comment}</p>`;
+        document.getElementById('commentList').appendChild(commentDiv);
+        input.value = '';
       }
     }
-
-    async function loadReflections(topicId) {
-      try {
-        const response = await fetch("reflections.json");
-        if (!response.ok) throw new Error("Failed to fetch reflections.json");
-
-        const allReflections = await response.json();
-        const match = allReflections.find(r => r.topic === topicId);
-
-        const container = document.getElementById("reflectionContainer");
-        container.innerHTML = "<h2>📝 Community Reflections</h2>";
-
-        if (!match || match.voices.length === 0) {
-          container.innerHTML += "<p>No reflections yet. Be the first to share.</p>";
-          return;
-        }
-
-        match.voices.forEach(v => {
-          const voice = document.createElement("p");
-          voice.innerHTML = `<strong>${v.name}:</strong> ${v.text}`;
-          container.appendChild(voice);
-        });
-      } catch (error) {
-        document.getElementById("reflectionContainer").innerHTML =
-          "<p>⚠️ Unable to load reflections. Please try again later.</p>";
-        console.error("Error loading reflections:", error);
-      }
-    }
-
-    function submitReflection() {
-      const name = document.getElementById("reflectionName").value.trim();
-      const text = document.getElementById("reflectionText").value.trim();
-
-      if (!name || !text) {
-        alert("Please enter both your name and reflection.");
-        return;
-      }
-
-      const container = document.getElementById("reflectionContainer");
-
-      const newVoice = document.createElement("p");
-      newVoice.innerHTML = `<strong>${name}:</strong> ${text}`;
-      container.appendChild(newVoice);
-
-      document.getElementById("reflectionName").value = "";
-      document.getElementById("reflectionText").value = "";
-
-      alert("🌸 Your reflection has been added. Thank you for sharing.");
-    }
-
-    loadDiscussion();
   </script>
 </body>
 </html>
