@@ -39,6 +39,13 @@
       cursor: pointer;
       margin-top: 10px;
     }
+    .agreement-box {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #f0f0e8;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
@@ -52,7 +59,13 @@
     <h3>🌿 Add Your Thoughts</h3>
     <textarea id="commentInput" rows="4" placeholder="Share your reflection or response..."></textarea>
     <button onclick="submitComment()">Submit Comment</button>
-    <div id="commentList"></div>
+    <ul id="commentList"></ul>
+  </div>
+
+  <div class="agreement-box">
+    <h3>🌱 Ready to Propose an Agreement?</h3>
+    <p id="agreementDescription">If this discussion feels ready to become a shared commitment, you may propose it as an agreement.</p>
+    <button onclick="proposeAgreement()">Propose Agreement</button>
   </div>
 
   <script>
@@ -74,13 +87,21 @@
 
     function submitComment() {
       const input = document.getElementById('commentInput');
-      const comment = input.value.trim();
-      if (comment) {
-        const commentDiv = document.createElement('div');
-        commentDiv.innerHTML = `<p>🗣️ ${comment}</p>`;
-        document.getElementById('commentList').appendChild(commentDiv);
+      const commentText = input.value.trim();
+      if (commentText) {
+        const comment = document.createElement('li');
+        comment.textContent = commentText;
+        document.getElementById('commentList').appendChild(comment);
         input.value = '';
       }
+    }
+
+    function proposeAgreement() {
+      const title = document.getElementById('suggestionTitle').textContent;
+      const description = document.getElementById('suggestionDescription').textContent;
+
+      const url = `agreements.html?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
+      window.location.href = url;
     }
   </script>
 </body>
