@@ -46,6 +46,10 @@ jobs:
     name: 🔮 Deploy Ritual
     runs-on: ubuntu-latest
     needs: setup_env
+    permissions:
+      id-token: write
+      pages: write # Required for deploying to GitHub Pages
+      contents: read # Required to checkout the repository
 
     env:
       DATABASE_URL: ${{ secrets.SUPABASE_DB_SESSION_URL }}
