@@ -1,0 +1,16 @@
+{
+  "name": "friendship-community-contract",
+  "version": "1.0.0",
+  "description": "A ceremonial frontend for mutual aid offerings and requests",
+  "main": "index.jsx",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}
