@@ -4,10 +4,10 @@
   "description": "A ceremonial frontend for mutual aid offerings and requests",
   "main": "index.jsx",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test"
-  },
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
+}
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
     "react": "^18.0.0",
