@@ -1,0 +1,48 @@
+.mutual-aid-form {
+  background: #fefcf8;
+  border: 1px solid #e0dcd0;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.mutual-aid-form h2 {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  color: #4b3f2f;
+}
+
+.mutual-aid-form label {
+  display: block;
+  margin-bottom: 12px;
+  color: #5a4e3c;
+}
+
+.mutual-aid-form textarea,
+.mutual-aid-form input,
+.mutual-aid-form select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.mutual-aid-form button {
+  margin-top: 16px;
+  background-color: #d4af7f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.mutual-aid-form button:hover {
+  background-color: #c49c6b;
+}

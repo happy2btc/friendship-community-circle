@@ -1,5 +1,6 @@
 {
   "name": "friendship-community-contract",
+<<<<<<< HEAD
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -23,5 +24,19 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "vite": "^7.1.2"
+=======
+  "version": "1.0.0",
+  "description": "A ceremonial frontend for mutual aid offerings and requests",
+  "main": "index.jsx",
+  "scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
+}
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+>>>>>>> 0d09f95664eb9c6700772d38803f9ac125a5f1d0
   }
 }

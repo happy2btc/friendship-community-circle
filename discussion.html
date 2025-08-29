@@ -1,107 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Discussion – Friendship Community</title>
+  <meta charset="UTF-8" />
+  <title>Community Discussion</title>
   <style>
     body {
-      font-family: Georgia, serif;
-      background-color: #fefaf6;
-      color: #3b2f2f;
-      padding: 40px;
-      font-size: 1.2em;
-      line-height: 1.6;
+      font-family: sans-serif;
+      background-color: #fdf6e3;
+      padding: 2rem;
     }
-    .suggestion-box {
+    .container {
+      max-width: 600px;
+      margin: auto;
       background-color: #fff;
-      border: 1px solid #d8bfa3;
+      padding: 2rem;
       border-radius: 12px;
-      padding: 30px;
-      margin-bottom: 40px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .comment-box {
-      margin-top: 20px;
-    }
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-    }
-    button {
-      background-color: #2e8b57;
-      color: #fff;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 6px;
+    .return-button {
+      margin-bottom: 1rem;
+      display: inline-block;
+      text-decoration: none;
       font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
+      color: #333;
     }
-    .agreement-box {
-      margin-top: 40px;
-      padding: 20px;
-      background-color: #f0f0e8;
-      border-radius: 12px;
-      border: 1px solid #ccc;
+    .return-button:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="suggestion-box">
-    <h2 id="suggestionTitle">Loading...</h2>
+  <div class="container">
+    <a href="menu.html" class="return-button">← Return to Menu</a>
+
+    <h1 id="suggestionTitle">Loading...</h1>
     <p id="suggestionDescription"></p>
-    <p><strong>Status:</strong> <span id="suggestionStatus"></span></p>
-  </div>
 
-  <div class="comment-box">
-    <h3>🌿 Add Your Thoughts</h3>
-    <textarea id="commentInput" rows="4" placeholder="Share your reflection or response..."></textarea>
-    <button onclick="submitComment()">Submit Comment</button>
-    <ul id="commentList"></ul>
-  </div>
+    <h3>🌱 Add Your Thoughts</h3>
+    <textarea rows="4" cols="50" placeholder="Share your reflection or response..."></textarea>
+    <br><br>
+    <button>Submit Reflection</button>
 
-  <div class="agreement-box">
-    <h3>🌱 Ready to Propose an Agreement?</h3>
-    <p id="agreementDescription">If this discussion feels ready to become a shared commitment, you may propose it as an agreement.</p>
-    <button onclick="proposeAgreement()">Propose Agreement</button>
+    <h3>✅ Ready to Propose an Agreement?</h3>
+    <p>If this discussion feels ready to become a shared commitment, you may propose it as an agreement.</p>
+    <button>Propose Agreement</button>
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const suggestionId = params.get('suggestion');
+    const urlParams = new URLSearchParams(window.location.search);
+    const suggestionId = urlParams.get("suggestion");
 
-    fetch('suggestions.json')
-      .then(res => res.json())
-      .then(data => {
-        const suggestion = data.find(s => s.id === suggestionId);
-        if (suggestion) {
-          document.getElementById('suggestionTitle').textContent = suggestion.title;
-          document.getElementById('suggestionDescription').textContent = suggestion.description;
-          document.getElementById('suggestionStatus').textContent = suggestion.status;
-        } else {
-          document.querySelector('.suggestion-box').innerHTML = '<p>⚠️ Suggestion not found.</p>';
-        }
-      });
-
-    function submitComment() {
-      const input = document.getElementById('commentInput');
-      const commentText = input.value.trim();
-      if (commentText) {
-        const comment = document.createElement('li');
-        comment.textContent = commentText;
-        document.getElementById('commentList').appendChild(comment);
-        input.value = '';
-      }
-    }
-
-    function proposeAgreement() {
-      const title = document.getElementById('suggestionTitle').textContent;
-      const description = document.getElementById('suggestionDescription').textContent;
-
-      const url = `agreements.html?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`;
-      window.location.href = url;
+    if (suggestionId) {
+      fetch("suggestions.json")
+        .then(response => response.json())
+        .then(data => {
+          const suggestion = data.find(s => s.id === suggestionId);
+          if (suggestion) {
+            document.getElementById("suggestionTitle").textContent = suggestion.title;
+            document.getElementById("suggestionDescription").textContent = suggestion.suggestion;
+          } else {
+            document.getElementById("suggestionTitle").textContent = "Suggestion not found.";
+            document.getElementById("suggestionDescription").textContent = "";
+          }
+        })
+        .catch(error => {
+          document.getElementById("suggestionTitle").textContent = "Error loading suggestion.";
+          document.getElementById("suggestionDescription").textContent = "";
+          console.error("Error:", error);
+        });
+    } else {
+      document.getElementById("suggestionTitle").textContent = "No suggestion selected.";
+      document.getElementById("suggestionDescription").textContent = "";
     }
   </script>
 </body>

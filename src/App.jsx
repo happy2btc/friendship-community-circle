@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -33,3 +34,20 @@ function App() {
 }
 
 export default App
+=======
+import React from 'react';
+import MutualAidForm from './components/MutualAidForm';
+import './styles/mutualAidForm.css';
+
+function App() {
+  return (
+    <div>
+      <h1>🌿 Friendship-Community-Contract</h1>
+      <p>This is the mutual aid scroll. Share what you're tending to, request support, or offer care.</p>
+      <MutualAidForm />
+    </div>
+  );
+}
+
+export default App;
+>>>>>>> 0d09f95664eb9c6700772d38803f9ac125a5f1d0

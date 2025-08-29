@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head> 
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <title>Make a Suggestion – Friendship Community</title>
   <style>
     body {
@@ -67,11 +68,11 @@
     }
   </style>
 </head>
-<body>
-  <h1>💡 Make a Suggestion</h1>
+<body> 
+   <h1>💡 Make a Suggestion</h1>
   <p>Share your voice. Every suggestion is a seed for transformation.</p>
 
-  <form>
+  <form id="suggestionForm">
     <label for="title">🌱 Title</label>
     <input type="text" id="title" name="title" placeholder="e.g. Rituals for Newcomers">
 
@@ -82,12 +83,47 @@
     <select id="status" name="status">
       <option value="suggestion">Suggestion</option>
       <option value="discussion">Discussion</option>
-      <option value="agreement">Agreement</option>
-    </select>
+      <option value="agreement">Agreement</option> 
+     </select>
+ <button type="submit">Submit Suggestion</button>
+</form>
 
-    <button type="submit">Submit Suggestion</button>
-  </form>
+    <script>
+document.getElementById("suggestionForm").addEventListener("submit", async function(event) {
+  event.preventDefault();
 
+  const newSuggestion = {
+    id: Date.now().toString(),
+    title: document.getElementById("title").value,
+    description: document.getElementById("description").value,
+    status: document.getElementById("status").value
+  };
+
+  try {
+    const response = await fetch("https://guykaykkefwabnuhqcyv.supabase.co/rest/v1/suggestions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI"
+      },
+      body: JSON.stringify(newSuggestion)
+    });
+
+    if (response.ok) {
+      alert("🌱 Suggestion submitted successfully!");
+      window.location.href = "menu.html";
+    } else {
+      alert("⚠️ Failed to submit suggestion.");
+    }
+  } catch (error) {
+    console.error("Error submitting suggestion:", error);
+    alert("⚠️ Something went wrong.");
+  }
+});
+</script>
+
+   
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 </body>
 </html>
