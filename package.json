@@ -8,4 +8,5 @@
     "build": "vite build",
     "preview": "vite preview"
   }
-}
+} 
+Clean merge conflict markers from package.json
