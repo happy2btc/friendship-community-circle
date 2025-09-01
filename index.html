@@ -1,16 +1,98 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Friendship Community Contract</title>
-    <!-- Add your styles or scripts here -->
-  </head>
-  <body>
-    <h1>Welcome to the Friendship Community Contract</h1>
-    <p>This is a space for trust, care, and co-creation.</p>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Join the Circle</title>
+  <style>
+    body {
+      font-family: serif;
+      background-color: #fdf6e3;
+      color: #333;
+      padding: 2rem;
+      max-width: 700px;
+      margin: auto;
+      text-align: center;
+    }
+    h1 {
+      color: #6b4f1d;
+    }
+    label {
+      display: block;
+      margin-top: 1.5rem;
+      font-weight: bold;
+      text-align: left;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: serif;
+    }
+    button {
+      margin-top: 2rem;
+      background-color: #2e7d32;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .back-button {
+      margin-top: 2rem;
+    }
+    .back-button a {
+      color: #2e7d32;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌿 Join the Circle</h1>
+  <p>This is where you name yourself. Where you say: “I’m here. I want to be part of this.”</p>
 
-   <a href="join.html" class="menu-button">🌿 Join the Circle</a>
+  <form id="joinForm">
+    <label for="name">🪶 Your Name</label>
+    <input type="text" id="name" name="name" required />
 
-    <div id="root"></div>
-  </body>
+    <label for="email">📬 Email Address</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="phone">📱 Phone Number (optional)</label>
+    <input type="tel" id="phone" name="phone" />
+
+    <label for="wallet">💠 Wallet Address (optional)</label>
+    <input type="text" id="wallet" name="wallet" />
+
+    <button type="submit">Step Into the Circle</button>
+  </form>
+
+  <div class="back-button">
+    <a href="menu.html">← Back to Menu</a>
+  </div>
+
+  <script>
+    document.getElementById("joinForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      // Collect form data
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const wallet = document.getElementById("wallet").value;
+
+      // Store in localStorage (optional for future personalization)
+      localStorage.setItem("memberName", name);
+      localStorage.setItem("memberEmail", email);
+      localStorage.setItem("memberPhone", phone);
+      localStorage.setItem("memberWallet", wallet);
+
+      // Redirect to affirm.html
+      window.location.href = "affirm.html";
+    });
+  </script>
+</body>
 </html>
-
