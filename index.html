@@ -31,7 +31,7 @@
       font-family: serif;
     }
     button {
-      margin-top: 2rem;
+      margin-top: 1.5rem;
       background-color: #2e7d32;
       color: white;
       padding: 10px 20px;
@@ -64,6 +64,8 @@
     <label for="phone">📱 Phone Number (optional)</label>
     <input type="tel" id="phone" name="phone" />
 
+    <button id="connectWallet" type="button">💠 Connect Wallet</button>
+
     <label for="wallet">💠 Wallet Address (optional)</label>
     <input type="text" id="wallet" name="wallet" />
 
@@ -75,23 +77,47 @@
   </div>
 
   <script>
+    // Handle form submission and redirect
     document.getElementById("joinForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
-      // Collect form data
       const name = document.getElementById("name").value;
       const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value;
       const wallet = document.getElementById("wallet").value;
 
-      // Store in localStorage (optional for future personalization)
       localStorage.setItem("memberName", name);
       localStorage.setItem("memberEmail", email);
       localStorage.setItem("memberPhone", phone);
       localStorage.setItem("memberWallet", wallet);
 
-      // Redirect to affirm.html
       window.location.href = "affirm.html";
+    });
+
+    // Connect Wallet button logic
+    async function detectWallet() {
+      if (typeof window.ethereum !== "undefined") {
+        try {
+          const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+          const walletAddress = accounts[0];
+          document.getElementById("wallet").value = walletAddress;
+          localStorage.setItem("memberWallet", walletAddress);
+        } catch (err) {
+          console.log("Wallet connection declined or failed:", err);
+        }
+      } else {
+        alert("MetaMask not detected. Please install it to connect your wallet.");
+      }
+    }
+
+    document.getElementById("connectWallet").addEventListener("click", detectWallet);
+
+    // Auto-fill wallet if previously stored
+    window.addEventListener("load", () => {
+      const savedWallet = localStorage.getItem("memberWallet");
+      if (savedWallet) {
+        document.getElementById("wallet").value = savedWallet;
+      }
     });
   </script>
 </body>
