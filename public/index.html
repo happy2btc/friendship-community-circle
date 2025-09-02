@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Friendship Community Circle</title>
+  <script type="module" src="supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #fdf6f0; }
+    form, #loginForm { margin-top: 2rem; }
+    label { display: block; margin-top: 1rem; }
+    input { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; }
+    .back-button { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>🌿 Welcome to the Circle</h1>
+  <form id="joinForm">
+    <label for="name">🪶 Your Name</label>
+    <input type="text" id="name" name="name" required />
+
+    <label for="email">📬 Email Address</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="password">🔑 Password</label>
+    <input type="password" id="password" name="password" required />
+
+    <label for="phone">📱 Phone Number (optional)</label>
+    <input type="tel" id="phone" name="phone" />
+
+    <label for="wallet">💠 Wallet Address (optional)</label>
+    <input type="text" id="wallet" name="wallet" />
+
+    <button type="submit">Step Into the Circle</button>
+  </form>
+
+  <div class="back-button">
+    <a href="#" id="showLogin">→ Already a member? Login</a>
+  </div>
+
+  <div id="loginForm" style="display:none;">
+    <h2>🔐 Login to the Circle</h2>
+    <label for="loginEmail">📬 Email</label>
+    <input type="email" id="loginEmail" required />
+    <label for="loginPassword">🔑 Password</label>
+    <input type="password" id="loginPassword" required />
+    <button id="loginButton">Login</button>
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabase.js';
+
+    document.getElementById("joinForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        alert("Registration failed: " + error.message);
+      } else {
+        window.location.href = "affirm.html";
+      }
+    });
+
+    document.getElementById("showLogin").addEventListener("click", () => {
+      document.getElementById("loginForm").style.display = "block";
+    });
+
+    document.getElementById("loginButton").addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert("Login failed: " + error.message);
+      } else {
+        window.location.href = "affirm.html";
+      }
+    });
+  </script>
+</body>
+</html>

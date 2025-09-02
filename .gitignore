@@ -4,7 +4,7 @@ node_modules/
 # Build output directories
 dist/
 build/
-public/
+
 
 # Supabase artifacts
 .supabase/
