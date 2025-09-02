@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Friendship Community Circle</title>
-  <script type="module" src="supabase.js"></script>
+  <script type="module" src="/lib/supabase.js"></script>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #fdf6f0; }
     form, #loginForm { margin-top: 2rem; }
@@ -49,7 +49,7 @@
   </div>
 
   <script type="module">
-    import { supabase } from './supabase.js';
+    import { supabase } from '/lib/supabase.js';
 
     document.getElementById("joinForm").addEventListener("submit", async function(e) {
       e.preventDefault();
