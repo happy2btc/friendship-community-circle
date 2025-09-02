@@ -9,7 +9,7 @@ public/
 # Supabase artifacts
 .supabase/
 supabase/.temp/
-supabase/migrations/
+
 
 # Environment variables
 .env

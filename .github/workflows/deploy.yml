@@ -6,53 +6,11 @@ on:
       - main
 
 jobs:
-  setup_env:
-    name: 🧱 Setup Environment
+  build:
+    name: 🧱 Build Project
     runs-on: ubuntu-latest
-
-    steps:
-      - name: 🌿 Export HOME for workflow context
-        run: echo "HOME=$HOME" >> $GITHUB_ENV
-
-      - name: 🛠️ Install dbmate to $HOME/bin
-        run: |
-          mkdir -p $HOME/bin
-          curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64 -o $HOME/bin/dbmate
-          chmod +x $HOME/bin/dbmate
-
-      - name: 📦 Upload dbmate binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: dbmate
-          path: ${{ env.HOME }}/bin/dbmate
-
-      - name: 🛠️ Install Supabase CLI via .deb
-        run: |
-          curl -sL https://github.com/supabase/cli/releases/download/v2.39.2/supabase_2.39.2_linux_amd64.deb -o supabase.deb
-          sudo dpkg -i supabase.deb
-
-      - name: 📦 Copy Supabase CLI to $HOME/bin
-        run: |
-          mkdir -p $HOME/bin
-          cp /usr/bin/supabase $HOME/bin/supabase
-
-      - name: 📦 Upload Supabase CLI binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: supabase-cli
-          path: ${{ env.HOME }}/bin/supabase
-
-  deploy_ritual:
-    name: 🔮 Deploy Ritual
-    runs-on: ubuntu-latest
-    needs: setup_env
-    permissions:
-      id-token: write
-      pages: write # Required for deploying to GitHub Pages
-      contents: read # Required to checkout the repository
 
     env:
-      DATABASE_URL: ${{ secrets.SUPABASE_DB_SESSION_URL }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
@@ -60,25 +18,33 @@ jobs:
       - name: 🧾 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🌿 Export HOME for workflow context
-        run: echo "HOME=$HOME" >> $GITHUB_ENV
-
-      - name: 📥 Download dbmate binary
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: dbmate
-          path: ${{ env.HOME }}/bin
+          node-version: '18'
+          cache: 'npm'
 
-      - name: 📥 Download Supabase CLI binary
-        uses: actions/download-artifact@v4
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
         with:
-          name: supabase-cli
-          path: ${{ env.HOME }}/bin
+          version: latest
 
-      - name: 📜 Run database migrations and log output
-        run: |
-          chmod +x $HOME/bin/dbmate
-          $HOME/bin/dbmate up | tee migration-scroll.txt
+      - name: Upload protected-pages to Supabase Storage
+        uses: brendenehlers/supabase-storage-upload@v1
+        with:
+          upload_directory_path: 'supabase/storage/protected-pages'
+          bucket_name: 'protected-pages'
+        env:
+          SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      - name: Push Supabase DB migrations
+        run: supabase db push --db-url ${{ secrets.SUPABASE_DB_SESSION_URL }} >> migration-scroll.txt
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: 📦 Upload migration scroll
         uses: actions/upload-artifact@v4
@@ -86,24 +52,35 @@ jobs:
           name: migration-scroll
           path: migration-scroll.txt
 
-      - name: "🚀 Auto-deploy all Edge Functions"
+      - name: Discover and Deploy Supabase Edge Functions
         run: |
-          chmod +x $HOME/bin/supabase
-          for dir in supabase/functions/*/; do
-            fname=$(basename "$dir")
-            echo "Deploying function: $fname"
-            $HOME/bin/supabase functions deploy "$fname" \
-              --project-ref "${SUPABASE_PROJECT_ID}" \
-              --no-verify-jwt
+          find supabase/functions -mindepth 1 -maxdepth 1 -type d | while read -r dir; do
+            if [ -f "$dir/index.ts" ] || [ -f "$dir/index.tsx" ]; then
+              FUNCTION_NAME=$(basename "$dir")
+              echo "Deploying function: $FUNCTION_NAME"
+              supabase functions deploy "$FUNCTION_NAME" --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+            fi
           done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./ # Path to your built static files
-          
-      - name: 🚀 Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    name: 🔮 Deploy Project
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
