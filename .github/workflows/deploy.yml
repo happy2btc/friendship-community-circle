@@ -35,8 +35,8 @@ jobs:
       - name: Upload protected-pages to Supabase Storage
         uses: brendenehlers/supabase-storage-upload@v1
         with:
-          upload_directory_path: 'supabase/storage/protected-pages'
-          bucket_name: 'protected-pages'
+          upload_directory_path: 'supabase/storage/protected-files'
+          bucket_name: 'protected-files'
         env:
           SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
