@@ -1,0 +1,48 @@
+# Node modules (if using npm/yarn for build tools)
+node_modules/
+
+# Build output directories
+dist/
+build/
+public/
+
+# Supabase artifacts
+.supabase/
+supabase/.temp/
+supabase/migrations/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# VS Code settings
+.vscode/
+*.code-workspace
+
+# OS-specific files (Windows)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# System files
+.DS_Store
+*.log
+*.tmp
+
+# GitHub Actions artifacts
+*.workflow.log
+.github/workflows/*.bak
+
+# Optional: ignore package-lock or yarn.lock if you regenerate frequently
+# package-lock.json
+# yarn.lock
+
+# Optional: ignore generated docs or scrolls
+docs/
+*.pdf
+
+# Ignore cache and temp folders
+.cache/
+.tmp/
