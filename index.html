@@ -1,9 +1,10 @@
+@@ -1,130 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <h2>Welcome to the Friendship Community</h2>
-  <title>Join the Circle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join the Circle</title>
   <style>
     h2 {
   color: #4b3b1f;
@@ -57,6 +58,7 @@
   </style>
 </head>
 <body>
+  <h2>Welcome to the Friendship Community</h2>
   <h1>🌿 Join the Circle</h1>
   <p>This is where you name yourself. Where you say: “I’m here. I want to be part of this.”</p>
 
@@ -113,7 +115,7 @@
         }
       } else {
         alert("MetaMask not detected. Please install it to connect your wallet.");
-      }
+     }
     }
 
     document.getElementById("connectWallet").addEventListener("click", detectWallet);
@@ -123,7 +125,7 @@
       const savedWallet = localStorage.getItem("memberWallet");
       if (savedWallet) {
         document.getElementById("wallet").value = savedWallet;
-      }
+       }
     });
   </script>
 </body>
