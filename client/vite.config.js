@@ -2,12 +2,11 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { readdirSync } from 'fs';
 
-const htmlDir = resolve(__dirname, '.');
-const htmlFiles = readdirSync(htmlDir)
+const htmlFiles = readdirSync(__dirname)
   .filter(file => file.endsWith('.html'))
   .reduce((entries, file) => {
     const name = file.replace('.html', '');
-    entries[name] = resolve(htmlDir, file);
+    entries[name] = resolve(__dirname, file);
     return entries;
   }, {});
 
