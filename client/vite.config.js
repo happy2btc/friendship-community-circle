@@ -11,6 +11,7 @@ const htmlFiles = readdirSync(__dirname)
   }, {});
 
 export default defineConfig({
+  base: '/friendship-community-circle/',
   publicDir: 'public',
   build: {
     outDir: '../dist',
