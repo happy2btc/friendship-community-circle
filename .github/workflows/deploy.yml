@@ -24,7 +24,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        working-directory: client
         uses: actions/setup-node@v4
         with:
           node-version: '20'
