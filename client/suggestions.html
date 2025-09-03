@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Community Suggestions</title>
   <style>
     body {
@@ -30,70 +31,81 @@
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    <h1>Community Suggestions</h1>
-<p>Every voice matters. Explore ideas shared by members of the circle.</p>
-
-<div class="filter-buttons">
-  <button onclick="filterSuggestions('all')">All</button>
-  <button onclick="filterSuggestions('suggestion')">Suggestions</button>
-  <button onclick="filterSuggestions('discussion')">Discussions</button>
-  <button onclick="filterSuggestions('agreement')">Agreements</button>
-</div>
-
-<div id="suggestionContainer"></div>
-
-<a href="menu.html" class="menu-button">Return to Menu</a>
+    .menu-button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #e28b75;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-<script>
-  let allSuggestions = [];
+  <h1>Community Suggestions</h1>
+  <p>Every voice matters. Explore ideas shared by members of the circle.</p>
 
-  async function loadSuggestions() {
-    try {
-      const response = await fetch("suggestions.json");
-      if (!response.ok) {
-        throw new Error("Failed to fetch suggestions.json");
+  <div class="filter-buttons">
+    <button onclick="filterSuggestions('all')">All</button>
+    <button onclick="filterSuggestions('suggestion')">Suggestions</button>
+    <button onclick="filterSuggestions('discussion')">Discussions</button>
+    <button onclick="filterSuggestions('agreement')">Agreements</button>
+  </div>
+
+  <div id="suggestionContainer"></div>
+
+  <a href="menu.html" class="menu-button">Return to Menu</a>
+
+  <script>
+    let allSuggestions = [];
+
+    async function loadSuggestions() {
+      try {
+        const response = await fetch("suggestions.json");
+        if (!response.ok) {
+          throw new Error("Failed to fetch suggestions.json");
+        }
+        allSuggestions = await response.json();
+        displaySuggestions("all");
+      } catch (error) {
+        document.getElementById("suggestionContainer").innerHTML =
+          "<p>⚠️ Unable to load suggestions. Please check the file path or try again later.</p>";
+        console.error("Error loading suggestions:", error);
       }
-      allSuggestions = await response.json();
-      displaySuggestions("all");
-    } catch (error) {
-      document.getElementById("suggestionContainer").innerHTML =
-        "<p>⚠️ Unable to load suggestions. Please check the file path or try again later.</p>";
-      console.error("Error loading suggestions:", error);
-    }
-  }
-
-  function filterSuggestions(status) {
-    displaySuggestions(status);
-  }
-
-  function displaySuggestions(status) {
-    const container = document.getElementById("suggestionContainer");
-    container.innerHTML = "";
-
-    const filtered = status === "all"
-      ? allSuggestions
-      : allSuggestions.filter(s => s.status === status);
-
-    if (filtered.length === 0) {
-      container.innerHTML = "<p>🌸 No suggestions found for this category.</p>";
-      return;
     }
 
-   filtered.forEach(s => {
-  const box = document.createElement("div");
-  box.className = "suggestion-box";
-  box.innerHTML = `
-    <h3><a href="discussion.html?suggestion=${s.id}">${s.title}</a></h3>
-    <p>${s.description}</p>
-    <p><strong>Status:</strong> ${s.status}</p>
-  `;
-  container.appendChild(box);
-});
-  }
+    function filterSuggestions(status) {
+      displaySuggestions(status);
+    }
 
-  loadSuggestions();
-</script>
-  </body>
+    function displaySuggestions(status) {
+      const container = document.getElementById("suggestionContainer");
+      container.innerHTML = "";
+
+      const filtered = status === "all"
+        ? allSuggestions
+        : allSuggestions.filter(s => s.status === status);
+
+      if (filtered.length === 0) {
+        container.innerHTML = "<p>🌸 No suggestions found for this category.</p>";
+        return;
+      }
+
+      filtered.forEach(s => {
+        const box = document.createElement("div");
+        box.className = "suggestion-box";
+        box.innerHTML = `
+          <h3><a href="discussion.html?suggestion=${s.id}">${s.title}</a></h3>
+          <p>${s.description}</p>
+          <p><strong>Status:</strong> ${s.status}</p>
+        `;
+        container.appendChild(box);
+      });
+    }
+
+    loadSuggestions();
+  </script>
+</body>
 </html>
