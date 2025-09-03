@@ -14,7 +14,6 @@ jobs:
   build:
     name: 🧱 Build Project
     runs-on: ubuntu-latest
-    working-directory: client
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -31,6 +30,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
+        working-directory: client
         run: npm ci
 
       - name: Setup Supabase CLI
@@ -72,6 +72,7 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
       - name: Build static site
+        working-directory: client
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -91,7 +92,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    working-directory: client
 
     needs: build
     steps:
