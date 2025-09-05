@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Circle Discussions</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      color: #4a7c59;
+    }
+
+    .suggestion-block {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .comment-button, .reply-button, .submit-button {
+      background-color: #4a7c59;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .comment-thread {
+      margin-top: 1rem;
+      padding-left: 1rem;
+      border-left: 2px solid #ccc;
+    }
+
+    .comment-box, .reply-box {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .comment-content {
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .agreement-box {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #eef6f0;
+      border-radius: 6px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 30px;
+    }
+    
+  </style>
+</head>
+<body>
+  <h1>🌿 Circle of Discussion</h1>
+
+  <div id="suggestion-container">
+    <!-- Suggestion Block -->
+    <div class="suggestion-block">
+      <h2 class="suggestion-title">How do we welcome new members?</h2>
+      <p class="suggestion-description">Let’s create a ritual for onboarding that feels warm and affirming.</p>
+
+      <!-- Comment Button -->
+      <button class="comment-button" onclick="openCommentBox('welcome')">💬 Make a Comment</button>
+
+      <!-- Comment Thread -->
+      <div class="comment-thread" id="comments-welcome">
+        <!-- Comments and replies will be dynamically inserted here -->
+      </div>
+
+      <!-- Proposed Agreement Box -->
+      <div class="agreement-box">
+        <h3>📝 Proposed Agreement</h3>
+        <p>When contributors have completed the discussion, enter the proposed agreement here:</p>
+        <textarea id="agreement-text-welcome" rows="4" cols="50" placeholder="Type the agreement..."></textarea>
+        <button class="submit-button" onclick="submitAgreement('welcome')">📤 Submit Agreement</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    // Open comment box
+    function openCommentBox(suggestionId) {
+      const thread = document.getElementById(`comments-${suggestionId}`);
+
+      const commentBox = document.createElement("div");
+      commentBox.className = "comment-box";
+
+      const textarea = document.createElement("textarea");
+      textarea.rows = 3;
+      textarea.cols = 50;
+      textarea.placeholder = "Type your comment...";
+
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "submit-button";
+      submitBtn.textContent = "Submit";
+      submitBtn.onclick = () => {
+        const content = textarea.value;
+        submitComment(suggestionId, content);
+        thread.removeChild(commentBox); // Optional: remove after submit
+      };
+
+      commentBox.appendChild(textarea);
+      commentBox.appendChild(submitBtn);
+      thread.appendChild(commentBox);
+    }
+
+    // Placeholder: Submit comment to backend
+    async function submitComment(suggestionId, content, parentId = null) {
+      // Insert into comments table with suggestionId and optional parentId
+    }
+
+    // Placeholder: Submit agreement to backend
+    async function submitAgreement(suggestionId) {
+      const agreementText = document.getElementById(`agreement-text-${suggestionId}`).value;
+      // Insert into proposed_agreements table
+    }
+
+    // Placeholder: Fetch and display comments
+    async function loadComments(suggestionId) {
+      // Query comments table and nest replies
+    }
+
+    // Initialize
+    // fetchSuggestions(); — will be added once backend is ready
+  </script>
+
+    <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

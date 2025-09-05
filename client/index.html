@@ -96,10 +96,22 @@
     document.getElementById("joinForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+const password = document.getElementById("password").value;
+const name = document.getElementById("name").value;
+const phone = document.getElementById("phone").value;
+const wallet = document.getElementById("wallet").value;
 
-      const { error } = await supabase.auth.signUp({ email, password });
-
+const { error } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: {
+      name,
+      phone,
+      wallet
+    }
+  }
+});
       if (error) {
         alert("Registration failed: " + error.message);
       } else {
@@ -120,7 +132,7 @@
       if (error) {
         alert("Login failed: " + error.message);
       } else {
-        window.location.href = "affirm.html";
+        window.location.href = "menu.html";
       }
     });
   </script>

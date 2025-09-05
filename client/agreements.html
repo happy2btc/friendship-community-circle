@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Agreement & Voting</title>
+  <style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #fefefe;
+    padding: 2rem;
+    color: #333;
+    text-align: center;
+  }
+
+  .agreement-block {
+    background: #eef6f0;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin: 0 auto 2rem auto;
+    max-width: 600px;
+  }
+
+  .vote-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .vote-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .agree-button {
+    background-color: #4a7c59;
+    color: white;
+  }
+
+  .disagree-button {
+    background-color: #c94c4c;
+    color: white;
+  }
+
+  .vote-counts {
+    margin-top: 1rem;
+    font-size: 1rem;
+  }
+
+.menu-button {
+    background-color: #6b4f1d;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 30px;
+}
+</style>
+</head>
+<body>
+  <h1>🗳️ Agreement & Voting Scroll</h1>
+
+  <div class="agreement-block">
+    <h2>Proposed Agreement</h2>
+    <p id="agreement-text">Loading agreement...</p>
+
+    <div class="vote-buttons">
+      <button class="vote-button agree-button" onclick="castVote('agree')">✅ Agree</button>
+      <button class="vote-button disagree-button" onclick="castVote('disagree')">❌ Disagree</button>
+    </div>
+
+    <div class="vote-counts" id="vote-counts">
+      Votes: Agree (0) | Disagree (0) | Total: 0
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    let suggestionId = 'welcome'; // Placeholder — will be dynamic later
+
+    async function fetchAgreement() {
+      const { data, error } = await supabase
+        .from('proposed_agreements')
+        .select('agreement_text')
+        .eq('suggestion_id', suggestionId)
+        .single();
+
+      if (data) {
+        document.getElementById("agreement-text").textContent = data.agreement_text;
+      } else {
+        document.getElementById("agreement-text").textContent = "No agreement found.";
+      }
+    }
+
+    async function castVote(choice) {
+      await supabase.from('votes').insert([
+        { suggestion_id: suggestionId, vote: choice }
+      ]);
+      updateVoteCounts();
+    }
+
+    async function updateVoteCounts() {
+      const { data, error } = await supabase
+        .from('votes')
+        .select('vote');
+
+      if (data) {
+        const agree = data.filter(v => v.vote === 'agree').length;
+        const disagree = data.filter(v => v.vote === 'disagree').length;
+        const total = data.length;
+
+        document.getElementById("vote-counts").textContent =
+          `Votes: Agree (${agree}) | Disagree (${disagree}) | Total: ${total}`;
+      }
+    }
+
+    fetchAgreement();
+    updateVoteCounts();
+  </script>
+
+    <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

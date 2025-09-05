@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🌐 Circle of Exchange</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #8c6f4e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #confirmation {
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🌐 Circle of Exchange</h2>
+
+  <form id="exchangeForm">
+    <label for="name">🧑 Your Name or Email</label>
+    <input type="text" id="name" name="name" required />
+
+    <label for="want">🌱 What do you seek?</label>
+    <textarea id="want" name="want" rows="3"></textarea>
+
+    <label for="give">🌾 What do you offer?</label>
+    <textarea id="give" name="give" rows="3"></textarea>
+
+    <label for="passion">🔥 What is your passion?</label>
+    <textarea id="passion" name="passion" rows="3"></textarea>
+
+    <label>
+      <input type="checkbox" id="visible" checked />
+      Make this visible to others
+    </label>
+
+    <button type="submit">Update My Offering</button>
+  </form>
+
+  <div id="confirmation"></div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabase = createClient('https://YOUR_PROJECT_ID.supabase.co', 'YOUR_ANON_KEY');
+
+  document.getElementById("exchangeForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const data = {
+      name: document.getElementById("name").value,
+      want: document.getElementById("want").value,
+      give: document.getElementById("give").value,
+      passion: document.getElementById("passion").value,
+      visible: document.getElementById("visible").checked
+    };
+
+    const { error } = await supabase.from('circle_exchange').insert([data]);
+
+    if (error) {
+      console.error("Submission failed:", error);
+      document.getElementById("confirmation").textContent = "⚠️ Something went wrong. Please try again.";
+    } else {
+      this.reset();
+      document.getElementById("confirmation").textContent = "✅ Your offering has been noted. Thank you!";
+    }
+  });
+</script>
+
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>
