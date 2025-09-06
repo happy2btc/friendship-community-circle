@@ -72,9 +72,6 @@
     <label for="email">📬 Your Email</label>
     <input type="text" id="email" name="email" readonly />
 
-    <label for="wallet_address">💠 Your Wallet Address</label>
-    <input type="text" id="wallet_address" name="wallet_address" readonly />
-
     <label for="want">🌱 What do you seek?</label>
     <textarea id="want" name="want" rows="3"></textarea>
 
@@ -94,6 +91,7 @@
 
   <div id="confirmation"></div>
 
+  <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
   <script type="module">
@@ -114,9 +112,8 @@
         return;
       }
 
-      // Display user info - wallet address is now optional
+      // Display user info
       document.getElementById('email').value = user.email;
-      document.getElementById('wallet_address').value = user.user_metadata?.wallet_address || 'No wallet address on file.';
 
       // Fetch the user's existing offering using their unique user ID
       const { data: offering, error } = await supabase
@@ -157,7 +154,6 @@
 
       const offeringData = {
         user_id: user.id, // The new primary key
-        'wallet address': user.user_metadata?.wallet_address, // Still save it if it exists
         want: document.getElementById("want").value,
         give: document.getElementById("give").value,
         passion: document.getElementById("passion").value,
@@ -181,3 +177,5 @@
     // Load the user's data as soon as the page is ready
     document.addEventListener('DOMContentLoaded', loadUserData);
   </script>
+</body>
+</html>
