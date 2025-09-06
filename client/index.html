@@ -106,17 +106,13 @@
       const phone = formData.get('phone');
       const walletAddress = formData.get('wallet_address');
 
-      // 1. First, try to log in the user
       let { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
 
       if (loginError) {
-        // 2. If login fails, check if it's because the user doesn't exist
         if (loginError.message === 'Invalid login credentials') {
-          
-          // 3. User doesn't exist, so let's try to sign them up
           let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email,
             password: password,
@@ -130,23 +126,41 @@
           });
 
           if (signUpError) {
-            // Handle sign-up errors (e.g., password too weak)
             formStatus.textContent = `⚠️ Error: ${signUpError.message}`;
             formStatus.style.color = 'red';
           } else {
-            // 4. Sign-up was successful, tell the user to check their email
             formStatus.textContent = '✅ Success! Please check your email for a confirmation link to activate your account.';
             formStatus.style.color = 'green';
             form.reset();
           }
         } else {
-          // Handle other login errors (e.g., network issue)
           formStatus.textContent = `⚠️ Error: ${loginError.message}`;
           formStatus.style.color = 'red';
         }
       } else {
-        // 5. Login was successful, redirect to the menu
-        window.location.href = 'menu.html';
+        // Login was successful, check for affirmation before redirecting
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('affirmation_text')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') { // Ignore error for no rows found
+            formStatus.textContent = `⚠️ Could not verify affirmation: ${profileError.message}`;
+            formStatus.style.color = 'red';
+          } else {
+            if (profile && profile.affirmation_text) {
+              window.location.href = 'menu.html';
+            } else {
+              window.location.href = 'affirm.html';
+            }
+          }
+        } else {
+            // Fallback, should not be reached
+            window.location.href = 'menu.html';
+        }
       }
     });
   </script>
