@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Community Suggestions</title>
+  <script type="module" src="/lib/supabase.js" defer></script>
   <style>
     body {
       font-family: Georgia, serif;
@@ -30,6 +31,7 @@
       margin: 20px 0;
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: left; /* Added to align text to the left */
     }
     .menu-button {
       display: inline-block;
@@ -49,27 +51,34 @@
 
   <div class="filter-buttons">
     <button onclick="filterSuggestions('all')">All</button>
-    <button onclick="filterSuggestions('suggestion')">Suggestions</button>
-    <button onclick="filterSuggestions('discussion')">Discussions</button>
-    <button onclick="filterSuggestions('agreement')">Agreements</button>
+    <button onclick="filterSuggestions('suggestion')">Suggestion</button>
+    <button onclick="filterSuggestions('discussion')">Discussion</button>
+    <button onclick="filterSuggestions('agreement')">Agreement</button>
   </div>
 
   <div id="suggestionContainer"></div>
 
-  <script>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
     let allSuggestions = [];
 
     async function loadSuggestions() {
       try {
-        const response = await fetch("suggestions.json");
-        if (!response.ok) {
-          throw new Error("Failed to fetch suggestions.json");
+        const { data, error } = await supabase
+          .from('suggestions')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw new Error(`Failed to fetch suggestions: ${error.message}`);
         }
-        allSuggestions = await response.json();
+
+        allSuggestions = data;
         displaySuggestions("all");
       } catch (error) {
         document.getElementById("suggestionContainer").innerHTML =
-          "<p>⚠️ Unable to load suggestions. Please check the file path or try again later.</p>";
+          `<p>⚠️ Unable to load suggestions: ${error.message}</p>`;
         console.error("Error loading suggestions:", error);
       }
     }
@@ -95,7 +104,7 @@
         const box = document.createElement("div");
         box.className = "suggestion-box";
         box.innerHTML = `
-          <h3><a href="discussion.html?suggestion=${s.id}">${s.title}</a></h3>
+          <h3>${s.title}</h3>
           <p>${s.description}</p>
           <p><strong>Status:</strong> ${s.status}</p>
         `;

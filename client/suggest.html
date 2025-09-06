@@ -15,11 +15,7 @@
       line-height: 1.6;
       text-align: center;
     }
-
-    h1 {
-      color: #6b4f1d;
-    }
-
+    h1 { color: #6b4f1d; }
     form {
       background-color: #fff;
       border: 1px solid #d8bfa3;
@@ -31,13 +27,7 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
       text-align: left;
     }
-
-    label {
-      display: block;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-
+    label { display: block; margin-top: 20px; font-weight: bold; }
     input, textarea, select {
       width: 100%;
       padding: 10px;
@@ -46,7 +36,6 @@
       border: 1px solid #ccc;
       font-size: 1em;
     }
-
     button {
       background-color: #2e8b57;
       color: #fff;
@@ -56,14 +45,9 @@
       font-weight: bold;
       cursor: pointer;
       margin-top: 20px;
-      width: 100%; /* Make button full width */
+      width: 100%;
     }
-
-    button:disabled {
-      background-color: #aaa;
-      cursor: not-allowed;
-    }
-
+    button:disabled { background-color: #aaa; cursor: not-allowed; }
     .menu-button {
       background-color: #6b4f1d;
       color: #fff;
@@ -74,16 +58,11 @@
       display: inline-block;
       margin-top: 30px;
     }
-
-    .form-status {
-      margin-top: 1rem;
-      text-align: center;
-      font-weight: bold;
-    }
+    .form-status { margin-top: 1rem; text-align: center; font-weight: bold; }
   </style>
 </head>
 <body> 
-   <h1>💡 Make a Suggestion</h1>
+  <h1>💡 Make a Suggestion</h1>
   <p>Share your voice. Every suggestion is a seed for transformation.</p>
 
   <form id="suggestionForm">
@@ -98,65 +77,71 @@
       <option value="suggestion">Suggestion</option>
       <option value="discussion">Discussion</option>
       <option value="agreement">Agreement</option> 
-     </select>
+    </select>
     <button type="submit" id="submit-btn">Submit Suggestion</button>
     <div id="form-status" class="form-status"></div>
-</form>
+  </form>
 
-<script type="module">
-  // Import the configured client from your existing library file
-  import { supabase } from '/lib/supabase.js';
+  <script type="module">
+    // Import the configured client from your existing library file
+    import { supabase } from '/lib/supabase.js';
 
-  const suggestionForm = document.getElementById("suggestionForm");
-  const submitBtn = document.getElementById("submit-btn");
-  const formStatus = document.getElementById("form-status");
+    const suggestionForm = document.getElementById("suggestionForm");
+    const submitBtn = document.getElementById("submit-btn");
+    const formStatus = document.getElementById("form-status");
 
-  suggestionForm.addEventListener("submit", async function(event) {
-    event.preventDefault(); // Prevent default form submission
+    suggestionForm.addEventListener("submit", async function(event) {
+      event.preventDefault(); // Prevent default form submission
 
-    // Disable button and show loading state
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
-    formStatus.textContent = '';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      formStatus.textContent = '';
 
-    // Get form values
-    const title = document.getElementById("title").value;
-    const description = document.getElementById("description").value;
-    const status = document.getElementById("status").value;
+      // Get the current logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
 
-    // Use the Supabase client to insert data into the 'suggestions' table
-    const { data, error } = await supabase
-      .from('suggestions')
-      .insert([
-        { 
-          title: title, 
-          description: description,
-          status: status
-        }
-      ]);
+      if (!user) {
+          alert("You must be logged in to make a suggestion.");
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Suggestion';
+          return;
+      }
 
-    if (error) {
-      console.error("Error submitting suggestion:", error);
-      formStatus.textContent = `⚠️ Error: ${error.message}`;
-      formStatus.style.color = 'red';
-      // Re-enable the button on error
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Suggestion';
-    } else {
-      formStatus.textContent = "🌱 Suggestion submitted successfully! Redirecting...";
-      formStatus.style.color = 'green';
-      suggestionForm.reset(); // Clear the form
-      
-      // Redirect to the menu after a short delay
-      setTimeout(() => {
-        window.location.href = "menu.html";
-      }, 2000);
-    }
-  });
-</script>
+      // Get form values
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const status = document.getElementById("status").value;
 
+      // Use the Supabase client to insert data, now including the author_id
+      const { data, error } = await supabase
+        .from('suggestions')
+        .insert([
+          { 
+            title: title, 
+            description: description,
+            status: status,
+            author_id: user.id // This line is the critical fix
+          }
+        ]);
+
+      if (error) {
+        console.error("Error submitting suggestion:", error);
+        formStatus.textContent = `⚠️ Error: ${error.message}`;
+        formStatus.style.color = 'red';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Suggestion';
+      } else {
+        formStatus.textContent = "🌱 Suggestion submitted successfully! Redirecting...";
+        formStatus.style.color = 'green';
+        suggestionForm.reset();
+        
+        setTimeout(() => {
+          window.location.href = "menu.html";
+        }, 2000);
+      }
+    });
+  </script>
    
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
-
 </body>
 </html>

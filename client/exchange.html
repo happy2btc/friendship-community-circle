@@ -27,6 +27,11 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input[readonly] {
+      background-color: #eee;
+      cursor: not-allowed;
     }
     button {
       margin-top: 1.5rem;
@@ -37,14 +42,16 @@
       border-radius: 6px;
       font-size: 1rem;
       cursor: pointer;
+      width: 100%;
+    }
+    button:disabled {
+      background-color: #ccc;
     }
     #confirmation {
       margin-top: 1rem;
-      color: green;
       font-weight: bold;
       text-align: center;
     }
-    
     .menu-button {
       background-color: #6b4f1d;
       color: #fff;
@@ -52,8 +59,9 @@
       border-radius: 6px;
       text-decoration: none;
       font-weight: bold;
-      display: inline-block;
-      margin-top: 30px;
+      display: block;
+      width: fit-content;
+      margin: 30px auto 0;
     }
   </style>
 </head>
@@ -61,8 +69,11 @@
   <h2>🌐 Circle of Exchange</h2>
 
   <form id="exchangeForm">
-    <label for="name">🧑 Your Name or Email</label>
-    <input type="text" id="name" name="name" required />
+    <label for="email">📬 Your Email</label>
+    <input type="text" id="email" name="email" readonly />
+
+    <label for="wallet_address">💠 Your Wallet Address</label>
+    <input type="text" id="wallet_address" name="wallet_address" readonly />
 
     <label for="want">🌱 What do you seek?</label>
     <textarea id="want" name="want" rows="3"></textarea>
@@ -75,7 +86,7 @@
 
     <label>
       <input type="checkbox" id="visible" checked />
-      Make this visible to others
+      Make this visible to others in the Circle
     </label>
 
     <button type="submit">Update My Offering</button>
@@ -83,35 +94,90 @@
 
   <div id="confirmation"></div>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-  const supabase = createClient('https://YOUR_PROJECT_ID.supabase.co', 'YOUR_ANON_KEY');
-
-  document.getElementById("exchangeForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
-
-    const data = {
-      name: document.getElementById("name").value,
-      want: document.getElementById("want").value,
-      give: document.getElementById("give").value,
-      passion: document.getElementById("passion").value,
-      visible: document.getElementById("visible").checked
-    };
-
-    const { error } = await supabase.from('circle_exchange').insert([data]);
-
-    if (error) {
-      console.error("Submission failed:", error);
-      document.getElementById("confirmation").textContent = "⚠️ Something went wrong. Please try again.";
-    } else {
-      this.reset();
-      document.getElementById("confirmation").textContent = "✅ Your offering has been noted. Thank you!";
-    }
-  });
-</script>
-
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
-</body>
-</html>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const form = document.getElementById("exchangeForm");
+    const confirmationDiv = document.getElementById("confirmation");
+    const submitButton = form.querySelector('button');
+
+    // Function to load user data and their existing offering
+    async function loadUserData() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        confirmationDiv.textContent = "⚠️ You must be logged in to use the Circle of Exchange.";
+        confirmationDiv.style.color = 'red';
+        form.style.display = 'none';
+        return;
+      }
+
+      // Display user info - wallet address is now optional
+      document.getElementById('email').value = user.email;
+      document.getElementById('wallet_address').value = user.user_metadata?.wallet_address || 'No wallet address on file.';
+
+      // Fetch the user's existing offering using their unique user ID
+      const { data: offering, error } = await supabase
+        .from('member_offerings')
+        .select('*')
+        .eq('user_id', user.id) // Use user.id instead of wallet address
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // Ignore 'PGRST116' (0 rows) error
+        console.error("Error fetching offering:", error);
+        confirmationDiv.textContent = "⚠️ Could not load your offering.";
+        confirmationDiv.style.color = 'red';
+      }
+
+      // If an offering was found, populate the form
+      if (offering) {
+        document.getElementById('want').value = offering.want || '';
+        document.getElementById('give').value = offering.give || '';
+        document.getElementById('passion').value = offering.passion || '';
+        document.getElementById('visible').checked = offering.visible;
+      }
+    }
+
+    // Handle form submission
+    form.addEventListener("submit", async function(event) {
+      event.preventDefault();
+      submitButton.disabled = true;
+      confirmationDiv.textContent = "Updating...";
+      confirmationDiv.style.color = 'black';
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        confirmationDiv.textContent = "⚠️ Cannot submit: You are not logged in.";
+        confirmationDiv.style.color = 'red';
+        return;
+      }
+
+      const offeringData = {
+        user_id: user.id, // The new primary key
+        'wallet address': user.user_metadata?.wallet_address, // Still save it if it exists
+        want: document.getElementById("want").value,
+        give: document.getElementById("give").value,
+        passion: document.getElementById("passion").value,
+        visible: document.getElementById("visible").checked
+      };
+
+      // Upsert the data. Supabase will use the primary key (user_id) for the conflict check.
+      const { error } = await supabase.from('member_offerings').upsert(offeringData);
+
+      if (error) {
+        console.error("Submission failed:", error);
+        confirmationDiv.textContent = `⚠️ Something went wrong: ${error.message}`;
+        confirmationDiv.style.color = 'red';
+      } else {
+        confirmationDiv.textContent = "✅ Your offering has been updated!";
+        confirmationDiv.style.color = 'green';
+      }
+      submitButton.disabled = false;
+    });
+
+    // Load the user's data as soon as the page is ready
+    document.addEventListener('DOMContentLoaded', loadUserData);
+  </script>
