@@ -40,20 +40,6 @@
       display: block;
       margin: 20px auto;
     }
-    .next-buttons {
-      text-align: center;
-      margin-top: 30px;
-    }
-    .next-buttons a {
-      background-color: #6b4f1d;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      margin: 10px;
-      display: inline-block;
-    }
     #affirmStatus {
       text-align: center;
       font-style: italic;
@@ -79,15 +65,6 @@
     <p id="affirmStatus"></p>
   </div>
 
-  <div class="next-buttons" id="nextButtons" style="display:none;">
-    <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
-    <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
-    <a href="agreements.html" class="menu-button">📜 View Agreements & Voting</a>
-    <a href="mutual-aid.html" class="menu-button">🌿 Tend to the Mutual Aid Scrolls</a>
-    <a href="contribute.html" class="menu-button">✍️ Fill Out the Contribution Form</a>
-    <a href="exchange.html" class="menu-button">🎁 Enter the Gift Circle of Exchange</a>
-  </div>
-
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
@@ -95,7 +72,6 @@
     const affirmStatus = document.getElementById('affirmStatus');
     const introText = document.getElementById('introText');
     const affirmBox = document.getElementById('affirmBox');
-    const nextButtons = document.getElementById('nextButtons');
 
     // Check if user is logged in and has already affirmed
     (async function checkAffirmation() {
@@ -108,9 +84,8 @@
                 .single();
             
             if (profile && profile.affirmation_text) {
-                affirmBox.style.display = "none";
-                introText.innerText = "🌸 You’ve already affirmed your values. Choose how to engage:";
-                nextButtons.style.display = "block";
+                // User has already affirmed, send them directly to the main menu.
+                window.location.href = 'menu.html';
             }
         }
     })();
@@ -141,11 +116,10 @@
         affirmStatus.innerText = `Error saving affirmation: ${error.message}`;
         affirmStatus.style.color = 'red';
       } else {
-        affirmStatus.innerText = `✅ You’ve affirmed: ${affirmedValues.join(", ")}. Welcome to the circle.`;
-        affirmBox.style.display = "none";
-        introText.innerText = "🌸 You’ve affirmed your values. Choose how to engage:";
-        nextButtons.style.display = "block";
+        // Success! Redirect to the main menu.
+        window.location.href = 'menu.html';
       }
     });
   </script>
 </body>
+</html>
