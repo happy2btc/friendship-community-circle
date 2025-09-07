@@ -1,97 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Contribution Form</title>
+  <meta charset="UTF-8">
+  <title>✍️ Submit Your Scroll</title>
+  <script type="module" src="/lib/supabase.js"></script>
   <style>
-    body {
-      font-family: serif;
-      background-color: #fdf6e3;
-      color: #333;
-      padding: 2rem;
-      max-width: 800px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      color: #6b4f1d;
-    }
-    label {
-      display: block;
-      margin-top: 1.5rem;
-      font-weight: bold;
-    }
-    textarea, input {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-family: serif;
-    }
-    button {
-      margin-top: 2rem;
-      background-color: #2e7d32;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .back-button {
-      margin-top: 2rem;
-      text-align: center;
-    }
-    .back-button a {
-      color: #2e7d32;
-      text-decoration: none;
-      font-weight: bold;
-    } 
-    .back-button button {
-  background-color: #6b4f1d;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 2rem;
-}
+    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; max-width: 600px; margin: auto; }
+    h1 { text-align: center; color: #4a7c59; }
+    form { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    label { display: block; margin-top: 1.2rem; font-weight: bold; }
+    textarea, input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background-color: #4a7c59; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 100%; }
+    button:disabled { background-color: #ccc; }
+    #status-message { margin-top: 1rem; font-weight: bold; text-align: center; }
+    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
   </style>
 </head>
 <body>
-  <h1>✍️ Contribution Form</h1>
-  <p>This is a space to name what you're building, where you're struggling, and how the community can show up for you.</p>
+  <h1>✍️ Submit Your Scroll</h1>
 
-  <form>
+  <form id="contribution-form">
     <label for="project">🌱 What is your project or what are you working on?</label>
-    <textarea id="project" rows="3"></textarea>
+    <textarea id="project" name="project" rows="3"></textarea>
 
     <label for="challenge">🌀 What is your current life challenge?</label>
-    <textarea id="challenge" rows="3"></textarea>
+    <textarea id="challenge" name="challenge" rows="3"></textarea>
 
     <label for="help">🧭 What kind of help are you looking for?</label>
-    <textarea id="help" rows="3"></textarea>
+    <textarea id="help" name="help" rows="3"></textarea>
 
     <label for="collab">🤝 Are you willing to collaborate?</label>
-    <input type="text" id="collab" />
+    <input type="text" id="collab" name="collab" />
 
     <label for="skills">🛠️ What skills, tools, or resources do you already have?</label>
-    <textarea id="skills" rows="3"></textarea>
+    <textarea id="skills" name="skills" rows="3"></textarea>
 
     <label for="urgency">⏳ Is there a timeline or urgency to your request?</label>
-    <input type="text" id="urgency" />
+    <input type="text" id="urgency" name="urgency" />
 
     <label for="contact">📬 How would you like to be contacted or supported?</label>
-    <input type="text" id="contact" />
+    <input type="text" id="contact" name="contact" />
 
     <button type="submit">Submit Your Scroll</button>
   </form>
 
-  <div class="back-button">
-  <button onclick="window.location.href='menu.html'">← Back to Menu</button>
-</div>
-  </div>
+  <div id="status-message"></div>
+
+  <a href="view-scrolls.html" class="menu-button">📜 View All Scrolls</a>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const form = document.getElementById('contribution-form');
+    const statusMessage = document.getElementById('status-message');
+    const submitButton = form.querySelector('button');
+
+    (async function checkUser() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            statusMessage.textContent = "⚠️ You must be logged in to submit a scroll.";
+            statusMessage.style.color = 'red';
+            form.style.display = 'none';
+        }
+    })();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      submitButton.disabled = true;
+      statusMessage.textContent = 'Submitting...';
+      statusMessage.style.color = 'black';
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        statusMessage.textContent = "⚠️ Error: You are not logged in.";
+        return;
+      }
+
+      const formData = new FormData(form);
+      const contributionData = {
+        user_id: user.id,
+        project: formData.get('project'),
+        challenge: formData.get('challenge'),
+        help: formData.get('help'),
+        collab: formData.get('collab'),
+        skills: formData.get('skills'),
+        urgency: formData.get('urgency'),
+        contact: formData.get('contact')
+      };
+
+      const { error } = await supabase.from('contributions').insert(contributionData);
+
+      if (error) {
+        statusMessage.textContent = `Error: ${error.message}`;
+        statusMessage.style.color = 'red';
+        submitButton.disabled = false;
+      } else {
+        statusMessage.textContent = '✅ Thank you! Your scroll has been submitted.';
+        statusMessage.style.color = 'green';
+        form.reset();
+        setTimeout(() => {
+            submitButton.disabled = false;
+            statusMessage.textContent = '';
+        }, 3000);
+      }
+    });
+  </script>
 </body>
 </html>

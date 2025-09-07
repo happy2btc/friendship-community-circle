@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; max-width: 600px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+        .profile-container { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .avatar-upload { text-align: center; margin-bottom: 1.5rem; }
+        .avatar-upload img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #eee; margin-bottom: 1rem; }
+        label { display: block; margin-top: 1rem; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+        input[readonly] { background-color: #eee; cursor: not-allowed; }
+        button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background-color: #2e8b57; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 100%; }
+        #status-message { margin-top: 1rem; font-weight: bold; text-align: center; }
+        .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+    </style>
+</head>
+<body>
+    <h1>👤 My Profile</h1>
+
+    <div class="profile-container">
+        <div class="avatar-upload">
+            <img id="avatar-image" src="https://i.imgur.com/Sufh42c.png" alt="User Avatar">
+            <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+            <button onclick="document.getElementById('avatar-input').click();">Change Picture</button>
+        </div>
+
+        <form id="profile-form">
+            <label for="email">Email</label>
+            <input type="text" id="email" readonly>
+
+            <label for="full-name">Full Name</label>
+            <input type="text" id="full-name" required>
+
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" placeholder="e.g., 555-123-4567">
+
+            <label for="location">Location</label>
+            <input type="text" id="location" placeholder="e.g., City, State">
+
+            <button type="submit">Update Profile</button>
+        </form>
+        <div id="status-message"></div>
+    </div>
+
+    <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+
+        const form = document.getElementById('profile-form');
+        const statusMessage = document.getElementById('status-message');
+        const avatarImage = document.getElementById('avatar-image');
+        const avatarInput = document.getElementById('avatar-input');
+        let currentUser = null;
+
+        async function loadProfile() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = '/index.html';
+                return;
+            }
+            currentUser = user;
+
+            document.getElementById('email').value = user.email;
+
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('full_name, avatar_url, phone, location')
+                .eq('id', user.id)
+                .single();
+
+            if (error && error.code !== 'PGRST116') {
+                statusMessage.textContent = `Error: ${error.message}`;
+                return;
+            }
+
+            if (profile) {
+                document.getElementById('full-name').value = profile.full_name || '';
+                document.getElementById('phone').value = profile.phone || '';
+                document.getElementById('location').value = profile.location || '';
+                if (profile.avatar_url) {
+                    avatarImage.src = profile.avatar_url;
+                }
+            }
+        }
+
+        avatarInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file || !currentUser) return;
+
+            statusMessage.textContent = 'Uploading picture...';
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(fileName, file, { upsert: true });
+
+            if (uploadError) {
+                statusMessage.textContent = `Upload Error: ${uploadError.message}`;
+                return;
+            }
+
+            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
+
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('id', currentUser.id);
+            
+            if (updateError) {
+                statusMessage.textContent = `Error saving URL: ${updateError.message}`;
+            } else {
+                avatarImage.src = publicUrl;
+                statusMessage.textContent = '✅ Picture updated!';
+            }
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!currentUser) return;
+
+            const profileData = {
+                full_name: document.getElementById('full-name').value,
+                phone: document.getElementById('phone').value,
+                location: document.getElementById('location').value
+            };
+
+            const { error } = await supabase
+                .from('profiles')
+                .update(profileData)
+                .eq('id', currentUser.id);
+
+            if (error) {
+                statusMessage.textContent = `Error updating profile: ${error.message}`;
+            } else {
+                statusMessage.textContent = '✅ Profile updated!';
+            }
+        });
+
+        loadProfile();
+    </script>
+</body>
+</html>

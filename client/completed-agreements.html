@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📜 Completed Agreements</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; }
+    h1 { text-align: center; color: #2e8b57; }
+    .agreements-container { max-width: 800px; margin: auto; }
+    .agreement-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .agreement-card h3 { margin-top: 0; color: #333; }
+    .agreement-card p { margin: 0.5rem 0; line-height: 1.5; }
+    .agreement-card .proposer { font-style: italic; color: #555; font-size: 0.9em; text-align: right; }
+    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+  </style>
+</head>
+<body>
+  <h1>📜 Completed Agreements</h1>
+  <div id="agreements-container">
+    <p>Loading completed agreements...</p>
+  </div>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const container = document.getElementById('agreements-container');
+
+    async function loadAgreements() {
+      const { data: agreements, error } = await supabase.rpc('get_completed_agreements');
+
+      if (error) {
+        container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
+        return;
+      }
+
+      if (agreements.length === 0) {
+        container.innerHTML = '<p>There are no completed agreements at this time.</p>';
+        return;
+      }
+
+      container.innerHTML = ''; // Clear the loading message
+
+      for (const agreement of agreements) {
+        const card = document.createElement('div');
+        card.className = 'agreement-card';
+
+        let content = `<h3>${agreement.title}</h3>`;
+        if (agreement.description) content += `<p>${agreement.description}</p>`;
+        content += `<p class="proposer">Proposed by: ${agreement.full_name || 'A Circle Member'}</p>`;
+        
+        card.innerHTML = content;
+        container.appendChild(card);
+      }
+    }
+
+    loadAgreements();
+  </script>
+</body>
+</html>

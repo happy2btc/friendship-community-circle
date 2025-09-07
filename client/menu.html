@@ -1,44 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Community Menu – New Paradigm Friendship Community</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background-color: #fdf6e3;
-      color: #333;
-      margin: 40px;
-      font-size: 1.2em;
-      text-align: center;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-    }
-
-    .menu-button {
-      background-color: #6b4f1d;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      margin: 10px;
-      display: inline-block;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Circle Menu</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #e6f7f2;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            color: #2e8b57;
+        }
+        .menu-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+        }
+        .menu-button, .logout-button {
+            background-color: #6b4f1d;
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1em;
+            transition: background-color 0.2s;
+        }
+        .menu-button:hover, .logout-button:hover {
+            background-color: #8c6f4e;
+        }
+        .logout-button {
+            background-color: #a94442; /* A distinct color for logout */
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+            grid-column: 1 / -1; /* Make it span both columns */
+        }
+    </style>
 </head>
-<body> 
-   <h1>🌞 Community Menu</h1>
-  <p>Welcome back. Choose how you’d like to engage today:</p>
+<body>
+    <h1>🌸 Welcome to the Circle</h1>
 
-  <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
-  <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
-  <a href="agreements.html" class="menu-button">📜 View Agreements & Voting</a>
-  <a href="mutual-aid.html" class="menu-button">🌿 Tend to the Mutual Aid Scrolls</a>
-  <a href="contribute.html" class="menu-button">✍️ Fill Out the Contribution Form</a>
- <a href="exchange.html" class="menu-button">🌿 Visit the Circle of Exchange</a> 
+    <div class="menu-container">
+        <a href="profile.html" class="menu-button">👤 My Profile</a>
+        <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
+        
+        <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
+        <a href="mutual-aid.html" class="menu-button">🌿 Tend to Mutual Aid</a>
+
+        <a href="contribute.html" class="menu-button">✍️ Submit Your Scroll</a>
+        <a href="view-scrolls.html" class="menu-button">📜 View All Scrolls</a>
+        
+        <a href="exchange.html" class="menu-button">🎁 Enter the Gift Circle</a>
+        <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
+
+        <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
+        <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
+
+        <button id="logout-button" class="logout-button">Log Out</button>
+    </div>
+
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+
+        const logoutButton = document.getElementById('logout-button');
+
+        logoutButton.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error logging out:', error);
+            } else {
+                // Redirect to the login page after successful logout
+                window.location.href = '/index.html';
+            }
+        });
+    </script>
 </body>
 </html>
-

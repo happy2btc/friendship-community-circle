@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html> 
-  <head>
+<head>
   <meta charset="UTF-8">
   <title>Affirm Your Values – New Paradigm Friendship Community</title>
+  <script type="module" src="/lib/supabase.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -11,11 +12,9 @@
       margin: 40px;
       font-size: 1.2em;
     }
-
     h1, h2, p {
       text-align: center;
     }
-
     .affirm-box {
       background-color: #fff;
       border: 1px solid #a3d9c5;
@@ -26,12 +25,10 @@
       width: 80%;
       max-width: 700px;
     }
-
     .affirm-box label {
       display: block;
       margin: 10px 0;
     }
-
     button {
       background-color: #2e8b57;
       color: #fff;
@@ -43,12 +40,10 @@
       display: block;
       margin: 20px auto;
     }
-
     .next-buttons {
       text-align: center;
       margin-top: 30px;
     }
-
     .next-buttons a {
       background-color: #6b4f1d;
       color: #fff;
@@ -59,7 +54,6 @@
       margin: 10px;
       display: inline-block;
     }
-
     #affirmStatus {
       text-align: center;
       font-style: italic;
@@ -69,53 +63,89 @@
 </head>
 <body> 
     <h1>🌱 Affirm Your Values</h1>
-  <p id="introText">You’ve already joined by connecting your wallet. Now affirm what you stand for.</p>
+  <p id="introText">Welcome. The final step is to affirm the values of our community.</p>
 
   <div class="affirm-box" id="affirmBox">
-    <h2>🧭 What Do You Believe In?</h2>
+    <h2>🧭 What Are Your Values?</h2>
     <form id="affirmForm">
       <label><input type="checkbox" name="value" value="authenticity"> I value authenticity in how I show up.</label>
-      <label><input type="checkbox" name="value" value="collaboration"> I believe in collaboration over competition.</label>
-      <label><input type="checkbox" name="value" value="belonging"> I commit to creating belonging for others.</label>
-      <label><input type="checkbox" name="value" value="transparency"> I believe in transparent decision-making.</label>
-      <label><input type="checkbox" name="value" value="accountability"> I welcome accountability as a form of care.</label>
-      <label><input type="checkbox" name="value" value="ritual"> I honor ritual and emotional safety in how we gather.</label>
+      <label><input type="checkbox" name="value" value="collaboration"> I value collaboration over competition.</label>
+      <label><input type="checkbox" name="value" value="belonging"> I value creating belonging for others.</label>
+      <label><input type="checkbox" name="value" value="transparency"> I value transparent decision-making.</label>
+      <label><input type="checkbox" name="value" value="accountability"> I value accountability as a form of care.</label>
+      <label><input type="checkbox" name="value" value="ritual"> I value ritual and emotional safety in how we gather.</label>
     </form>
-
-    <button onclick="affirmValues()">✅ Affirm & Continue</button>
+    <button id="affirmButton">✅ Affirm & Continue</button>
     <p id="affirmStatus"></p>
   </div>
 
   <div class="next-buttons" id="nextButtons" style="display:none;">
-  <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
-  <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
-  <a href="agreements.html" class="menu-button">📜 View Agreements & Voting</a>
-  <a href="mutual-aid.html" class="menu-button">🌿 Tend to the Mutual Aid Scrolls</a>
-  <a href="contribute.html" class="menu-button">✍️ Fill Out the Contribution Form</a>
-  <a href="exchange.html" class="menu-button">🎁 Enter the Gift Circle of Exchange</a>
-</div>
+    <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
+    <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
+    <a href="agreements.html" class="menu-button">📜 View Agreements & Voting</a>
+    <a href="mutual-aid.html" class="menu-button">🌿 Tend to the Mutual Aid Scrolls</a>
+    <a href="contribute.html" class="menu-button">✍️ Fill Out the Contribution Form</a>
+    <a href="exchange.html" class="menu-button">🎁 Enter the Gift Circle of Exchange</a>
+  </div>
 
-  <script>
-    if (localStorage.getItem("affirmed") === "true") {
-      document.getElementById("affirmBox").style.display = "none";
-      document.getElementById("introText").innerText = "🌸 You’ve already affirmed your values. Choose how to engage:";
-      document.getElementById("nextButtons").style.display = "block";
-    }
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
 
-    function affirmValues() {
-      const checkboxes = document.querySelectorAll('input[name="value"]:checked');
-      if (checkboxes.length === 0) {
-        document.getElementById('affirmStatus').innerText = "🌸 Please affirm at least one value.";
+    const affirmButton = document.getElementById('affirmButton');
+    const affirmStatus = document.getElementById('affirmStatus');
+    const introText = document.getElementById('introText');
+    const affirmBox = document.getElementById('affirmBox');
+    const nextButtons = document.getElementById('nextButtons');
+
+    // Check if user is logged in and has already affirmed
+    (async function checkAffirmation() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('affirmation_text')
+                .eq('id', user.id)
+                .single();
+            
+            if (profile && profile.affirmation_text) {
+                affirmBox.style.display = "none";
+                introText.innerText = "🌸 You’ve already affirmed your values. Choose how to engage:";
+                nextButtons.style.display = "block";
+            }
+        }
+    })();
+
+    affirmButton.addEventListener('click', async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        affirmStatus.innerText = "Could not find user. Please log in again.";
+        affirmStatus.style.color = 'red';
         return;
       }
 
-      const affirmed = Array.from(checkboxes).map(cb => cb.value);
-      localStorage.setItem("affirmed", "true");
-      document.getElementById('affirmStatus').innerText = `✅ You’ve affirmed: ${affirmed.join(", ")}. Welcome to the circle.`;
-      document.getElementById("affirmBox").style.display = "none";
-      document.getElementById("introText").innerText = "🌸 You’ve affirmed your values. Choose how to engage:";
-      document.getElementById("nextButtons").style.display = "block";
-    }
+      const checkboxes = document.querySelectorAll('input[name="value"]:checked');
+      if (checkboxes.length === 0) {
+        affirmStatus.innerText = "🌸 Please affirm at least one value.";
+        return;
+      }
+
+      const affirmedValues = Array.from(checkboxes).map(cb => cb.value);
+      const affirmationText = `Affirmed: ${affirmedValues.join(", ")}`;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ affirmation_text: affirmationText })
+        .eq('id', user.id);
+
+      if (error) {
+        affirmStatus.innerText = `Error saving affirmation: ${error.message}`;
+        affirmStatus.style.color = 'red';
+      } else {
+        affirmStatus.innerText = `✅ You’ve affirmed: ${affirmedValues.join(", ")}. Welcome to the circle.`;
+        affirmBox.style.display = "none";
+        introText.innerText = "🌸 You’ve affirmed your values. Choose how to engage:";
+        nextButtons.style.display = "block";
+      }
+    });
   </script>
 </body>
-</html>
