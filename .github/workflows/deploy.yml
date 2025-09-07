@@ -78,9 +78,10 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
+  uses: actions/upload-pages-artifact@v3
+  with:
+    # Upload only the dist folder from the client directory
+    path: ./client/dist
 
   deploy:
     name: 🔮 Deploy Project
