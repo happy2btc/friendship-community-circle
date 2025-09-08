@@ -41,9 +41,9 @@
 
         async function loadDiscussions() {
             const { data: discussions, error } = await supabase
-                .from('suggestions') // Assuming discussions are in the 'suggestions' table
+                .from('suggestions')
                 .select('*')
-                .eq('status', 'discussion'); // Assuming a 'status' column
+                .eq('status', 'discussion');
 
             if (error) {
                 discussionList.innerHTML = `<p style="color:red;">Error loading discussions: ${error.message}</p>`;
@@ -55,7 +55,7 @@
                 return;
             }
 
-            discussionList.innerHTML = ''; // Clear existing list
+            discussionList.innerHTML = '';
             for (const discussion of discussions) {
                 const discussionEl = document.createElement('div');
                 discussionEl.className = 'discussion-item';
@@ -68,7 +68,6 @@
                 discussionList.appendChild(discussionEl);
             }
 
-            // Add event listeners to the new buttons
             document.querySelectorAll('.propose-btn').forEach(button => {
                 button.addEventListener('click', handleProposeClick);
             });
@@ -89,14 +88,13 @@
             statusEl.textContent = 'Submitting...';
 
             const endTime = new Date();
-            endTime.setHours(endTime.getHours() + 24); // Default 24 hour duration
+            endTime.setHours(endTime.getHours() + 24);
 
-            // Insert into agreements table
             const { error: insertError } = await supabase
                 .from('agreements')
                 .insert({
                     agreement_text: agreementText,
-                    proposed_by: currentUser.id, // This is the fix
+                    proposed_by: currentUser.id,
                     end_time: endTime.toISOString(),
                     status: 'polling'
                 });
@@ -109,7 +107,6 @@
                 return;
             }
 
-            // Update the original suggestion's status to 'complete'
             const { error: updateError } = await supabase
                 .from('suggestions')
                 .update({ status: 'complete' })
@@ -124,9 +121,12 @@
             statusEl.style.color = 'green';
         }
 
+        // THIS IS THE FIX: Ensure user is loaded BEFORE loading discussions
         async function init() {
             await getUser();
-            await loadDiscussions();
+            if (currentUser) { // Only load discussions if we successfully got a user
+                await loadDiscussions();
+            }
         }
 
         init();
