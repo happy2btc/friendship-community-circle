@@ -1,3 +1,4 @@
+// filepath: client/agreements.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,13 +108,9 @@
                 statusEl.textContent = '✅ Agreement submitted successfully!';
                 statusEl.style.color = 'green';
                 agreementTextEl.value = '';
-                loadAgreements(); // Refresh the list
+                // loadAgreements(); // Refresh the list
             }
         });
-
-        async function loadAgreements() {
-            // ... function to load existing agreements ...
-        }
 
         // Initial load
         async function init() {
