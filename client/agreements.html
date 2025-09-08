@@ -1,150 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Community Agreements</title>
-  <script type="module" src="/lib/supabase.js"></script>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; background-color: #f9f9f9; color: #333; padding: 2rem; }
-    h1 { text-align: center; color: #4a7c59; }
-    
-    /* --- CSS CHANGES ARE HERE --- */
-
-    .agreements-container { 
-      /* We no longer need flexbox here. */
-    }
-    .agreement-card { 
-      background: #fff; 
-      border: 1px solid #ddd; 
-      padding: 1.5rem; 
-      border-radius: 8px; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-      text-align: center;
-      width: 90%;
-      max-width: 700px;
-      /* This is the key change: auto margins on left/right will center the block */
-      margin: 0 auto 2rem auto; 
-    }
-
-    /* --- END OF CSS CHANGES --- */
-
-    .agreement-card h2 { color: #6b4f1d; }
-    .agreement-text { background-color: #eef6f0; padding: 1rem; border-radius: 6px; margin: 1rem 0; font-style: italic; }
-    .vote-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    .vote-buttons button { border: 2px solid transparent; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-    .agree-btn { background-color: #2e8b57; color: white; }
-    .disagree-btn { background-color: #c94c4c; color: white; }
-    .vote-buttons button.user-voted { border-color: #000; box-shadow: 0 0 5px #000; }
-    .vote-count { margin-top: 1rem; font-weight: bold; }
-    .menu-button { 
-      background-color: #6b4f1d; 
-      color: #fff; 
-      padding: 12px 20px; 
-      border-radius: 6px; 
-      text-decoration: none; 
-      font-weight: bold; 
-      display: block;
-      width: fit-content;
-      margin: 30px auto 0;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Proposed Agreements & Voting</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #e6f7f2; color: #333; margin: 40px; }
+        h1, h2 { text-align: center; color: #2e8b57; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        textarea, input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background-color: #2e8b57; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        button:hover { background-color: #3a9d6b; }
+        #status { text-align: center; margin-top: 15px; font-weight: bold; }
+        .agreement-list { list-style-type: none; padding: 0; }
+        .agreement-item { background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .vote-buttons button { margin-right: 10px; }
+    </style>
 </head>
 <body>
-  <h1>📜 Community Agreements for Voting</h1>
-  <div id="agreements-container"></div>
-  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+    <div class="container">
+        <h1>⚖️ Proposed Agreements & Voting</h1>
+        <a href="menu.html">← Back to Menu</a>
 
-  <script type="module">
-    // The JavaScript is unchanged
-    import { supabase } from '/lib/supabase.js';
+        <hr>
 
-    const agreementsContainer = document.getElementById('agreements-container');
+        <h2>Propose a New Agreement</h2>
+        <div id="proposal-form">
+            <div class="form-group">
+                <label for="agreement-text">Proposed Agreement Text:</label>
+                <textarea id="agreement-text" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="duration">Polling Duration (in hours):</label>
+                <input type="number" id="duration" value="24">
+            </div>
+            <button id="submit-agreement">Submit and Start Vote</button>
+            <p id="status"></p>
+        </div>
 
-    async function handleVote(agreementId, voteValue) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return alert('You must be logged in to vote.');
+        <hr>
 
-      const { error } = await supabase
-        .from('votes')
-        .upsert({
-          agreement_id: agreementId,
-          user_id: user.id,
-          vote: voteValue
-        }, {
-          onConflict: 'agreement_id, user_id'
+        <h2>Currently Polling</h2>
+        <ul id="agreement-list" class="agreement-list">
+            <!-- Agreements will be loaded here by JavaScript -->
+        </ul>
+    </div>
+
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+
+        const submitButton = document.getElementById('submit-agreement');
+        const statusEl = document.getElementById('status');
+        const agreementTextEl = document.getElementById('agreement-text');
+        const durationEl = document.getElementById('duration');
+        const agreementListEl = document.getElementById('agreement-list');
+
+        // Get the current logged-in user
+        let currentUser;
+        async function getUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                currentUser = user;
+            } else {
+                window.location.href = 'index.html'; // Redirect if not logged in
+            }
+        }
+
+        submitButton.addEventListener('click', async () => {
+            if (!currentUser) {
+                statusEl.textContent = 'Error: User not found. Please log in again.';
+                statusEl.style.color = 'red';
+                return;
+            }
+
+            const agreementText = agreementTextEl.value.trim();
+            const durationHours = parseInt(durationEl.value, 10);
+
+            if (!agreementText || !durationHours) {
+                statusEl.textContent = 'Please fill out all fields.';
+                statusEl.style.color = 'red';
+                return;
+            }
+
+            const endTime = new Date();
+            endTime.setHours(endTime.getHours() + durationHours);
+
+            statusEl.textContent = 'Submitting...';
+            statusEl.style.color = 'black';
+
+            const { error } = await supabase
+                .from('agreements')
+                .insert({
+                    agreement_text: agreementText,
+                    proposed_by: currentUser.id, // This is the fix: using the correct user ID
+                    end_time: endTime.toISOString(),
+                    status: 'polling'
+                });
+
+            if (error) {
+                statusEl.textContent = `Error submitting agreement: ${error.message}`;
+                statusEl.style.color = 'red';
+                console.error(error);
+            } else {
+                statusEl.textContent = '✅ Agreement submitted successfully!';
+                statusEl.style.color = 'green';
+                agreementTextEl.value = '';
+                loadAgreements(); // Refresh the list
+            }
         });
 
-      if (error) {
-        alert(`Error casting vote: ${error.message}`);
-      } else {
-        location.reload();
-      }
-    }
+        async function loadAgreements() {
+            // ... function to load existing agreements ...
+        }
 
-    async function loadAgreements() {
-      const { data: { user } } = await supabase.auth.getUser();
+        // Initial load
+        async function init() {
+            await getUser();
+            // await loadAgreements(); // You can uncomment this when loadAgreements is built
+        }
+        init();
 
-      const { data: agreements, error } = await supabase
-        .from('agreements')
-        .select(`
-          id,
-          agreement_text,
-          suggestions (
-            title
-          )
-        `);
-
-      if (error) {
-        agreementsContainer.innerHTML = `<p>Error loading agreements: ${error.message}</p>`;
-        return;
-      }
-      if (agreements.length === 0) {
-        agreementsContainer.innerHTML = `<p>No agreements have been proposed for voting yet.</p>`;
-        return;
-      }
-
-      const { data: allVotes } = await supabase.from('votes').select('*');
-
-      for (const agreement of agreements) {
-        const card = document.createElement('div');
-        card.className = 'agreement-card';
-
-        const votesForThis = allVotes ? allVotes.filter(v => v.agreement_id === agreement.id) : [];
-        const agreeVotes = votesForThis.filter(v => v.vote === true).length;
-        const disagreeVotes = votesForThis.filter(v => v.vote === false).length;
-        const totalVotes = agreeVotes + disagreeVotes;
-        
-        const userVote = user ? votesForThis.find(v => v.user_id === user.id) : null;
-
-        card.innerHTML = `
-          <h2>${agreement.suggestions.title}</h2>
-          <p><strong>Proposed Agreement:</strong></p>
-          <div class="agreement-text">${agreement.agreement_text}</div>
-          <div class="vote-buttons">
-            <button class="agree-btn ${userVote && userVote.vote === true ? 'user-voted' : ''}">
-              ✅ Agree
-            </button>
-            <button class="disagree-btn ${userVote && userVote.vote === false ? 'user-voted' : ''}">
-              ❌ Disagree
-            </button>
-          </div>
-          <div class="vote-count">
-            Votes: ${agreeVotes} Agree, ${disagreeVotes} Disagree (Total: ${totalVotes})
-          </div>
-        `;
-
-        card.querySelector('.agree-btn').onclick = () => handleVote(agreement.id, true);
-        card.querySelector('.disagree-btn').onclick = () => handleVote(agreement.id, false);
-
-        agreementsContainer.appendChild(card);
-      }
-    }
-
-    loadAgreements();
-  </script>
+    </script>
 </body>
 </html>
