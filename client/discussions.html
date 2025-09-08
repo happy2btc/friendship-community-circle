@@ -1,147 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Current Discussions</title>
-    <script type="module" src="/lib/supabase.js"></script>
-    <style>
-        body { font-family: sans-serif; background-color: #e6f7f2; color: #333; margin: 40px; }
-        h1 { text-align: center; color: #2e8b57; }
-        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .discussion-item { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        .discussion-item h3 { margin-top: 0; }
-        button { background-color: #2e8b57; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #3a9d6b; }
-        .status { font-style: italic; color: #555; }
-        .back-button {
-            display: inline-block;
-            margin-bottom: 20px;
-            background-color: #6c757d;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-        .back-button:hover {
-            background-color: #5a6268;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Circle Discussions</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f9f9f9; color: #333; padding: 2rem; padding-bottom: 100px; }
+    h1 { text-align: center; color: #4a7c59; }
+    .discussion-container { display: flex; flex-direction: column; gap: 1rem; }
+    
+    details.discussion-block { background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    details.discussion-block summary { padding: 1.5rem; font-size: 1.2em; font-weight: bold; cursor: pointer; list-style: none; }
+    details.discussion-block summary::-webkit-details-marker { display: none; }
+    details.discussion-block summary::before { content: '▶ '; font-size: 0.8em; }
+    details[open].discussion-block > summary::before { content: '▼ '; }
+    .summary-meta { font-size: 0.8em; font-weight: normal; color: #666; margin-left: 1rem; }
+    .discussion-content { padding: 0 1.5rem 1.5rem 1.5rem; }
+
+    .comment-thread { margin-top: 1rem; padding-left: 20px; }
+    .comment { border-left: 2px solid #eee; padding-left: 20px; margin-top: 1rem; }
+    .comment-box { margin-top: 10px; padding: 10px; background-color: #f8f8f8; border-radius: 6px; }
+    .comment-box textarea { width: 95%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .action-button { background-color: #4a7c59; color: white; border: none; padding: 8px 12px; margin-top: 5px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
+    .reply-button { background-color: #6c757d; font-size: 0.8em; padding: 4px 8px; }
+    .agreement-box { margin-top: 2rem; padding: 1rem; background-color: #eef6f0; border-radius: 6px; }
+    .agreement-box input[type="number"] { width: 100px; }
+
+    .floating-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      gap: 10px;
+    }
+    .floating-controls button, .floating-controls a {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🗣️ View Current Discussions</h1>
-        <a href="menu.html" class="back-button">← Back to Menu</a>
-        <div id="discussion-list">
-            <!-- Discussions will be loaded here -->
-        </div>
-    </div>
+  <h1>Circle of Discussion</h1>
+  <div id="discussion-container"></div>
 
-    <script type="module">
-        import { supabase } from '/lib/supabase.js';
+  <div class="floating-controls">
+    <button id="expand-all">Expand All</button>
+    <button id="collapse-all">Collapse All</button>
+    <a href="menu.html" class="menu-button">Return to Menu</a>
+  </div>
 
-        const discussionList = document.getElementById('discussion-list');
-        let currentUser;
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
 
-        async function getUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                currentUser = user;
-            } else {
-                window.location.href = 'index.html'; // Redirect if not logged in
-            }
+    const discussionContainer = document.getElementById('discussion-container');
+
+    async function loadDiscussions() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // This is the simplified, robust way. We call the database function.
+      const { data: discussions, error: discussionsError } = await supabase
+        .rpc('get_open_discussions');
+
+      if (discussionsError) {
+        discussionContainer.innerHTML = `<p>Error loading discussions: ${discussionsError.message}</p>`;
+        return;
+      }
+      if (discussions.length === 0) {
+        discussionContainer.innerHTML = `<p>No active discussions at the moment.</p>`;
+        return;
+      }
+
+      const discussionIds = discussions.map(d => d.id);
+      const { data: allComments } = await supabase
+        .from('comments')
+        .select('*')
+        .in('suggestion_id', discussionIds)
+        .order('created_at', { ascending: true });
+
+      discussions.forEach(discussion => {
+        const commentsForThis = allComments ? allComments.filter(c => c.suggestion_id === discussion.id) : [];
+        discussion.lastActivityAt = commentsForThis.length > 0 ? new Date(commentsForThis[commentsForThis.length - 1].created_at) : new Date(discussion.created_at);
+      });
+      discussions.sort((a, b) => b.lastActivityAt - a.lastActivityAt);
+
+      // Clear the container before rendering new content
+      discussionContainer.innerHTML = '';
+
+      for (const discussion of discussions) {
+        const commentsForThisDiscussion = allComments ? allComments.filter(c => c.suggestion_id === discussion.id) : [];
+        
+        const isAuthor = user && user.id === discussion.author_id;
+        // The RPC function guarantees we only get discussions that need an agreement box for the author.
+        const showAgreementBox = isAuthor; 
+
+        const discussionBlock = document.createElement('details');
+        discussionBlock.className = 'discussion-block';
+
+        const summary = document.createElement('summary');
+        summary.textContent = `${discussion.title} `;
+        const summaryMeta = document.createElement('span');
+        summaryMeta.className = 'summary-meta';
+        summaryMeta.textContent = `(${commentsForThisDiscussion.length} comments)`;
+        summary.appendChild(summaryMeta);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'discussion-content';
+
+        const descriptionP = document.createElement('p');
+        descriptionP.textContent = discussion.description;
+
+        const commentButton = document.createElement('button');
+        commentButton.className = 'action-button';
+        commentButton.dataset.action = 'add-comment';
+        commentButton.dataset.discussionId = discussion.id;
+        commentButton.textContent = 'Make a Comment';
+
+        const threadDiv = document.createElement('div');
+        threadDiv.className = 'comment-thread';
+        threadDiv.id = `thread-for-${discussion.id}`;
+
+        contentDiv.appendChild(descriptionP);
+        contentDiv.appendChild(commentButton);
+        contentDiv.appendChild(threadDiv);
+
+        if (showAgreementBox) {
+          const agreementBox = document.createElement('div');
+          agreementBox.className = 'agreement-box';
+          const h3 = document.createElement('h3');
+          h3.textContent = 'Propose an Agreement';
+          const p = document.createElement('p');
+          p.textContent = 'Once submitted, the agreement will be locked and this discussion will move to the voting page.';
+          const label1 = document.createElement('label');
+          label1.htmlFor = `agreement-text-${discussion.id}`;
+          label1.textContent = 'Final Agreement Text:';
+          const textarea = document.createElement('textarea');
+          textarea.id = `agreement-text-${discussion.id}`;
+          textarea.rows = 4;
+          textarea.style.width = '95%';
+          const label2 = document.createElement('label');
+          label2.htmlFor = `polling-hours-${discussion.id}`;
+          label2.textContent = 'Polling Duration (in hours):';
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.id = `polling-hours-${discussion.id}`;
+          input.value = '24';
+          input.min = '1';
+          const br = document.createElement('br');
+          const button = document.createElement('button');
+          button.className = 'action-button';
+          button.dataset.action = 'submit-agreement';
+          button.dataset.discussionId = discussion.id;
+          button.textContent = 'Submit and Start Vote';
+          agreementBox.append(h3, p, label1, textarea, label2, input, br, button);
+          contentDiv.appendChild(agreementBox);
         }
 
-        async function loadDiscussions() {
-            const { data: discussions, error } = await supabase
-                .from('suggestions')
-                .select('*')
-                .eq('status', 'discussion');
+        discussionBlock.appendChild(summary);
+        discussionBlock.appendChild(contentDiv);
+        discussionContainer.appendChild(discussionBlock);
 
-            if (error) {
-                discussionList.innerHTML = `<p style="color:red;">Error loading discussions: ${error.message}</p>`;
-                return;
-            }
+        renderComments(commentsForThisDiscussion, threadDiv);
+      }
+    }
+    
+    function renderComments(commentList, parentElement, parentId = null) {
+      const commentsToRender = commentList.filter(c => c.parent_id === parentId);
+      for (const comment of commentsToRender) {
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        const p = document.createElement('p');
+        p.textContent = comment.content;
+        const button = document.createElement('button');
+        button.className = 'action-button reply-button';
+        button.dataset.action = 'reply';
+        button.dataset.commentId = comment.id;
+        button.textContent = 'Reply';
+        commentDiv.appendChild(p);
+        commentDiv.appendChild(button);
+        parentElement.appendChild(commentDiv);
+        renderComments(commentList, commentDiv, comment.id);
+      }
+    }
 
-            if (discussions.length === 0) {
-                discussionList.innerHTML = '<p>There are no active discussions right now.</p>';
-                return;
-            }
+    document.addEventListener('click', async (e) => {
+      const target = e.target;
+      const actionTarget = target.closest('[data-action]');
 
-            discussionList.innerHTML = '';
-            for (const discussion of discussions) {
-                const discussionEl = document.createElement('div');
-                discussionEl.className = 'discussion-item';
-                // THIS IS THE FIX: Changed suggestion_text to suggestion
-                discussionEl.innerHTML = `
-                    <h3>${discussion.suggestion}</h3>
-                    <p>Proposed by: A community member</p>
-                    <button class="propose-btn" data-id="${discussion.id}" data-text="${discussion.suggestion}">Propose as Agreement</button>
-                    <p class="status" id="status-${discussion.id}">Once submitted, this discussion will move to the voting page.</p>
-                `;
-                discussionList.appendChild(discussionEl);
-            }
+      if (target.id === 'expand-all') {
+        document.querySelectorAll('details.discussion-block').forEach(d => d.open = true);
+        return;
+      }
+      if (target.id === 'collapse-all') {
+        document.querySelectorAll('details.discussion-block').forEach(d => d.open = false);
+        return;
+      }
 
-            document.querySelectorAll('.propose-btn').forEach(button => {
-                button.addEventListener('click', handleProposeClick);
-            });
+      if (!actionTarget) return;
+
+      const action = actionTarget.dataset.action;
+      
+      if (action === 'add-comment' || action === 'reply') {
+        const parentElement = action === 'reply' ? actionTarget.parentElement : actionTarget.nextElementSibling;
+        const parentId = action === 'reply' ? actionTarget.dataset.commentId : null;
+        const discussionId = parentElement.closest('.discussion-content').querySelector('[data-action="add-comment"]').dataset.discussionId;
+        showCommentBox(parentElement, discussionId, parentId);
+      }
+      
+      if (action === 'submit-agreement') {
+        const discussionId = actionTarget.dataset.discussionId;
+        const agreementText = document.getElementById(`agreement-text-${discussionId}`).value;
+        const pollingHours = parseInt(document.getElementById(`polling-hours-${discussionId}`).value, 10);
+
+        if (!agreementText.trim()) return alert('Agreement text cannot be empty.');
+        if (isNaN(pollingHours) || pollingHours <= 0) return alert('Polling duration must be a positive number of hours.');
+        
+        const { error } = await supabase.rpc('submit_agreement_for_voting', {
+          suggestion_id_in: discussionId,
+          agreement_text_in: agreementText,
+          polling_hours_in: pollingHours
+        });
+
+        if (error) { 
+          alert(`Error submitting agreement: ${error.message}`); 
+        } else { 
+          alert('Agreement submitted successfully! This discussion will now move to the voting page.');
+          location.reload();
         }
+      }
+    });
 
-        async function handleProposeClick(event) {
-            if (!currentUser) {
-                alert('Error: User not found. Please log in again.');
-                return;
-            }
+    function showCommentBox(parentElement, discussionId, parentCommentId = null) {
+      if (parentElement.querySelector('.comment-box')) {
+          parentElement.querySelector('.comment-box').remove();
+      }
+      const box = document.createElement('div');
+      box.className = 'comment-box';
+      const textarea = document.createElement('textarea');
+      textarea.placeholder = 'Type your thoughts...';
+      const button = document.createElement('button');
+      button.className = 'action-button';
+      button.textContent = 'Submit';
+      button.onclick = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return alert('You must be logged in to comment.');
+        const content = textarea.value;
+        if (!content.trim()) return;
+        const { error } = await supabase.from('comments').insert({ suggestion_id: discussionId, parent_id: parentCommentId, content: content, author_id: user.id });
+        if (error) { alert(`Error: ${error.message}`); } 
+        else { location.reload(); }
+      };
+      box.appendChild(textarea);
+      box.appendChild(button);
+      parentElement.appendChild(box);
+      textarea.focus();
+    }
 
-            const button = event.target;
-            const suggestionId = button.dataset.id;
-            const agreementText = button.dataset.text;
-            const statusEl = document.getElementById(`status-${suggestionId}`);
-
-            button.disabled = true;
-            statusEl.textContent = 'Submitting...';
-
-            const endTime = new Date();
-            endTime.setHours(endTime.getHours() + 24);
-
-            const { error: insertError } = await supabase
-                .from('agreements')
-                .insert({
-                    agreement_text: agreementText,
-                    proposed_by: currentUser.id,
-                    end_time: endTime.toISOString(),
-                    status: 'polling'
-                });
-
-            if (insertError) {
-                statusEl.textContent = `Error: ${insertError.message}`;
-                statusEl.style.color = 'red';
-                button.disabled = false;
-                console.error(insertError);
-                return;
-            }
-
-            const { error: updateError } = await supabase
-                .from('suggestions')
-                .update({ status: 'complete' })
-                .eq('id', suggestionId);
-            
-            if (updateError) {
-                statusEl.textContent = `Agreement created, but failed to update discussion status: ${updateError.message}`;
-                return;
-            }
-
-            statusEl.textContent = '✅ Success! Moved to voting page.';
-            statusEl.style.color = 'green';
-        }
-
-        async function init() {
-            await getUser();
-            if (currentUser) {
-                await loadDiscussions();
-            }
-        }
-
-        init();
-    </script>
+    loadDiscussions();
+  </script>
 </body>
-</html>
