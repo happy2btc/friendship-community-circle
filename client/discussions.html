@@ -64,11 +64,12 @@
     import { supabase } from '/lib/supabase.js';
 
     const discussionContainer = document.getElementById('discussion-container');
+    let currentUser; // Variable to hold the user object
 
     async function loadDiscussions() {
       const { data: { user } } = await supabase.auth.getUser();
+      currentUser = user; // Store the user object
 
-      // This is the simplified, robust way. We call the database function.
       const { data: discussions, error: discussionsError } = await supabase
         .rpc('get_open_discussions');
 
@@ -94,14 +95,12 @@
       });
       discussions.sort((a, b) => b.lastActivityAt - a.lastActivityAt);
 
-      // Clear the container before rendering new content
       discussionContainer.innerHTML = '';
 
       for (const discussion of discussions) {
         const commentsForThisDiscussion = allComments ? allComments.filter(c => c.suggestion_id === discussion.id) : [];
         
         const isAuthor = user && user.id === discussion.author_id;
-        // The RPC function guarantees we only get discussions that need an agreement box for the author.
         const showAgreementBox = isAuthor; 
 
         const discussionBlock = document.createElement('details');
@@ -218,17 +217,21 @@
       }
       
       if (action === 'submit-agreement') {
-        const discussionId = actionTarget.dataset.discussionId;
+        if (!currentUser) return alert('You must be logged in to submit an agreement.');
+
+        const discussionId = parseInt(actionTarget.dataset.discussionId, 10);
         const agreementText = document.getElementById(`agreement-text-${discussionId}`).value;
         const pollingHours = parseInt(document.getElementById(`polling-hours-${discussionId}`).value, 10);
 
         if (!agreementText.trim()) return alert('Agreement text cannot be empty.');
         if (isNaN(pollingHours) || pollingHours <= 0) return alert('Polling duration must be a positive number of hours.');
         
+        // THIS IS THE FIX: Reordering the keys to match the database's expectation.
         const { error } = await supabase.rpc('submit_agreement_for_voting', {
-          suggestion_id_in: discussionId,
           agreement_text_in: agreementText,
-          polling_hours_in: pollingHours
+          polling_hours_in: pollingHours,
+          proposer_id_in: currentUser.id,
+          suggestion_id_in: discussionId
         });
 
         if (error) { 
@@ -269,3 +272,4 @@
     loadDiscussions();
   </script>
 </body>
+</html>
