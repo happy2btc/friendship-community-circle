@@ -1,125 +1,75 @@
 <!DOCTYPE html>
-<html> 
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Affirm Your Values – New Paradigm Friendship Community</title>
-  <script type="module" src="/lib/supabase.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      background-color: #e6f7f2;
-      color: #333;
-      margin: 40px;
-      font-size: 1.2em;
-    }
-    h1, h2, p {
-      text-align: center;
-    }
-    .affirm-box {
-      background-color: #fff;
-      border: 1px solid #a3d9c5;
-      border-radius: 12px;
-      padding: 30px;
-      margin: 40px auto;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      width: 80%;
-      max-width: 700px;
-    }
-    .affirm-box label {
-      display: block;
-      margin: 10px 0;
-    }
-    button {
-      background-color: #2e8b57;
-      color: #fff;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      display: block;
-      margin: 20px auto;
-    }
-    #affirmStatus {
-      text-align: center;
-      font-style: italic;
-      margin-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Affirm Your Values</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; margin: 40px; text-align: center; }
+        .container { max-width: 700px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        h1 { color: #6b4f1d; }
+        ul { list-style-type: none; padding: 0; text-align: left; display: inline-block; }
+        li { margin-bottom: 1rem; font-size: 1.1em; }
+        button { background-color: #2e8b57; color: #fff; padding: 15px 30px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.2em; }
+        button:disabled { background-color: #ccc; }
+        #status { margin-top: 1rem; font-weight: bold; }
+    </style>
 </head>
-<body> 
-    <h1>🌱 Affirm Your Values</h1>
-  <p id="introText">Welcome. The final step is to affirm the values of our community.</p>
+<body>
+    <div class="container">
+        <h1>Our Community Values</h1>
+        <p>By entering, you affirm your commitment to these principles:</p>
+        <ul>
+            <li>🌿 **Honesty:** We communicate openly and truthfully.</li>
+            <li>🤝 **Respect:** We honor each other's perspectives and boundaries.</li>
+            <li>✨ **Integrity:** We act in alignment with our values, even when no one is watching.</li>
+            <li>🌱 **Growth:** We are committed to personal and collective learning.</li>
+            <li>❤️ **Compassion:** We approach ourselves and others with kindness and understanding.</li>
+        </ul>
+        <button id="affirm-button">I Affirm These Values</button>
+        <p id="status"></p>
+    </div>
 
-  <div class="affirm-box" id="affirmBox">
-    <h2>🧭 What Are Your Values?</h2>
-    <form id="affirmForm">
-      <label><input type="checkbox" name="value" value="authenticity"> I value authenticity in how I show up.</label>
-      <label><input type="checkbox" name="value" value="collaboration"> I value collaboration over competition.</label>
-      <label><input type="checkbox" name="value" value="belonging"> I value creating belonging for others.</label>
-      <label><input type="checkbox" name="value" value="transparency"> I value transparent decision-making.</label>
-      <label><input type="checkbox" name="value" value="accountability"> I value accountability as a form of care.</label>
-      <label><input type="checkbox" name="value" value="ritual"> I value ritual and emotional safety in how we gather.</label>
-    </form>
-    <button id="affirmButton">✅ Affirm & Continue</button>
-    <p id="affirmStatus"></p>
-  </div>
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
 
-  <script type="module">
-    import { supabase } from '/lib/supabase.js';
+        const affirmButton = document.getElementById('affirm-button');
+        const statusEl = document.getElementById('status');
+        let currentUser;
 
-    const affirmButton = document.getElementById('affirmButton');
-    const affirmStatus = document.getElementById('affirmStatus');
-    const introText = document.getElementById('introText');
-    const affirmBox = document.getElementById('affirmBox');
+        async function checkUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                // If no user is logged in, send them back to the start
+                window.location.href = 'index.html';
+            }
+            currentUser = user;
+        }
 
-    // Check if user is logged in and has already affirmed
-    (async function checkAffirmation() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: profile, error } = await supabase
+        affirmButton.addEventListener('click', async () => {
+            affirmButton.disabled = true;
+            statusEl.textContent = 'Recording your affirmation...';
+
+            // We'll save the current date as the affirmation text
+            const affirmationValue = new Date().toISOString();
+
+            const { error } = await supabase
                 .from('profiles')
-                .select('affirmation_text')
-                .eq('id', user.id)
-                .single();
-            
-            if (profile && profile.affirmation_text) {
-                // User has already affirmed, send them directly to the main menu.
+                .update({ affirmation_text: affirmationValue })
+                .eq('id', currentUser.id);
+
+            if (error) {
+                statusEl.textContent = `Error: ${error.message}`;
+                statusEl.style.color = 'red';
+                affirmButton.disabled = false;
+            } else {
+                // Success! Redirect to the main menu.
                 window.location.href = 'menu.html';
             }
-        }
-    })();
+        });
 
-    affirmButton.addEventListener('click', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        affirmStatus.innerText = "Could not find user. Please log in again.";
-        affirmStatus.style.color = 'red';
-        return;
-      }
-
-      const checkboxes = document.querySelectorAll('input[name="value"]:checked');
-      if (checkboxes.length === 0) {
-        affirmStatus.innerText = "🌸 Please affirm at least one value.";
-        return;
-      }
-
-      const affirmedValues = Array.from(checkboxes).map(cb => cb.value);
-      const affirmationText = `Affirmed: ${affirmedValues.join(", ")}`;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ affirmation_text: affirmationText })
-        .eq('id', user.id);
-
-      if (error) {
-        affirmStatus.innerText = `Error saving affirmation: ${error.message}`;
-        affirmStatus.style.color = 'red';
-      } else {
-        // Success! Redirect to the main menu.
-        window.location.href = 'menu.html';
-      }
-    });
-  </script>
+        // Run the user check as soon as the page loads
+        checkUser();
+    </script>
 </body>
 </html>
