@@ -1,4 +1,3 @@
-// filepath: client/agreements.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,119 +5,192 @@
     <title>Proposed Agreements & Voting</title>
     <script type="module" src="/lib/supabase.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #e6f7f2; color: #333; margin: 40px; }
-        h1, h2 { text-align: center; color: #2e8b57; }
-        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        textarea, input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background-color: #2e8b57; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
-        button:hover { background-color: #3a9d6b; }
-        #status { text-align: center; margin-top: 15px; font-weight: bold; }
-        .agreement-list { list-style-type: none; padding: 0; }
-        .agreement-item { background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
-        .vote-buttons button { margin-right: 10px; }
+        body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+        h1 { text-align: center; color: #6b4f1d; }
+        .agreements-container { max-width: 800px; margin: auto; }
+        .agreement-card { background: #fff; border: 1px solid #d8bfa3; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .agreement-card p { margin: 0.5rem 0; line-height: 1.5; font-size: 1.1em; }
+        .agreement-meta { font-size: 0.9em; color: #666; }
+        .vote-buttons button { margin-right: 10px; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+        .vote-for { background-color: #28a745; color: white; }
+        .vote-against { background-color: #dc3545; color: white; }
+        .withdraw-vote { background-color: #6c757d; color: white; }
+        .menu-button { display: block; width: fit-content; margin: 3rem auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>⚖️ Proposed Agreements & Voting</h1>
-        <a href="menu.html">← Back to Menu</a>
-
-        <hr>
-
-        <h2>Propose a New Agreement</h2>
-        <div id="proposal-form">
-            <div class="form-group">
-                <label for="agreement-text">Proposed Agreement Text:</label>
-                <textarea id="agreement-text" rows="4"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="duration">Polling Duration (in hours):</label>
-                <input type="number" id="duration" value="24">
-            </div>
-            <button id="submit-agreement">Submit and Start Vote</button>
-            <p id="status"></p>
-        </div>
-
-        <hr>
-
-        <h2>Currently Polling</h2>
-        <ul id="agreement-list" class="agreement-list">
-            <!-- Agreements will be loaded here by JavaScript -->
-        </ul>
+    <h1>⚖️ Proposed Agreements & Voting</h1>
+    <div id="agreements-container">
+        <p>Loading agreements for voting...</p>
     </div>
+    <a href="menu.html" class="menu-button">← Back to Menu</a>
+<script type="module">
+import { supabase } from '/lib/supabase.js';
 
-    <script type="module">
-        import { supabase } from '/lib/supabase.js';
+const container = document.getElementById('agreements-container');
+let currentUser;
 
-        const submitButton = document.getElementById('submit-agreement');
-        const statusEl = document.getElementById('status');
-        const agreementTextEl = document.getElementById('agreement-text');
-        const durationEl = document.getElementById('duration');
-        const agreementListEl = document.getElementById('agreement-list');
+async function init() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
+    currentUser = user;
+    await loadAgreements();
+}
 
-        // Get the current logged-in user
-        let currentUser;
-        async function getUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                currentUser = user;
-            } else {
-                window.location.href = 'index.html'; // Redirect if not logged in
-            }
-        }
+async function loadAgreements() {
+    const { data: agreements, error } = await supabase
+        .rpc('get_all_polling_agreements_with_authors');
 
-        submitButton.addEventListener('click', async () => {
-            if (!currentUser) {
-                statusEl.textContent = 'Error: User not found. Please log in again.';
-                statusEl.style.color = 'red';
-                return;
-            }
+    if (error) {
+        container.innerHTML = `<p style="color:red;">Error loading agreements: ${error.message}</p>`;
+        return;
+    }
 
-            const agreementText = agreementTextEl.value.trim();
-            const durationHours = parseInt(durationEl.value, 10);
+    if (agreements.length === 0) {
+        container.innerHTML = '<p>There are no agreements being voted on right now.</p>';
+        return;
+    }
 
-            if (!agreementText || !durationHours) {
-                statusEl.textContent = 'Please fill out all fields.';
-                statusEl.style.color = 'red';
-                return;
-            }
+    // Fetch all votes by the current user for these agreements
+    const agreementIds = agreements.map(a => a.id);
+    const { data: votesData } = await supabase
+        .from('votes')
+        .select('agreement_id, vote')
+        .in('agreement_id', agreementIds)
+        .eq('user_id', currentUser.id);
 
-            const endTime = new Date();
-            endTime.setHours(endTime.getHours() + durationHours);
-
-            statusEl.textContent = 'Submitting...';
-            statusEl.style.color = 'black';
-
-            const { error } = await supabase
-                .from('agreements')
-                .insert({
-                    agreement_text: agreementText,
-                    proposed_by: currentUser.id, // This is the fix: using the correct user ID
-                    end_time: endTime.toISOString(),
-                    status: 'polling'
-                });
-
-            if (error) {
-                statusEl.textContent = `Error submitting agreement: ${error.message}`;
-                statusEl.style.color = 'red';
-                console.error(error);
-            } else {
-                statusEl.textContent = '✅ Agreement submitted successfully!';
-                statusEl.style.color = 'green';
-                agreementTextEl.value = '';
-                // loadAgreements(); // Refresh the list
-            }
+    // Map: agreement_id -> vote
+    const userVotes = {};
+    if (votesData) {
+        votesData.forEach(v => {
+            userVotes[v.agreement_id] = v.vote;
         });
+    }
 
-        // Initial load
-        async function init() {
-            await getUser();
-            // await loadAgreements(); // You can uncomment this when loadAgreements is built
+    container.innerHTML = '';
+
+    for (const agreement of agreements) {
+        const card = document.createElement('div');
+        card.className = 'agreement-card';
+
+        const proposerName = agreement.proposer_username || 'An unknown member';
+        const endTime = new Date(agreement.end_time);
+
+        // Determine user's vote for this agreement
+        const userVote = userVotes[agreement.id];
+        let voteButtonsHtml = '';
+        if (userVote === 'for') {
+            voteButtonsHtml = `
+                <div style="margin-bottom:10px;color:#28a745;font-weight:bold;">You voted FOR ✅</div>
+                <button class="vote-against" data-agreement-id="${agreement.id}" data-vote="against">Change to Against</button>
+                <button class="withdraw-vote" data-agreement-id="${agreement.id}" data-action="withdraw">Withdraw Vote</button>
+            `;
+        } else if (userVote === 'against') {
+            voteButtonsHtml = `
+                <div style="margin-bottom:10px;color:#dc3545;font-weight:bold;">You voted AGAINST ❌</div>
+                <button class="vote-for" data-agreement-id="${agreement.id}" data-vote="for">Change to For</button>
+                <button class="withdraw-vote" data-agreement-id="${agreement.id}" data-action="withdraw">Withdraw Vote</button>
+            `;
+        } else {
+            voteButtonsHtml = `
+                <button class="vote-for" data-agreement-id="${agreement.id}" data-vote="for">Vote For</button>
+                <button class="vote-against" data-agreement-id="${agreement.id}" data-vote="against">Vote Against</button>
+            `;
         }
-        init();
 
-    </script>
+        card.innerHTML = `
+            <p><strong>${agreement.agreement_text}</strong></p>
+            <p class="agreement-meta">Proposed by: ${proposerName}</p>
+            <p class="agreement-meta">Voting ends: ${endTime.toLocaleString()}</p>
+            <div class="vote-buttons" id="vote-area-${agreement.id}">
+                ${voteButtonsHtml}
+            </div>
+        `;
+        container.appendChild(card);
+    }
+}
+
+container.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (target.tagName !== 'BUTTON' || !target.dataset.agreementId || target.disabled) return;
+
+    const agreementId = target.dataset.agreementId;
+    const voteArea = document.getElementById(`vote-area-${agreementId}`);
+
+    // Handle withdraw action by setting vote to NULL (if allowed)
+    if (target.dataset.action === 'withdraw') {
+        voteArea.innerHTML = 'Withdrawing your vote...';
+        console.log('Attempting to withdraw vote for agreement:', agreementId, 'user:', currentUser.id);
+
+        const { error: updateError } = await supabase
+            .from('votes')
+            .update({ vote: null })
+            .eq('agreement_id', agreementId)
+            .eq('user_id', currentUser.id);
+
+        if (updateError) {
+            voteArea.innerHTML = `<span style="color:red">Error: ${updateError.message}</span>`;
+            console.error('Withdraw update error:', updateError);
+            return;
+        }
+        console.log('Vote withdrawn (set to NULL) successfully.');
+        await loadAgreements();
+        return;
+    }
+
+    // Handle voting actions
+    const voteValue = target.dataset.vote;
+    voteArea.innerHTML = 'Recording your vote...';
+    console.log('Recording vote:', voteValue, 'for agreement:', agreementId, 'user:', currentUser.id);
+
+    // Always try to update first
+    const { data: updateData, error: updateError } = await supabase
+        .from('votes')
+        .update({ vote: voteValue })
+        .eq('agreement_id', agreementId)
+        .eq('user_id', currentUser.id);
+
+    if (updateError) {
+        voteArea.innerHTML = `<span style="color:red">Error: ${updateError.message}</span>`;
+        console.error('Update vote error:', updateError);
+        return;
+    }
+
+    // If no row was updated, try to insert
+    if (!updateData || updateData.length === 0) {
+        console.log('No existing vote to update, inserting new vote.');
+        const { error: insertError } = await supabase
+            .from('votes')
+            .insert({
+                agreement_id: agreementId,
+                user_id: currentUser.id,
+                vote: voteValue
+            });
+        if (insertError) {
+            // If duplicate key error, update the existing row again
+            if (insertError.code === '23505') {
+                console.log('Duplicate key on insert, updating existing row.');
+                await supabase
+                    .from('votes')
+                    .update({ vote: voteValue })
+                    .eq('agreement_id', agreementId)
+                    .eq('user_id', currentUser.id);
+            } else {
+                voteArea.innerHTML = `<span style="color:red">Error: ${insertError.message}</span>`;
+                console.error('Insert vote error:', insertError);
+                return;
+            }
+        }
+    }
+
+    await loadAgreements();
+});
+
+init();
+</script>
+
 </body>
 </html>

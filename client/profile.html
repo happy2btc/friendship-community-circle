@@ -5,70 +5,44 @@
     <title>My Profile</title>
     <script type="module" src="/lib/supabase.js"></script>
     <style>
-        body { font-family: sans-serif; background-color: #e6f7f2; color: #333; margin: 40px; display: flex; justify-content: center; }
-        .container { max-width: 600px; width: 100%; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2e8b57; }
+        body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; margin: 40px; display: flex; justify-content: center; }
+        .container { max-width: 600px; width: 100%; background-color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        h1 { text-align: center; color: #6b4f1d; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background-color: #2e8b57; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; width: 100%; }
+        input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1.1em; }
+        button { background-color: #2e8b57; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 1em; width: 100%; }
         button:hover { background-color: #3a9d6b; }
         button:disabled { background-color: #ccc; }
         #status { text-align: center; margin-top: 15px; font-weight: bold; }
-        a { color: #2e8b57; }
-
-        /* Intuitive Avatar Styles */
-        .avatar-upload {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 20px auto;
-            border-radius: 50%;
-            border: 4px solid #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: pointer;
-        }
-        #avatar-image {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            background-color: #eee;
-        }
-        .avatar-upload .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.5);
+        
+        .menu-button {
+            display: block;
+            width: fit-content;
+            margin: 2rem auto 0 auto;
+            background-color: #6c757d;
             color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-            font-size: 0.9em;
+            padding: 10px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
             text-align: center;
         }
-        .avatar-upload:hover .overlay {
-            opacity: 1;
-        }
-        #avatar-input {
-            display: none; /* Hide the actual file input */
-        }
+        .menu-button:hover { background-color: #5a6268; }
+
+        .avatar-upload { position: relative; width: 150px; height: 150px; margin: 0 auto 20px auto; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; }
+        #avatar-image { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background-color: #eee; }
+        .avatar-upload .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: rgba(0, 0, 0, 0.5); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; font-size: 0.9em; text-align: center; }
+        .avatar-upload:hover .overlay { opacity: 1; }
+        #avatar-input { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>👤 My Profile</h1>
-        <a href="menu.html">← Back to Menu</a>
         <hr>
 
         <form id="profile-form">
-            <!-- The new intuitive avatar upload section -->
             <div class="form-group">
                 <label for="avatar-input">Profile Picture</label>
                 <label for="avatar-input" class="avatar-upload">
@@ -82,17 +56,23 @@
             </div>
 
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="e.g., CircleFriend">
-            </div>
-            <div class="form-group">
                 <label for="email">Email</label>
                 <input type="text" id="email" disabled>
+            </div>
+            <div class="form-group">
+                <label for="full-name">Full Name</label>
+                <input type="text" id="full-name" placeholder="e.g., TC Townsend">
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" placeholder="(555) 555-5555">
             </div>
 
             <button type="submit" id="update-button">Update Profile</button>
             <p id="status"></p>
         </form>
+        
+        <a href="menu.html" class="menu-button">← Back to Menu</a>
     </div>
 
     <script type="module">
@@ -101,7 +81,8 @@
         const profileForm = document.getElementById('profile-form');
         const updateButton = document.getElementById('update-button');
         const statusEl = document.getElementById('status');
-        const usernameEl = document.getElementById('username');
+        const fullNameEl = document.getElementById('full-name');
+        const phoneEl = document.getElementById('phone');
         const emailEl = document.getElementById('email');
         const avatarInput = document.getElementById('avatar-input');
         const avatarImage = document.getElementById('avatar-image');
@@ -120,24 +101,34 @@
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('username, avatar_url')
+                .select('full_name, phone, avatar_url')
                 .eq('id', user.id)
                 .single();
 
+            if (error) {
+                console.error('Error loading profile:', error);
+                avatarImage.src = 'https://via.placeholder.com/150';
+                return;
+            }
+
             if (data) {
                 currentProfile = data;
-                usernameEl.value = data.username || '';
-                if (data.avatar_url) {
-                    // Construct the public URL and add a timestamp to prevent caching issues
-                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(data.avatar_url);
-                    avatarImage.src = `${publicUrl}?t=${new Date().getTime()}`;
+                fullNameEl.value = data.full_name || '';
+                phoneEl.value = data.phone || '';
+                
+                // --- FINAL, SIMPLIFIED FIX ---
+                const imageUrl = data.avatar_url;
+
+                if (imageUrl && imageUrl.trim() !== '') {
+                    // If the URL exists, use it directly. Add a timestamp to prevent caching issues.
+                    avatarImage.src = `${imageUrl}?t=${new Date().getTime()}`;
                 } else {
-                    avatarImage.src = 'https://via.placeholder.com/150'; // Default placeholder
+                    // Otherwise, use a placeholder.
+                    avatarImage.src = 'https://via.placeholder.com/150';
                 }
             }
         }
 
-        // Show a preview of the new image when selected
         avatarInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -155,29 +146,31 @@
             statusEl.textContent = 'Updating...';
             statusEl.style.color = 'black';
 
-            const newUsername = usernameEl.value.trim();
+            const newFullName = fullNameEl.value.trim();
+            const newPhone = phoneEl.value.trim();
             const file = avatarInput.files[0];
             let newAvatarPath = currentProfile.avatar_url;
 
             try {
-                // 1. Upload new avatar if one was selected
                 if (file) {
                     const fileExt = file.name.split('.').pop();
                     const filePath = `${currentUser.id}/${Date.now()}.${fileExt}`;
 
                     const { error: uploadError } = await supabase.storage
                         .from('avatars')
-                        .upload(filePath, file);
+                        .upload(filePath, file, { upsert: true });
 
                     if (uploadError) throw uploadError;
-                    newAvatarPath = filePath;
+                    
+                    // --- FIX: Store only the path for new uploads ---
+                    newAvatarPath = filePath; 
                 }
 
-                // 2. Update the profile table with new username and/or avatar URL
                 const { error: updateError } = await supabase
                     .from('profiles')
                     .update({
-                        username: newUsername,
+                        full_name: newFullName,
+                        phone: newPhone,
                         avatar_url: newAvatarPath
                     })
                     .eq('id', currentUser.id);
@@ -186,8 +179,11 @@
 
                 statusEl.textContent = '✅ Profile updated successfully!';
                 statusEl.style.color = 'green';
-                // Reload the profile to show the final image from storage
-                await loadProfile();
+                
+                // After a successful update, we need to reload the profile.
+                // The logic now needs to handle both old full URLs and new paths.
+                // The most robust way is to just reload the page.
+                window.location.reload();
 
             } catch (error) {
                 statusEl.textContent = `Error: ${error.message}`;
