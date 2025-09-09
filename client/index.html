@@ -120,34 +120,40 @@
       });
 
       if (loginError) {
-        // If login fails, assume it's a new user and try to sign them up
         if (loginError.message === 'Invalid login credentials') {
-          if (!name) {
-            formStatus.textContent = '⚠️ Please provide your name to sign up.';
-            formStatus.style.color = 'red';
-            return;
-          }
-          
-          let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-              data: {
-                full_name: name,
-                phone: phone // Save the optional phone number
-              }
-            }
-          });
+          // This could be a typo OR a new user.
+          // Let's check if they provided a name, suggesting they want to sign up.
+          if (name) {
+            // They provided a name, so let's try to sign them up.
+            let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: email,
+              password: password,
+              options: { data: { full_name: name, phone: phone } }
+            });
 
-          if (signUpError) {
-            formStatus.textContent = `⚠️ Error: ${signUpError.message}`;
-            formStatus.style.color = 'red';
+            if (signUpError) {
+              if (signUpError.message.includes('User already registered')) {
+                // THIS IS THE KEY FIX: They provided a name, but the email is taken.
+                // This means they just typed their password wrong.
+                formStatus.textContent = '⚠️ That email is already registered. Please check your password.';
+                formStatus.style.color = 'red';
+              } else {
+                // A different, unexpected sign-up error.
+                formStatus.textContent = `⚠️ Error: ${signUpError.message}`;
+                formStatus.style.color = 'red';
+              }
+            } else {
+              // SIGN UP SUCCESS: Immediately redirect to affirm page
+              window.location.href = 'affirm.html';
+            }
           } else {
-            // SIGN UP SUCCESS: Immediately redirect to affirm page
-            window.location.href = 'affirm.html';
+            // They did NOT provide a name and the login failed.
+            // This is a simple "wrong password" or "wrong email" case.
+            formStatus.textContent = '⚠️ Invalid login. Please check your email and password.';
+            formStatus.style.color = 'red';
           }
         } else {
-          // A different login error occurred
+          // A different login error occurred (e.g., network issue).
           formStatus.textContent = `⚠️ Error: ${loginError.message}`;
           formStatus.style.color = 'red';
         }
