@@ -18,9 +18,18 @@
       justify-content: center;
       min-height: 100vh;
     }
-    h1 {
+    .main-title {
+      font-size: 2.5em; /* Larger font for the main title */
+      font-weight: bold;
       color: #6b4f1d;
       text-align: center;
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #6b4f1d;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: normal;
     }
     form {
       background-color: #fff;
@@ -66,10 +75,15 @@
   </style>
 </head>
 <body>
-  <h1>🌿 Welcome to the Circle</h1>
-  <form id="sign-up-form">
+  <div class="main-title">The Fellowship Community Circle</div>
+  <h2>🌿 Welcome to the Circle</h2>
+  
+  <form id="auth-form">
     <label for="name">🪶 Your Name</label>
-    <input type="text" id="name" name="name" required>
+    <input type="text" id="name" name="name">
+
+    <label for="phone">📱 Phone (optional)</label>
+    <input type="tel" id="phone" name="phone">
 
     <label for="email">📬 Email Address</label>
     <input type="email" id="email" name="email" required>
@@ -77,25 +91,19 @@
     <label for="password">🔑 Password</label>
     <input type="password" id="password" name="password" required minlength="6">
 
-    <label for="phone">📱 Phone Number (optional)</label>
-    <input type="tel" id="phone" name="phone">
-
-    <label for="wallet_address">💠 Wallet Address (optional)</label>
-    <input type="text" id="wallet_address" name="wallet_address">
-
-    <button type="submit">Step Into the Circle</button>
+    <button type="submit">Enter the Circle</button>
     <div id="form-status"></div>
   </form>
 
   <script type="module">
     import { supabase } from './lib/supabase.js';
 
-    const signUpForm = document.getElementById('sign-up-form');
+    const authForm = document.getElementById('auth-form');
     const formStatus = document.getElementById('form-status');
 
-    signUpForm.addEventListener('submit', async (event) => {
+    authForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      formStatus.textContent = 'Processing...';
+      formStatus.textContent = 'Entering...';
       formStatus.style.color = '#333';
 
       const form = event.target;
@@ -104,23 +112,29 @@
       const password = formData.get('password');
       const name = formData.get('name');
       const phone = formData.get('phone');
-      const walletAddress = formData.get('wallet_address');
 
+      // First, try to log in
       let { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
 
       if (loginError) {
+        // If login fails, assume it's a new user and try to sign them up
         if (loginError.message === 'Invalid login credentials') {
+          if (!name) {
+            formStatus.textContent = '⚠️ Please provide your name to sign up.';
+            formStatus.style.color = 'red';
+            return;
+          }
+          
           let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
               data: {
                 full_name: name,
-                phone: phone,
-                wallet_address: walletAddress,
+                phone: phone // Save the optional phone number
               }
             }
           });
@@ -129,37 +143,28 @@
             formStatus.textContent = `⚠️ Error: ${signUpError.message}`;
             formStatus.style.color = 'red';
           } else {
-            formStatus.textContent = '✅ Success! Please check your email for a confirmation link to activate your account.';
-            formStatus.style.color = 'green';
-            form.reset();
+            // SIGN UP SUCCESS: Immediately redirect to affirm page
+            window.location.href = 'affirm.html';
           }
         } else {
+          // A different login error occurred
           formStatus.textContent = `⚠️ Error: ${loginError.message}`;
           formStatus.style.color = 'red';
         }
       } else {
-        // Login was successful, check for affirmation before redirecting
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
+        // LOGIN SUCCESS: Check if they have affirmed
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('affirmation_text')
-            .eq('id', user.id)
+            .eq('id', loginData.user.id)
             .single();
 
-          if (profileError && profileError.code !== 'PGRST116') { // Ignore error for no rows found
-            formStatus.textContent = `⚠️ Could not verify affirmation: ${profileError.message}`;
-            formStatus.style.color = 'red';
-          } else {
-            if (profile && profile.affirmation_text) {
-              window.location.href = 'menu.html';
-            } else {
-              window.location.href = 'affirm.html';
-            }
-          }
-        } else {
-            // Fallback, should not be reached
+        if (profile && profile.affirmation_text) {
+            // They have affirmed, go to menu
             window.location.href = 'menu.html';
+        } else {
+            // They have not affirmed, go to affirm page
+            window.location.href = 'affirm.html';
         }
       }
     });
