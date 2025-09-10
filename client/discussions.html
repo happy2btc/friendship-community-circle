@@ -81,7 +81,7 @@
       const { data: { user } } = await supabase.auth.getUser();
       currentUser = user;
 
-      // Fetch discussions
+      // Fetch discussions (all, including status)
       const { data: discussions, error: discussionsError } = await supabase
         .rpc('get_all_open_discussions_with_authors');
       console.log('Discussions:', discussions);
@@ -95,7 +95,9 @@
         return;
       }
 
-      const discussionIds = discussions.map(d => d.id);
+      // Filter only open discussions (in case backend returns all)
+      const openDiscussions = discussions.filter(d => d.status === 'open');
+      const discussionIds = openDiscussions.map(d => d.id);
 
       // Fetch all comments for these discussions
       const { data: allComments, error: commentsError } = await supabase
@@ -108,7 +110,7 @@
       // Gather all unique author_ids from discussions and comments
       const authorIds = [
         ...new Set([
-          ...discussions.map(d => (d.author_id || '').trim().toLowerCase()),
+          ...openDiscussions.map(d => (d.author_id || '').trim().toLowerCase()),
           ...(allComments || []).map(c => (c.author_id || '').trim().toLowerCase())
         ])
       ];
@@ -128,14 +130,14 @@
       });
       console.log('Profiles Lookup:', profiles);
 
-      // --- SORT DISCUSSIONS BY LATEST COMMENT OR OWN CREATED_AT ---
+      // Sort discussions by latest comment or own created_at
       function getLatestCommentTime(discussionId, comments) {
         const relevant = comments.filter(c => c.suggestion_id === discussionId);
-        if (relevant.length === 0) return new Date(discussions.find(d => d.id === discussionId).created_at).getTime();
+        if (relevant.length === 0) return new Date(openDiscussions.find(d => d.id === discussionId).created_at).getTime();
         return Math.max(...relevant.map(c => new Date(c.created_at).getTime()));
       }
 
-      discussions.sort((a, b) => {
+      openDiscussions.sort((a, b) => {
         const aLatest = getLatestCommentTime(a.id, allComments);
         const bLatest = getLatestCommentTime(b.id, allComments);
         return bLatest - aLatest; // descending
@@ -143,7 +145,7 @@
 
       discussionContainer.innerHTML = '';
 
-      for (const discussion of discussions) {
+      for (const discussion of openDiscussions) {
         if (!discussion.title) continue;
 
         const normalizedAuthorId = (discussion.author_id || '').trim().toLowerCase();
@@ -318,6 +320,18 @@
         if (!agreementText.trim()) return alert('Agreement text cannot be empty.');
         if (isNaN(pollingHours) || pollingHours <= 0) return alert('Polling duration must be a positive number of hours.');
 
+        // Update status to 'voting' when submitting agreement
+        const { error: updateError } = await supabase
+          .from('suggestions')
+          .update({ status: 'voting' })
+          .eq('id', discussionId);
+
+        if (updateError) {
+          alert(`Error updating discussion status: ${updateError.message}`);
+          return;
+        }
+
+        // Optionally, call your RPC to submit the agreement for voting
         const { error } = await supabase.rpc('submit_agreement_for_voting', {
           suggestion_id_in: discussionId,
           agreement_text_in: agreementText,
