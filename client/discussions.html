@@ -19,12 +19,19 @@
     .comment { border-left: 2px solid #eee; padding-left: 20px; margin-top: 1rem; position: relative; }
     .comment-meta { font-size: 0.85em; color: #888; margin-bottom: 4px; }
     .comment-box { margin-top: 10px; padding: 10px; background-color: #f8f8f8; border-radius: 6px; }
+    .comment-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .comment-box textarea {
+      margin-bottom: 8px;
+    }
     .comment-box textarea, .agreement-box textarea, .agreement-box input { font-size: 1.1em !important; }
     textarea { width: 95%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
     .action-button { background-color: #4a7c59; color: white; border: none; padding: 8px 12px; margin-top: 5px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
     .reply-button { background-color: #6c757d; font-size: 0.8em; padding: 4px 8px; }
     .agreement-box { margin-top: 2rem; padding: 1rem; background-color: #eef6f0; border-radius: 6px; }
-    .agreement-box input[type="number"] { width: 100px; }
     .floating-controls {
       position: fixed;
       bottom: 20px;
@@ -60,6 +67,14 @@
     }
     .delete-icon:hover {
       color: #a71d2a;
+    }
+    .author-instruction {
+      background: #fffbe6;
+      border: 1px solid #ffe58f;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      color: #856404;
     }
   </style>
 </head>
@@ -196,6 +211,13 @@
         if (showAgreementBox) {
           const agreementBox = document.createElement('div');
           agreementBox.className = 'agreement-box';
+
+          // Add instruction note for the author
+          const instruction = document.createElement('div');
+          instruction.className = 'author-instruction';
+          instruction.textContent =
+            'As the author, when you feel the discussion is complete, you may propose an agreement for the group to vote on.';
+
           const h3 = document.createElement('h3');
           h3.textContent = 'Propose an Agreement';
           const p = document.createElement('p');
@@ -206,21 +228,14 @@
           const textarea = document.createElement('textarea');
           textarea.id = `agreement-text-${discussion.id}`;
           textarea.rows = 4;
-          const label2 = document.createElement('label');
-          label2.htmlFor = `polling-hours-${discussion.id}`;
-          label2.textContent = 'Polling Duration (in hours):';
-          const input = document.createElement('input');
-          input.type = 'number';
-          input.id = `polling-hours-${discussion.id}`;
-          input.value = '24';
-          input.min = '1';
           const br = document.createElement('br');
           const button = document.createElement('button');
           button.className = 'action-button';
           button.dataset.action = 'submit-agreement';
           button.dataset.discussionId = discussion.id;
           button.textContent = 'Submit and Start Vote';
-          agreementBox.append(h3, p, label1, textarea, label2, input, br, button);
+
+          agreementBox.append(instruction, h3, p, label1, textarea, br, button);
           contentDiv.appendChild(agreementBox);
         }
 
@@ -313,14 +328,13 @@
       if (action === 'submit-agreement') {
         if (!currentUser) return alert('You must be logged in to submit an agreement.');
 
-        const discussionId = parseInt(actionTarget.dataset.discussionId, 10);
+        // Use the correct UUID for discussionId
+        const discussionId = actionTarget.dataset.discussionId;
         const agreementText = document.getElementById(`agreement-text-${discussionId}`).value;
-        const pollingHours = parseInt(document.getElementById(`polling-hours-${discussionId}`).value, 10);
 
         if (!agreementText.trim()) return alert('Agreement text cannot be empty.');
-        if (isNaN(pollingHours) || pollingHours <= 0) return alert('Polling duration must be a positive number of hours.');
 
-        // Update status to 'voting' when submitting agreement
+        // --- Update status to 'voting' before submitting agreement ---
         const { error: updateError } = await supabase
           .from('suggestions')
           .update({ status: 'voting' })
@@ -331,11 +345,10 @@
           return;
         }
 
-        // Optionally, call your RPC to submit the agreement for voting
+        // Call your RPC to submit the agreement for voting
         const { error } = await supabase.rpc('submit_agreement_for_voting', {
           suggestion_id_in: discussionId,
           agreement_text_in: agreementText,
-          polling_hours_in: pollingHours,
           proposer_id_in: currentUser.id
         });
 
