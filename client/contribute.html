@@ -76,28 +76,30 @@
       const { data, error } = await supabase
         .from('contributions')
         .select('*')
-        .eq('user_id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         statusMessage.textContent = `Error loading scroll: ${error.message}`;
         statusMessage.style.color = 'red';
         return;
       }
 
-      if (data) {
-        existingScrollId = data.id;
-        form.project.value = data.project || '';
-        form.challenge.value = data.challenge || '';
-        form.help.value = data.help || '';
-        form.collab.value = data.collab || '';
-        form.skills.value = data.skills || '';
-        form.urgency.value = data.urgency || '';
-        form.contact.value = data.contact || '';
+      if (data && data.length > 0) {
+        // Always use the first scroll if multiple exist
+        const scroll = data[0];
+        existingScrollId = scroll.id;
+        form.project.value = scroll.project || '';
+        form.challenge.value = scroll.challenge || '';
+        form.help.value = scroll.help || '';
+        form.collab.value = scroll.collab || '';
+        form.skills.value = scroll.skills || '';
+        form.urgency.value = scroll.urgency || '';
+        form.contact.value = scroll.contact || '';
         deleteBtn.style.display = '';
         saveBtn.textContent = 'Update Scroll';
       } else {
         existingScrollId = null;
+        form.reset();
         deleteBtn.style.display = 'none';
         saveBtn.textContent = 'Submit Your Scroll';
       }
