@@ -1,114 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Make a Suggestion</title>
-    <script type="module" src="/lib/supabase.js"></script>
-    <style>
-        body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; margin: 40px; }
-        /* --- CHANGE 1: Made the container wider --- */
-        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        h1 { color: #6b4f1d; text-align: center; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-        /* --- CHANGE 2: Increased font size in text boxes --- */
-        input, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1.1em; }
-        textarea { resize: vertical; min-height: 120px; }
-        button { background-color: #2e8b57; color: #fff; padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1.1em; width: 100%; }
-        button:disabled { background-color: #ccc; }
-        #status { margin-top: 1rem; font-weight: bold; text-align: center; }
-        
-        /* --- CHANGE 3: Added styles to make the link a button --- */
-        .back-button {
-            display: block;
-            width: fit-content;
-            margin: 2rem auto 0 auto;
-            background-color: #6c757d; /* A neutral, secondary color */
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            text-align: center;
-        }
-        .back-button:hover {
-            background-color: #5a6268;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>💡 Make a Suggestion</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; max-width: 600px; margin: auto; }
+    h1 { text-align: center; color: #4a7c59; }
+    form { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    label { display: block; margin-top: 1.2rem; font-weight: bold; }
+    textarea, input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background-color: #4a7c59; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 100%; }
+    button:disabled { background-color: #ccc; }
+    #status-message { margin-top: 1rem; font-weight: bold; text-align: center; }
+    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🌱 Make a Suggestion</h1>
-        <p>Propose a new idea for the community to discuss. Once submitted, your suggestion will appear on the Circle of Discussion page.</p>
-        <form id="suggestion-form">
-            <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" required></textarea>
-            </div>
-            <button type="submit">Submit Suggestion</button>
-            <p id="status"></p>
-        </form>
-        <!-- --- CHANGE 3: Changed the class of the link --- -->
-        <a href="menu.html" class="back-button">← Back to Menu</a>
-    </div>
+  <h1>💡 Make a Suggestion</h1>
 
-    <script type="module">
-        import { supabase } from '/lib/supabase.js';
+  <form id="suggestion-form">
+    <label for="title">Suggestion Title</label>
+    <input type="text" id="title" name="title" placeholder="Short summary or title" required />
 
-        const suggestionForm = document.getElementById('suggestion-form');
-        const statusEl = document.getElementById('status');
-        let currentUser;
+    <label for="description">Describe your suggestion</label>
+    <textarea id="description" name="description" rows="4" placeholder="Describe your idea or suggestion..." required></textarea>
 
-        async function checkUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                window.location.href = 'index.html'; // Redirect if not logged in
-            }
-            currentUser = user;
-        }
+    <button type="submit" id="submit-btn">Submit Suggestion</button>
+  </form>
 
-        suggestionForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
-            const title = document.getElementById('title').value.trim();
-            const description = document.getElementById('description').value.trim();
+  <div id="status-message"></div>
 
-            if (!title || !description) {
-                statusEl.textContent = 'Please fill out both the title and description.';
-                statusEl.style.color = 'red';
-                return;
-            }
+  <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
-            statusEl.textContent = 'Submitting...';
-            suggestionForm.querySelector('button').disabled = true;
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
 
-            const { error } = await supabase
-                .from('suggestions')
-                .insert({
-                    title: title,
-                    description: description,
-                    author_id: currentUser.id,
-                    status: 'open' // All new suggestions start as 'open'
-                });
+    const form = document.getElementById('suggestion-form');
+    const statusMessage = document.getElementById('status-message');
+    const submitBtn = document.getElementById('submit-btn');
 
-            if (error) {
-                statusEl.textContent = `Error: ${error.message}`;
-                statusEl.style.color = 'red';
-                suggestionForm.querySelector('button').disabled = false;
-            } else {
-                statusEl.textContent = 'Success! Redirecting to discussions...';
-                statusEl.style.color = 'green';
-                // Redirect to the discussions page to see the new suggestion
-                window.location.href = 'discussions.html';
-            }
+    let currentUser;
+
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        statusMessage.textContent = "⚠️ You must be logged in to submit a suggestion.";
+        statusMessage.style.color = 'red';
+        form.style.display = 'none';
+        return null;
+      }
+      return user;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      submitBtn.disabled = true;
+      statusMessage.textContent = 'Submitting...';
+      statusMessage.style.color = 'black';
+
+      currentUser = await getUser();
+      if (!currentUser) return;
+
+      const title = form.title.value.trim();
+      const description = form.description.value.trim();
+
+      // Insert suggestion with status 'open'
+      const { error } = await supabase
+        .from('suggestions')
+        .insert({
+          title,
+          description,
+          author_id: currentUser.id,
+          status: 'open'
         });
 
-        // Make sure a user is logged in when the page loads
-        checkUser();
-    </script>
+      if (error) {
+        statusMessage.textContent = `Error: ${error.message}`;
+        statusMessage.style.color = 'red';
+      } else {
+        statusMessage.textContent = '✅ Suggestion submitted!';
+        statusMessage.style.color = 'green';
+        form.reset();
+      }
+      submitBtn.disabled = false;
+    });
+  </script>
 </body>
 </html>
