@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>✍️ Submit Your Scroll  </title>
+  <title>✍️ Edit Your Scroll</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
     body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; max-width: 600px; margin: auto; }
@@ -14,10 +14,11 @@
     button:disabled { background-color: #ccc; }
     #status-message { margin-top: 1rem; font-weight: bold; text-align: center; }
     .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+    .delete-button { background-color: #a94442; color: #fff; margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <h1>✍️ Submit Your Scroll</h1>
+  <h1>✍️ Edit Your Scroll</h1>
 
   <form id="contribution-form">
     <label for="project">🌱 What is your project or what are you working on?</label>
@@ -41,7 +42,8 @@
     <label for="contact">📬 How would you like to be contacted or supported?</label>
     <input type="text" id="contact" name="contact" />
 
-    <button type="submit">Submit Your Scroll</button>
+    <button type="submit" id="save-btn">Save Scroll</button>
+    <button type="button" id="delete-btn" class="delete-button" style="display:none;">Delete Scroll</button>
   </form>
 
   <div id="status-message"></div>
@@ -54,32 +56,62 @@
 
     const form = document.getElementById('contribution-form');
     const statusMessage = document.getElementById('status-message');
-    const submitButton = form.querySelector('button');
+    const saveBtn = document.getElementById('save-btn');
+    const deleteBtn = document.getElementById('delete-btn');
 
-    (async function checkUser() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            statusMessage.textContent = "⚠️ You must be logged in to submit a scroll.";
-            statusMessage.style.color = 'red';
-            form.style.display = 'none';
-        }
-    })();
+    let currentUser;
+    let existingScrollId = null;
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      submitButton.disabled = true;
-      statusMessage.textContent = 'Submitting...';
-      statusMessage.style.color = 'black';
-
+    async function loadScroll() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        statusMessage.textContent = "⚠️ Error: You are not logged in.";
+        statusMessage.textContent = "⚠️ You must be logged in to edit your scroll.";
+        statusMessage.style.color = 'red';
+        form.style.display = 'none';
+        return;
+      }
+      currentUser = user;
+
+      // Try to load existing scroll for this user
+      const { data, error } = await supabase
+        .from('contributions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        statusMessage.textContent = `Error loading scroll: ${error.message}`;
+        statusMessage.style.color = 'red';
         return;
       }
 
+      if (data) {
+        existingScrollId = data.id;
+        form.project.value = data.project || '';
+        form.challenge.value = data.challenge || '';
+        form.help.value = data.help || '';
+        form.collab.value = data.collab || '';
+        form.skills.value = data.skills || '';
+        form.urgency.value = data.urgency || '';
+        form.contact.value = data.contact || '';
+        deleteBtn.style.display = '';
+        saveBtn.textContent = 'Update Scroll';
+      } else {
+        existingScrollId = null;
+        deleteBtn.style.display = 'none';
+        saveBtn.textContent = 'Submit Your Scroll';
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      saveBtn.disabled = true;
+      statusMessage.textContent = 'Saving...';
+      statusMessage.style.color = 'black';
+
       const formData = new FormData(form);
       const contributionData = {
-        user_id: user.id,
+        user_id: currentUser.id,
         project: formData.get('project'),
         challenge: formData.get('challenge'),
         help: formData.get('help'),
@@ -89,22 +121,60 @@
         contact: formData.get('contact')
       };
 
-      const { error } = await supabase.from('contributions').insert(contributionData);
+      let error;
+      if (existingScrollId) {
+        // Update existing scroll
+        ({ error } = await supabase
+          .from('contributions')
+          .update(contributionData)
+          .eq('id', existingScrollId));
+      } else {
+        // Insert new scroll
+        ({ error } = await supabase
+          .from('contributions')
+          .insert(contributionData));
+      }
 
       if (error) {
         statusMessage.textContent = `Error: ${error.message}`;
         statusMessage.style.color = 'red';
-        submitButton.disabled = false;
       } else {
-        statusMessage.textContent = '✅ Thank you! Your scroll has been submitted.';
+        statusMessage.textContent = '✅ Your scroll has been saved!';
         statusMessage.style.color = 'green';
-        form.reset();
         setTimeout(() => {
-            submitButton.disabled = false;
-            statusMessage.textContent = '';
+          statusMessage.textContent = '';
         }, 3000);
+        await loadScroll();
       }
+      saveBtn.disabled = false;
     });
+
+    deleteBtn.addEventListener('click', async () => {
+      if (!existingScrollId) return;
+      if (!confirm('Are you sure you want to delete your scroll?')) return;
+      deleteBtn.disabled = true;
+      statusMessage.textContent = 'Deleting...';
+      statusMessage.style.color = 'black';
+
+      const { error } = await supabase
+        .from('contributions')
+        .delete()
+        .eq('id', existingScrollId);
+
+      if (error) {
+        statusMessage.textContent = `Error: ${error.message}`;
+        statusMessage.style.color = 'red';
+      } else {
+        statusMessage.textContent = '✅ Your scroll has been deleted.';
+        form.reset();
+        existingScrollId = null;
+        deleteBtn.style.display = 'none';
+        saveBtn.textContent = 'Submit Your Scroll';
+      }
+      deleteBtn.disabled = false;
+    });
+
+    loadScroll();
   </script>
 </body>
 </html>
