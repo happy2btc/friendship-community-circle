@@ -111,22 +111,36 @@
       }
 
       // Filter only open discussions (in case backend returns all)
-      const openDiscussions = discussions.filter(d => d.status === 'open');
-      const discussionIds = openDiscussions.map(d => d.id);
+      const openDiscussions = discussions.filter(d => d.status === 'open' || d.status === 'voting');
+      // Only use valid IDs for the query
+      const suggestionIds = openDiscussions
+        .map(d => d.id)
+        .filter(id => typeof id === 'number' || (typeof id === 'string' && id.length > 0));
 
-      // Fetch all comments for these discussions
-      const { data: allComments, error: commentsError } = await supabase
-        .from('comments')
-        .select('*')
-        .in('suggestion_id', discussionIds)
-        .order('created_at', { ascending: true });
+      let allComments = [];
+      let commentsError = null;
+
+      if (suggestionIds.length > 0) {
+        const { data, error } = await supabase
+          .from('comments')
+          .select('*')
+          .in('suggestion_id', suggestionIds)
+          .order('created_at', { ascending: true });
+        allComments = data;
+        commentsError = error;
+      } else {
+        allComments = [];
+        commentsError = null;
+      }
       console.log('All Comments:', allComments);
+
+      const allCommentsSafe = Array.isArray(allComments) ? allComments : [];
 
       // Gather all unique author_ids from discussions and comments
       const authorIds = [
         ...new Set([
           ...openDiscussions.map(d => (d.author_id || '').trim().toLowerCase()),
-          ...(allComments || []).map(c => (c.author_id || '').trim().toLowerCase())
+          ...allCommentsSafe.map(c => (c.author_id || '').trim().toLowerCase())
         ])
       ];
       console.log('Author IDs:', authorIds);
@@ -138,24 +152,24 @@
         .in('id', authorIds);
       console.log('Profiles Data:', profilesData);
 
-      // Build a lookup map for author_id -> full_name (normalize IDs)
       const profiles = {};
       (profilesData || []).forEach(profile => {
         profiles[(profile.id || '').trim().toLowerCase()] = profile.full_name;
       });
       console.log('Profiles Lookup:', profiles);
 
-      // Sort discussions by latest comment or own created_at
-      function getLatestCommentTime(discussionId, comments) {
-        const relevant = comments.filter(c => c.suggestion_id === discussionId);
-        if (relevant.length === 0) return new Date(openDiscussions.find(d => d.id === discussionId).created_at).getTime();
+      function getLatestCommentTime(suggestionId, comments) {
+        const relevant = comments.filter(c => c.suggestion_id === suggestionId);
+        if (relevant.length === 0) return new Date(openDiscussions.find(d => d.id === suggestionId).created_at).getTime();
         return Math.max(...relevant.map(c => new Date(c.created_at).getTime()));
       }
 
       openDiscussions.sort((a, b) => {
-        const aLatest = getLatestCommentTime(a.id, allComments);
-        const bLatest = getLatestCommentTime(b.id, allComments);
-        return bLatest - aLatest; // descending
+        const aId = a.id;
+        const bId = b.id;
+        const aLatest = getLatestCommentTime(aId, allCommentsSafe);
+        const bLatest = getLatestCommentTime(bId, allCommentsSafe);
+        return bLatest - aLatest;
       });
 
       discussionContainer.innerHTML = '';
@@ -164,22 +178,19 @@
         if (!discussion.title) continue;
 
         const normalizedAuthorId = (discussion.author_id || '').trim().toLowerCase();
-        const commentsForThisDiscussion = allComments
-          ? allComments.filter(c => c.suggestion_id === discussion.id)
+        const suggestionId = discussion.id;
+        const commentsForThisDiscussion = allCommentsSafe
+          ? allCommentsSafe.filter(c => c.suggestion_id === suggestionId)
           : [];
         const totalCommentCount = commentsForThisDiscussion.length;
 
-        // Debug: Show author lookup for discussion
-        console.log('Discussion author_id:', discussion.author_id, 'Normalized:', normalizedAuthorId, 'Name:', profiles[normalizedAuthorId]);
-
         const isAuthor = currentUser && ((currentUser.id || '').trim().toLowerCase() === normalizedAuthorId);
-        const showAgreementBox = isAuthor;
 
         const discussionBlock = document.createElement('details');
         discussionBlock.className = 'discussion-block';
+        discussionBlock.dataset.suggestionId = suggestionId;
 
         const summary = document.createElement('summary');
-        // Use profiles lookup for author name
         const authorName = profiles[normalizedAuthorId] || 'A member';
         summary.textContent = `${discussion.title} `;
 
@@ -190,6 +201,7 @@
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'discussion-content';
+        contentDiv.dataset.suggestionId = suggestionId;
 
         const descriptionP = document.createElement('p');
         descriptionP.textContent = discussion.description;
@@ -197,22 +209,22 @@
         const commentButton = document.createElement('button');
         commentButton.className = 'action-button';
         commentButton.dataset.action = 'add-comment';
-        commentButton.dataset.discussionId = discussion.id;
+        commentButton.dataset.suggestionId = suggestionId;
         commentButton.textContent = 'Make a Comment';
 
         const threadDiv = document.createElement('div');
         threadDiv.className = 'comment-thread';
-        threadDiv.id = `thread-for-${discussion.id}`;
+        threadDiv.id = `thread-for-${suggestionId}`;
 
         contentDiv.appendChild(descriptionP);
         contentDiv.appendChild(commentButton);
         contentDiv.appendChild(threadDiv);
 
-        if (showAgreementBox) {
+        // Agreement box logic
+        if (isAuthor && discussion.status === 'open') {
           const agreementBox = document.createElement('div');
           agreementBox.className = 'agreement-box';
 
-          // Add instruction note for the author
           const instruction = document.createElement('div');
           instruction.className = 'author-instruction';
           instruction.textContent =
@@ -223,20 +235,25 @@
           const p = document.createElement('p');
           p.textContent = 'Once submitted, this discussion will be locked and will move to the voting page.';
           const label1 = document.createElement('label');
-          label1.htmlFor = `agreement-text-${discussion.id}`;
+          label1.htmlFor = `agreement-text-${suggestionId}`;
           label1.textContent = 'Proposed Agreement Text:';
           const textarea = document.createElement('textarea');
-          textarea.id = `agreement-text-${discussion.id}`;
+          textarea.id = `agreement-text-${suggestionId}`;
           textarea.rows = 4;
           const br = document.createElement('br');
           const button = document.createElement('button');
           button.className = 'action-button';
           button.dataset.action = 'submit-agreement';
-          button.dataset.discussionId = discussion.id;
+          button.dataset.suggestionId = suggestionId;
           button.textContent = 'Submit and Start Vote';
 
           agreementBox.append(instruction, h3, p, label1, textarea, br, button);
           contentDiv.appendChild(agreementBox);
+        } else if (isAuthor && discussion.status === 'voting') {
+          const alreadySubmitted = document.createElement('div');
+          alreadySubmitted.className = 'agreement-box';
+          alreadySubmitted.innerHTML = `<div class="author-instruction">An agreement has already been submitted for this discussion.</div>`;
+          contentDiv.appendChild(alreadySubmitted);
         }
 
         discussionBlock.appendChild(summary);
@@ -247,19 +264,14 @@
       }
     }
 
-    // Recursive rendering of comments and replies
     function renderComments(commentList, parentElement, parentId = null, profiles = {}, currentUser = null) {
       const commentsToRender = commentList.filter(c => c.parent_id === parentId);
       for (const comment of commentsToRender) {
         const normalizedAuthorId = (comment.author_id || '').trim().toLowerCase();
 
-        // Debug: Show author lookup for comment
-        console.log('Comment author_id:', comment.author_id, 'Normalized:', normalizedAuthorId, 'Name:', profiles[normalizedAuthorId]);
-
         const commentDiv = document.createElement('div');
         commentDiv.className = 'comment';
 
-        // Use profiles lookup for author name
         const authorName = profiles[normalizedAuthorId] || 'Unknown';
         const createdAt = new Date(comment.created_at).toLocaleString();
         const metaDiv = document.createElement('div');
@@ -273,6 +285,7 @@
         replyButton.className = 'action-button reply-button';
         replyButton.dataset.action = 'reply';
         replyButton.dataset.commentId = comment.id;
+        replyButton.dataset.suggestionId = comment.suggestion_id;
         replyButton.textContent = 'Reply';
 
         commentDiv.appendChild(metaDiv);
@@ -321,39 +334,65 @@
       if (action === 'add-comment' || action === 'reply') {
         const parentElement = action === 'reply' ? actionTarget.parentElement : actionTarget.nextElementSibling;
         const parentId = action === 'reply' ? actionTarget.dataset.commentId : null;
-        const discussionId = parentElement.closest('.discussion-content').querySelector('[data-action="add-comment"]').dataset.discussionId;
-        showCommentBox(parentElement, discussionId, parentId);
+        // Get suggestionId directly from the button's dataset
+        const suggestionId = actionTarget.dataset.suggestionId;
+        showCommentBox(parentElement, suggestionId, parentId);
       }
 
       if (action === 'submit-agreement') {
         if (!currentUser) return alert('You must be logged in to submit an agreement.');
 
-        // Use the correct UUID for discussionId
-        const discussionId = actionTarget.dataset.discussionId;
-        const agreementText = document.getElementById(`agreement-text-${discussionId}`).value;
+        // Try to get the suggestionId from the button, fallback to .discussion-block if missing
+        let suggestionId = actionTarget.dataset.suggestionId;
+        if (!suggestionId) {
+          const discussionBlockDiv = actionTarget.closest('.discussion-block');
+          if (discussionBlockDiv) {
+            suggestionId = discussionBlockDiv.dataset.suggestionId;
+          }
+        }
+        console.log('Submit agreement suggestionId:', suggestionId);
+
+        // Use closest agreement box to get textarea value
+        const textarea = actionTarget.closest('.agreement-box').querySelector('textarea');
+        const agreementText = textarea ? textarea.value : '';
+
+        console.log('Agreement text value:', agreementText);
 
         if (!agreementText.trim()) return alert('Agreement text cannot be empty.');
+        if (!suggestionId) return alert('Suggestion ID is missing.');
+
+        // --- Check if agreement already exists ---
+        const { data: existingAgreements, error: fetchError } = await supabase
+          .from('agreements')
+          .select('id')
+          .eq('suggestion_id', suggestionId);
+
+        if (existingAgreements && existingAgreements.length > 0) {
+          alert('An agreement has already been submitted for this discussion.');
+          return;
+        }
 
         // --- Update status to 'voting' before submitting agreement ---
         const { error: updateError } = await supabase
           .from('suggestions')
           .update({ status: 'voting' })
-          .eq('id', discussionId);
+          .eq('id', suggestionId); // Use integer id
 
         if (updateError) {
           alert(`Error updating discussion status: ${updateError.message}`);
           return;
         }
 
-        // Call your RPC to submit the agreement for voting
-        const { error } = await supabase.rpc('submit_agreement_for_voting', {
-          suggestion_id_in: discussionId,
-          agreement_text_in: agreementText,
-          proposer_id_in: currentUser.id
+        // --- Insert agreement into agreements table ---
+        const { error: insertError } = await supabase.from('agreements').insert({
+          suggestion_id: suggestionId,
+          agreement_text: agreementText,
+          proposer_id: currentUser.id,
+          status: 'voting'
         });
 
-        if (error) {
-          alert(`Error submitting agreement: ${error.message}`);
+        if (insertError) {
+          alert(`Error submitting agreement: ${insertError.message}`);
         } else {
           alert('Agreement submitted successfully! You will now be taken to the voting page.');
           window.location.href = 'agreements.html';
@@ -361,10 +400,12 @@
       }
     });
 
-    function showCommentBox(parentElement, discussionId, parentCommentId = null) {
+    function showCommentBox(parentElement, suggestionId, parentCommentId = null) {
       if (parentElement.querySelector('.comment-box')) {
         parentElement.querySelector('.comment-box').remove();
       }
+      // suggestionId is now always passed correctly
+      console.log('CommentBox suggestionId:', suggestionId);
       const box = document.createElement('div');
       box.className = 'comment-box';
       const textarea = document.createElement('textarea');
@@ -377,7 +418,13 @@
         if (!user) return alert('You must be logged in to comment.');
         const content = textarea.value;
         if (!content.trim()) return;
-        const { error } = await supabase.from('comments').insert({ suggestion_id: discussionId, parent_id: parentCommentId, content: content, author_id: user.id });
+        console.log('Insert comment:', {
+          suggestion_id: suggestionId,
+          parent_id: parentCommentId,
+          content: content,
+          author_id: user.id
+        });
+        const { error } = await supabase.from('comments').insert({ suggestion_id: suggestionId, parent_id: parentCommentId, content: content, author_id: user.id });
         if (error) { alert(`Error: ${error.message}`); }
         else { await loadDiscussions(); }
       };
