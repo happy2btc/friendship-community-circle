@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>👥 All Profiles</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; max-width: 700px; margin: auto; }
+    h1 { text-align: center; color: #4a7c59; }
+    .profile-list { margin-top: 2rem; }
+    .profile-block { background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; padding: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 1.5rem; }
+    .profile-pic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: #eee; }
+    .profile-details { flex: 1; }
+    .profile-name { font-size: 1.1em; font-weight: bold; color: #4a7c59; margin-bottom: 0.5em; }
+    .profile-id, .profile-email, .profile-bio, .profile-location, .profile-interests {
+      font-size: 0.95em; color: #555; margin-bottom: 0.3em;
+    }
+    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+  </style>
+</head>
+<body>
+  <h1>👥 All Profiles</h1>
+  <div class="profile-list" id="profile-list"></div>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    const profileList = document.getElementById('profile-list');
+
+    async function loadProfiles() {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name', { ascending: true });
+
+      if (error) {
+        profileList.innerHTML = `<p>Error loading profiles: ${error.message}</p>`;
+        return;
+      }
+      if (!profiles || profiles.length === 0) {
+        profileList.innerHTML = `<p>No profiles found.</p>`;
+        return;
+      }
+
+      profileList.innerHTML = '';
+      for (const profile of profiles) {
+        // Only show profiles that have a name or other required info
+        if (!profile.full_name && !profile.bio && !profile.location && !profile.interests && !profile.email) continue;
+
+        const block = document.createElement('div');
+        block.className = 'profile-block';
+
+        // Use avatar_url or profile_picture column for the image
+        let picUrl = profile.avatar_url || profile.profile_picture || '';
+        let picHtml = picUrl
+          ? `<img src="${picUrl}" alt="Profile picture" class="profile-pic" />`
+          : `<div class="profile-pic"></div>`;
+
+        block.innerHTML = `
+          ${picHtml}
+          <div class="profile-details">
+            <div class="profile-name">${profile.full_name || '(No Name)'}</div>
+            <div class="profile-id">ID: ${profile.id}</div>
+            ${profile.email ? `<div class="profile-email">Email: ${profile.email}</div>` : ''}
+            ${profile.bio ? `<div class="profile-bio">Bio: ${profile.bio}</div>` : ''}
+            ${profile.location ? `<div class="profile-location">Location: ${profile.location}</div>` : ''}
+            ${profile.interests ? `<div class="profile-interests">Interests: ${profile.interests}</div>` : ''}
+          </div>
+        `;
+        profileList.appendChild(block);
+      }
+    }
+
+    loadProfiles();
+  </script>
+</body>
+</html>
