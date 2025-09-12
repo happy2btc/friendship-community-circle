@@ -76,11 +76,22 @@
       border-radius: 5px;
       color: #856404;
     }
+    .error-message {
+      color: #a94442;
+      background: #fff0f0;
+      border: 1px solid #a94442;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <h1>Circle of Discussion</h1>
   <div id="discussion-container"></div>
+  <div id="error-message" class="error-message" style="display:none;"></div>
   <div class="floating-controls">
     <button id="expand-all">Expand All</button>
     <button id="collapse-all">Collapse All</button>
@@ -90,7 +101,16 @@
     import { supabase } from '/lib/supabase.js';
 
     const discussionContainer = document.getElementById('discussion-container');
+    const errorMessageDiv = document.getElementById('error-message');
     let currentUser;
+
+    function showError(msg) {
+      errorMessageDiv.textContent = msg;
+      errorMessageDiv.style.display = 'block';
+      setTimeout(() => {
+        errorMessageDiv.style.display = 'none';
+      }, 6000);
+    }
 
     async function loadDiscussions() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -99,9 +119,8 @@
       // Fetch discussions (all, including status)
       const { data: discussions, error: discussionsError } = await supabase
         .rpc('get_all_open_discussions_with_authors');
-      console.log('Discussions:', discussions);
-
       if (discussionsError) {
+        showError(`Error loading discussions: ${discussionsError.message}`);
         discussionContainer.innerHTML = `<p>Error loading discussions: ${discussionsError.message}</p>`;
         return;
       }
@@ -110,9 +129,8 @@
         return;
       }
 
-      // Filter only open discussions (in case backend returns all)
-      const openDiscussions = discussions.filter(d => d.status === 'open' || d.status === 'voting');
-      // Only use valid IDs for the query
+      // Only show discussions with status 'open'
+      const openDiscussions = discussions.filter(d => d.status === 'open');
       const suggestionIds = openDiscussions
         .map(d => d.id)
         .filter(id => typeof id === 'number' || (typeof id === 'string' && id.length > 0));
@@ -132,7 +150,6 @@
         allComments = [];
         commentsError = null;
       }
-      console.log('All Comments:', allComments);
 
       const allCommentsSafe = Array.isArray(allComments) ? allComments : [];
 
@@ -143,20 +160,17 @@
           ...allCommentsSafe.map(c => (c.author_id || '').trim().toLowerCase())
         ])
       ];
-      console.log('Author IDs:', authorIds);
 
       // Fetch all relevant profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', authorIds);
-      console.log('Profiles Data:', profilesData);
 
       const profiles = {};
       (profilesData || []).forEach(profile => {
         profiles[(profile.id || '').trim().toLowerCase()] = profile.full_name;
       });
-      console.log('Profiles Lookup:', profiles);
 
       function getLatestCommentTime(suggestionId, comments) {
         const relevant = comments.filter(c => c.suggestion_id === suggestionId);
@@ -249,11 +263,6 @@
 
           agreementBox.append(instruction, h3, p, label1, textarea, br, button);
           contentDiv.appendChild(agreementBox);
-        } else if (isAuthor && discussion.status === 'voting') {
-          const alreadySubmitted = document.createElement('div');
-          alreadySubmitted.className = 'agreement-box';
-          alreadySubmitted.innerHTML = `<div class="author-instruction">An agreement has already been submitted for this discussion.</div>`;
-          contentDiv.appendChild(alreadySubmitted);
         }
 
         discussionBlock.appendChild(summary);
@@ -303,7 +312,7 @@
           deleteBtn.onclick = async () => {
             if (!confirm('Delete this comment?')) return;
             const { error } = await supabase.from('comments').delete().eq('id', comment.id);
-            if (error) alert('Error deleting comment: ' + error.message);
+            if (error) showError('Error deleting comment: ' + error.message);
             else await loadDiscussions();
           };
           commentDiv.appendChild(deleteBtn);
@@ -334,15 +343,13 @@
       if (action === 'add-comment' || action === 'reply') {
         const parentElement = action === 'reply' ? actionTarget.parentElement : actionTarget.nextElementSibling;
         const parentId = action === 'reply' ? actionTarget.dataset.commentId : null;
-        // Get suggestionId directly from the button's dataset
         const suggestionId = actionTarget.dataset.suggestionId;
         showCommentBox(parentElement, suggestionId, parentId);
       }
 
       if (action === 'submit-agreement') {
-        if (!currentUser) return alert('You must be logged in to submit an agreement.');
+        if (!currentUser) return showError('You must be logged in to submit an agreement.');
 
-        // Try to get the suggestionId from the button, fallback to .discussion-block if missing
         let suggestionId = actionTarget.dataset.suggestionId;
         if (!suggestionId) {
           const discussionBlockDiv = actionTarget.closest('.discussion-block');
@@ -350,16 +357,12 @@
             suggestionId = discussionBlockDiv.dataset.suggestionId;
           }
         }
-        console.log('Submit agreement suggestionId:', suggestionId);
 
-        // Use closest agreement box to get textarea value
         const textarea = actionTarget.closest('.agreement-box').querySelector('textarea');
         const agreementText = textarea ? textarea.value : '';
 
-        console.log('Agreement text value:', agreementText);
-
-        if (!agreementText.trim()) return alert('Agreement text cannot be empty.');
-        if (!suggestionId) return alert('Suggestion ID is missing.');
+        if (!agreementText.trim()) return showError('Agreement text cannot be empty.');
+        if (!suggestionId) return showError('Suggestion ID is missing.');
 
         // --- Check if agreement already exists ---
         const { data: existingAgreements, error: fetchError } = await supabase
@@ -367,19 +370,26 @@
           .select('id')
           .eq('suggestion_id', suggestionId);
 
+        if (fetchError) {
+          showError(`Error checking for existing agreement: ${fetchError.message}`);
+          return;
+        }
+
         if (existingAgreements && existingAgreements.length > 0) {
-          alert('An agreement has already been submitted for this discussion.');
+          showError('An agreement has already been submitted for this discussion.');
           return;
         }
 
         // --- Update status to 'voting' before submitting agreement ---
+        console.log('Updating suggestion status to voting for id:', suggestionId);
         const { error: updateError } = await supabase
           .from('suggestions')
           .update({ status: 'voting' })
-          .eq('id', suggestionId); // Use integer id
+          .eq('id', suggestionId);
 
         if (updateError) {
-          alert(`Error updating discussion status: ${updateError.message}`);
+          showError(`Error updating discussion status: ${updateError.message}`);
+          console.error(updateError);
           return;
         }
 
@@ -392,7 +402,7 @@
         });
 
         if (insertError) {
-          alert(`Error submitting agreement: ${insertError.message}`);
+          showError(`Error submitting agreement: ${insertError.message}`);
         } else {
           alert('Agreement submitted successfully! You will now be taken to the voting page.');
           window.location.href = 'agreements.html';
@@ -404,8 +414,6 @@
       if (parentElement.querySelector('.comment-box')) {
         parentElement.querySelector('.comment-box').remove();
       }
-      // suggestionId is now always passed correctly
-      console.log('CommentBox suggestionId:', suggestionId);
       const box = document.createElement('div');
       box.className = 'comment-box';
       const textarea = document.createElement('textarea');
@@ -415,17 +423,11 @@
       button.textContent = 'Submit';
       button.onclick = async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return alert('You must be logged in to comment.');
+        if (!user) return showError('You must be logged in to comment.');
         const content = textarea.value;
         if (!content.trim()) return;
-        console.log('Insert comment:', {
-          suggestion_id: suggestionId,
-          parent_id: parentCommentId,
-          content: content,
-          author_id: user.id
-        });
         const { error } = await supabase.from('comments').insert({ suggestion_id: suggestionId, parent_id: parentCommentId, content: content, author_id: user.id });
-        if (error) { alert(`Error: ${error.message}`); }
+        if (error) { showError(`Error: ${error.message}`); }
         else { await loadDiscussions(); }
       };
       box.appendChild(textarea);
