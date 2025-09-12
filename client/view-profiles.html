@@ -2,72 +2,122 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>👥 All Profiles</title>
+  <title>All Profiles</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
-    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; max-width: 700px; margin: auto; }
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
     h1 { text-align: center; color: #4a7c59; }
-    .profile-list { margin-top: 2rem; }
-    .profile-block { background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; padding: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 1.5rem; }
-    .profile-pic { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: #eee; }
-    .profile-details { flex: 1; }
-    .profile-name { font-size: 1.1em; font-weight: bold; color: #4a7c59; margin-bottom: 0.5em; }
-    .profile-id, .profile-email, .profile-bio, .profile-location, .profile-interests {
-      font-size: 0.95em; color: #555; margin-bottom: 0.3em;
+    ul.profiles-list {
+      list-style: none;
+      padding: 0;
+      max-width: 600px;
+      margin: 2rem auto;
     }
-    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+    li.profile-item {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 1.2rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .profile-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #4a7c59;
+      background: #eee;
+      flex-shrink: 0;
+    }
+    .profile-details {
+      flex: 1;
+    }
+    .profile-name {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #4a7c59;
+      margin-bottom: 0.3em;
+    }
+    .profile-bio {
+      font-size: 0.98em;
+      color: #555;
+      margin-bottom: 0.2em;
+    }
   </style>
 </head>
 <body>
-  <h1>👥 All Profiles</h1>
-  <div class="profile-list" id="profile-list"></div>
-  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  <h1>All Profiles</h1>
+  <ul class="profiles-list" id="profiles-list"></ul>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
-    const profileList = document.getElementById('profile-list');
+    const profilesList = document.getElementById('profiles-list');
+
+    // Your actual Supabase project ref and bucket name
+    const PROJECT_REF = 'guykaykkefwabnuhqcyv';
+    const BUCKET_NAME = 'avatars'; // Change if your bucket name is different
+
+    function getAvatarUrl(avatar_url) {
+      if (!avatar_url) return null;
+      if (avatar_url.startsWith('http')) return avatar_url;
+      return `https://${PROJECT_REF}.supabase.co/storage/v1/object/public/${BUCKET_NAME}/${avatar_url}`;
+    }
 
     async function loadProfiles() {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, avatar_url, bio')
         .order('full_name', { ascending: true });
 
       if (error) {
-        profileList.innerHTML = `<p>Error loading profiles: ${error.message}</p>`;
+        profilesList.innerHTML = `<li>Error loading profiles: ${error.message}</li>`;
         return;
       }
       if (!profiles || profiles.length === 0) {
-        profileList.innerHTML = `<p>No profiles found.</p>`;
+        profilesList.innerHTML = `<li>No profiles found.</li>`;
         return;
       }
 
-      profileList.innerHTML = '';
-      for (const profile of profiles) {
-        // Only show profiles that have a name or other required info
-        if (!profile.full_name && !profile.bio && !profile.location && !profile.interests && !profile.email) continue;
+      profilesList.innerHTML = '';
+      profiles.forEach(profile => {
+        const li = document.createElement('li');
+        li.className = 'profile-item';
 
-        const block = document.createElement('div');
-        block.className = 'profile-block';
+        // Profile image
+        const img = document.createElement('img');
+        img.className = 'profile-img';
+        const avatarSrc = getAvatarUrl(profile.avatar_url);
+        if (avatarSrc) {
+          img.src = avatarSrc;
+          img.alt = `${profile.full_name}'s profile picture`;
+        } else {
+          img.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.full_name || 'User');
+          img.alt = 'Default avatar';
+        }
 
-        // Use avatar_url or profile_picture column for the image
-        let picUrl = profile.avatar_url || profile.profile_picture || '';
-        let picHtml = picUrl
-          ? `<img src="${picUrl}" alt="Profile picture" class="profile-pic" />`
-          : `<div class="profile-pic"></div>`;
+        // Details
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'profile-details';
 
-        block.innerHTML = `
-          ${picHtml}
-          <div class="profile-details">
-            <div class="profile-name">${profile.full_name || '(No Name)'}</div>
-            <div class="profile-id">ID: ${profile.id}</div>
-            ${profile.email ? `<div class="profile-email">Email: ${profile.email}</div>` : ''}
-            ${profile.bio ? `<div class="profile-bio">Bio: ${profile.bio}</div>` : ''}
-            ${profile.location ? `<div class="profile-location">Location: ${profile.location}</div>` : ''}
-            ${profile.interests ? `<div class="profile-interests">Interests: ${profile.interests}</div>` : ''}
-          </div>
-        `;
-        profileList.appendChild(block);
-      }
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'profile-name';
+        nameDiv.textContent = profile.full_name || 'No Name';
+
+        const bioDiv = document.createElement('div');
+        bioDiv.className = 'profile-bio';
+        bioDiv.textContent = profile.bio || '';
+
+        detailsDiv.appendChild(nameDiv);
+        detailsDiv.appendChild(bioDiv);
+
+        li.appendChild(img);
+        li.appendChild(detailsDiv);
+
+        profilesList.appendChild(li);
+      });
     }
 
     loadProfiles();
