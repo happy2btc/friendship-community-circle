@@ -2,217 +2,104 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Agreements Voting</title>
-  <script type="module" src="/lib/supabase.js"></script>
+  <title>Agreements for Voting</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; color: #333; padding: 2rem; }
-    h1 { text-align: center; color: #4a7c59; }
-    .agreement-container { max-width: 700px; margin: 0 auto; }
-    .agreement-block { background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 1.5rem; }
-    .agreement-title { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
-    .agreement-meta { font-size: 0.9em; color: #666; margin-bottom: 1em; }
-    .vote-buttons { display: flex; gap: 1rem; margin-bottom: 1em; }
-    .vote-button { background-color: #4a7c59; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-size: 1em; cursor: pointer; }
-    .vote-button.disagree { background-color: #dc3545; }
-    .vote-counts { font-size: 1em; margin-bottom: 1em; }
-    .floating-controls {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      background-color: rgba(255,255,255,0.9);
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: flex;
-      gap: 10px;
-    }
-    .floating-controls a {
-      background-color: #6b4f1d;
-      color: #fff;
-      padding: 10px 15px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
+    body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    h1 { text-align: center; color: #6b4f1d; }
+    .agreements-container { max-width: 800px; margin: auto; }
+    .agreement-card { background: #fff; border: 1px solid #d8bfa3; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .agreement-card p { margin: 0.5rem 0; line-height: 1.5; font-size: 1.1em; }
+    .proposer { font-size: 0.95em; color: #666; }
+    .menu-button { display: block; width: fit-content; margin: 3rem auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>Agreements Voting</h1>
-  <div class="agreement-container" id="agreement-container"></div>
-  <div class="floating-controls">
-    <a href="menu.html" class="menu-button">Return to Menu</a>
+  <h1>🗳️ Agreements for Voting</h1>
+  <div id="agreements-container" class="agreements-container">
+    <p>Loading agreements for voting...</p>
   </div>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
-    const agreementContainer = document.getElementById('agreement-container');
-    let currentUser;
-    let communityMembers = [];
+    const container = document.getElementById('agreements-container');
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-    async function loadCommunityMembers() {
-      // Fetch all community members (for 80% voting logic)
-      const { data, error } = await supabase.from('profiles').select('id');
-      if (error) return [];
-      return data || [];
+    async function getMemberCount() {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true });
+      return count || 1;
     }
 
-    async function loadProposerNames(proposerIds) {
-      // Fetch proposer names for all agreements
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', proposerIds);
-      if (error) return {};
-      const nameMap = {};
-      (data || []).forEach(profile => {
-        nameMap[profile.id] = profile.full_name;
-      });
-      return nameMap;
+    async function getVoteCount(agreementId) {
+      const { count, error } = await supabase
+        .from('agreement_votes')
+        .select('id', { count: 'exact', head: true })
+        .eq('agreement_id', agreementId);
+      return count || 0;
     }
 
     async function loadAgreements() {
-      const { data: { user } } = await supabase.auth.getUser();
-      currentUser = user;
-
-      communityMembers = await loadCommunityMembers();
-      const totalMembers = communityMembers.length;
-
-      // Fetch agreements in voting
-      const { data: agreements, error: agreementsError } = await supabase
+      // Fetch agreements with status 'voting'
+      const { data: agreements, error } = await supabase
         .from('agreements')
-        .select('*')
-        .eq('status', 'voting')
-        .order('created_at', { ascending: true });
+        .select('id, agreement_text, proposer_id, created_at, status')
+        .eq('status', 'voting');
 
-      if (agreementsError) {
-        agreementContainer.innerHTML = `<p>Error loading agreements: ${agreementsError.message}</p>`;
+      if (error) {
+        container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
         return;
       }
+
       if (!agreements || agreements.length === 0) {
-        agreementContainer.innerHTML = `<p>There are no agreements being voted on right now.</p>`;
+        container.innerHTML = '<p>There are no agreements up for voting at this time.</p>';
         return;
       }
 
-      // Fetch votes for these agreements
-      const agreementIds = agreements.map(a => a.id);
-      const { data: votes, error: votesError } = await supabase
-        .from('agreement_votes')
-        .select('*')
-        .in('agreement_id', agreementIds);
+      // Get total member count
+      const memberCount = await getMemberCount();
+      const now = Date.now();
 
-      // Fetch proposer names
-      const proposerIds = agreements.map(a => a.proposer_id);
-      const proposerNames = await loadProposerNames(proposerIds);
-
-      agreementContainer.innerHTML = '';
-
+      // For each agreement, get vote count and filter
+      const filtered = [];
       for (const agreement of agreements) {
-        const votesForAgreement = votes ? votes.filter(v => v.agreement_id === agreement.id) : [];
-        const agreeVotes = votesForAgreement.filter(v => v.vote_value === 'agree').length;
-        const disagreeVotes = votesForAgreement.filter(v => v.vote_value === 'disagree').length;
-        const totalVotes = votesForAgreement.length;
+        const createdAt = new Date(agreement.created_at).getTime();
+        const age = now - createdAt;
+        const voteCount = await getVoteCount(agreement.id);
+        const percent = voteCount / memberCount;
 
-        // Voting progress logic
-        const percentVoted = totalMembers > 0 ? (totalVotes / totalMembers) * 100 : 0;
-        let votingStatus = '';
-        let canVote = true;
+        // Hide if older than a week and less than 50% voted
+        if (age > ONE_WEEK_MS && percent < 0.5) continue;
 
-        // Voting ends when 80% or more have voted
-        if (percentVoted >= 80) {
-          canVote = false;
-          const agreePercent = totalVotes > 0 ? (agreeVotes / totalVotes) * 100 : 0;
-          if (agreePercent >= 75) {
-            votingStatus = 'Agreement PASSED and will move to completed agreements.';
-            // Move to completed agreements (update status)
-            await supabase.from('agreements').update({ status: 'completed' }).eq('id', agreement.id);
-          } else if (agreePercent > 50) {
-            votingStatus = 'Agreement did NOT pass but received more than 50%. It will go back for further discussion.';
-            // Send back for discussion (update status)
-            await supabase.from('agreements').update({ status: 'discussion' }).eq('id', agreement.id);
-          } else {
-            votingStatus = 'Agreement did NOT pass and will be removed.';
-            // Remove agreement (delete)
-            await supabase.from('agreements').delete().eq('id', agreement.id);
-            continue; // Skip rendering this agreement
-          }
-        }
+        // Attach vote info for display
+        agreement.voteCount = voteCount;
+        agreement.votePercent = Math.round(percent * 100);
+        filtered.push(agreement);
+      }
 
-        // Check if user already voted
-        const userVote = votesForAgreement.find(v => v.voter_id === (currentUser ? currentUser.id : null));
+      container.innerHTML = '';
 
-        const block = document.createElement('div');
-        block.className = 'agreement-block';
+      if (filtered.length === 0) {
+        container.innerHTML = '<p>No agreements meet the voting criteria.</p>';
+        return;
+      }
 
-        const title = document.createElement('div');
-        title.className = 'agreement-title';
-        title.textContent = agreement.agreement_text;
+      for (const agreement of filtered) {
+        const card = document.createElement('div');
+        card.className = 'agreement-card';
 
-        const meta = document.createElement('div');
-        meta.className = 'agreement-meta';
-        const proposerName = proposerNames[agreement.proposer_id] || agreement.proposer_id;
-        meta.textContent = `Proposed by ${proposerName} • Total votes: ${totalVotes} of ${totalMembers} (${percentVoted.toFixed(1)}%)`;
-
-        const voteCounts = document.createElement('div');
-        voteCounts.className = 'vote-counts';
-        voteCounts.textContent = `Agree: ${agreeVotes} | Disagree: ${disagreeVotes}`;
-
-        block.appendChild(title);
-        block.appendChild(meta);
-        block.appendChild(voteCounts);
-
-        if (canVote && !userVote && currentUser) {
-          const voteButtons = document.createElement('div');
-          voteButtons.className = 'vote-buttons';
-
-          const agreeBtn = document.createElement('button');
-          agreeBtn.className = 'vote-button agree';
-          agreeBtn.textContent = 'Agree';
-          agreeBtn.onclick = async () => {
-            await supabase.from('agreement_votes').insert({
-              agreement_id: agreement.id,
-              voter_id: currentUser.id,
-              vote_value: 'agree'
-            });
-            await loadAgreements();
-          };
-
-          const disagreeBtn = document.createElement('button');
-          disagreeBtn.className = 'vote-button disagree';
-          disagreeBtn.textContent = 'Disagree';
-          disagreeBtn.onclick = async () => {
-            await supabase.from('agreement_votes').insert({
-              agreement_id: agreement.id,
-              voter_id: currentUser.id,
-              vote_value: 'disagree'
-            });
-            await loadAgreements();
-          };
-
-          voteButtons.appendChild(agreeBtn);
-          voteButtons.appendChild(disagreeBtn);
-          block.appendChild(voteButtons);
-        } else if (userVote) {
-          const votedMsg = document.createElement('div');
-          votedMsg.textContent = `You voted: ${userVote.vote_value.charAt(0).toUpperCase() + userVote.vote_value.slice(1)}`;
-          block.appendChild(votedMsg);
-        }
-
-        if (votingStatus) {
-          const statusMsg = document.createElement('div');
-          statusMsg.style.marginTop = '1em';
-          statusMsg.style.fontWeight = 'bold';
-          statusMsg.textContent = votingStatus;
-          block.appendChild(statusMsg);
-        }
-
-        agreementContainer.appendChild(block);
+        card.innerHTML = `
+          <p><strong>${agreement.agreement_text}</strong></p>
+          <p class="proposer">Proposed by: ${agreement.proposer_id || 'A Circle Member'}</p>
+          <p>Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</p>
+        `;
+        container.appendChild(card);
       }
     }
 
     loadAgreements();
-    </script>
+  </script>
 </body>
 </html>
