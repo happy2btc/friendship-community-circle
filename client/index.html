@@ -73,8 +73,8 @@
       min-height: 1.5em;
     }
     .toggle-button {
-      background-color: #2e8b57; /* Changed to green */
-      color: #fff;               /* Changed to white */
+      background-color: #2e8b57;
+      color: #fff;
       border: none;
       padding: 10px 15px;
       border-radius: 6px;
@@ -83,6 +83,18 @@
       width: 100%;
       font-size: 1em;
       font-weight: bold;
+    }
+    .forgot-link {
+      display: block;
+      text-align: center;
+      margin-top: 1em;
+      color: #2e8b57;
+      text-decoration: underline;
+      font-size: 1em;
+      font-weight: bold;
+    }
+    .forgot-link:hover {
+      color: #6b4f1d;
     }
   </style>
 </head>
@@ -110,6 +122,7 @@
 
     <button type="submit" id="submit-button">Enter the Circle</button>
     <div id="form-status"></div>
+    <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
   </form>
 
   <script type="module">
@@ -206,5 +219,6 @@
         submitBtn.disabled = false;
       }
     });
-  </script>
+   </script>
 </body>
+</html>
