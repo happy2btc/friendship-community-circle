@@ -29,6 +29,7 @@
     .vote-buttons .abstain { background-color: #bdbdbd; color: #333; }
     .vote-buttons .abstain:hover { background-color: #757575; color: #fff; }
     .vote-status { margin-top: 0.5rem; font-size: 0.95em; color: #4a7c59; }
+    .voters-list { margin-top: 1rem; font-size: 1em; color: #333; }
     .menu-button { display: block; width: fit-content; margin: 3rem auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
   </style>
 </head>
@@ -70,6 +71,35 @@
       return data ? data.vote_value : null;
     }
 
+    async function getAllVoters(agreementId) {
+      // Get all votes for this agreement
+      const { data: votes, error } = await supabase
+        .from('agreement_votes')
+        .select('voter_id, vote_value')
+        .eq('agreement_id', agreementId);
+
+      if (!votes || votes.length === 0) return [];
+
+      // Get all voter profiles in one query
+      const voterIds = votes.map(v => v.voter_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', voterIds);
+
+      // Map voter_id to name
+      const idToName = {};
+      profiles?.forEach(profile => {
+        idToName[profile.id] = profile.full_name;
+      });
+
+      // Return array of {name, vote}
+      return votes.map(v => ({
+        name: idToName[v.voter_id] || 'Unknown',
+        vote: v.vote_value
+      }));
+    }
+
     async function vote(agreementId, voteValue, voterId, card) {
       // Check if user already voted
       const existingVote = await getUserVote(agreementId, voterId);
@@ -85,6 +115,17 @@
       } else {
         card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
         alert('Vote submitted!');
+        // Refresh voters list after voting
+        getAllVoters(agreementId).then(voters => {
+          const votersDiv = card.querySelector('.voters-list');
+          if (voters.length === 0) {
+            votersDiv.textContent = 'No votes yet.';
+          } else {
+            votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
+              voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
+              '</ul>';
+          }
+        });
       }
     }
 
@@ -151,6 +192,7 @@
             <button class="abstain" data-vote="abstain">Abstain</button>
           </div>
           <div class="vote-status"></div>
+          <div class="voters-list"></div>
         `;
 
         // Add voting button logic
@@ -173,6 +215,18 @@
             }
           });
         }
+
+        // Show all voters and their votes
+        getAllVoters(agreement.id).then(voters => {
+          const votersDiv = card.querySelector('.voters-list');
+          if (voters.length === 0) {
+            votersDiv.textContent = 'No votes yet.';
+          } else {
+            votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
+              voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
+              '</ul>';
+          }
+        });
 
         container.appendChild(card);
       }
