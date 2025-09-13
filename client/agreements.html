@@ -10,6 +10,25 @@
     .agreement-card { background: #fff; border: 1px solid #d8bfa3; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     .agreement-card p { margin: 0.5rem 0; line-height: 1.5; font-size: 1.1em; }
     .proposer { font-size: 0.95em; color: #666; }
+    .vote-info { font-size: 1em; font-weight: bold; margin-bottom: 1rem; color: #4a7c59; }
+    .vote-buttons { display: flex; gap: 1rem; margin-top: 1rem; }
+    .vote-buttons button {
+      flex: 1;
+      padding: 12px 0;
+      font-size: 1.1em;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .vote-buttons .agree { background-color: #4caf50; color: #fff; }
+    .vote-buttons .agree:hover { background-color: #388e3c; }
+    .vote-buttons .disagree { background-color: #e53935; color: #fff; }
+    .vote-buttons .disagree:hover { background-color: #b71c1c; }
+    .vote-buttons .abstain { background-color: #bdbdbd; color: #333; }
+    .vote-buttons .abstain:hover { background-color: #757575; color: #fff; }
+    .vote-status { margin-top: 0.5rem; font-size: 0.95em; color: #4a7c59; }
     .menu-button { display: block; width: fit-content; margin: 3rem auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
   </style>
 </head>
@@ -41,6 +60,34 @@
       return count || 0;
     }
 
+    async function getUserVote(agreementId, voterId) {
+      const { data, error } = await supabase
+        .from('agreement_votes')
+        .select('vote_value')
+        .eq('agreement_id', agreementId)
+        .eq('voter_id', voterId)
+        .single();
+      return data ? data.vote_value : null;
+    }
+
+    async function vote(agreementId, voteValue, voterId, card) {
+      // Check if user already voted
+      const existingVote = await getUserVote(agreementId, voterId);
+      if (existingVote) {
+        alert('You have already voted on this agreement.');
+        return;
+      }
+      const { error } = await supabase
+        .from('agreement_votes')
+        .insert([{ agreement_id: agreementId, voter_id: voterId, vote_value: voteValue }]);
+      if (error) {
+        alert('Error submitting vote: ' + error.message);
+      } else {
+        card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
+        alert('Vote submitted!');
+      }
+    }
+
     async function loadAgreements() {
       // Fetch agreements with status 'voting'
       const { data: agreements, error } = await supabase
@@ -61,6 +108,10 @@
       // Get total member count
       const memberCount = await getMemberCount();
       const now = Date.now();
+
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      const voterId = userData?.user?.id;
 
       // For each agreement, get vote count and filter
       const filtered = [];
@@ -93,8 +144,36 @@
         card.innerHTML = `
           <p><strong>${agreement.agreement_text}</strong></p>
           <p class="proposer">Proposed by: ${agreement.proposer_id || 'A Circle Member'}</p>
-          <p>Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</p>
+          <div class="vote-info">Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</div>
+          <div class="vote-buttons">
+            <button class="agree" data-vote="agree">Agree</button>
+            <button class="disagree" data-vote="disagree">Disagree</button>
+            <button class="abstain" data-vote="abstain">Abstain</button>
+          </div>
+          <div class="vote-status"></div>
         `;
+
+        // Add voting button logic
+        const buttons = card.querySelectorAll('.vote-buttons button');
+        buttons.forEach(btn => {
+          btn.onclick = async () => {
+            if (!voterId) {
+              alert('You must be signed in to vote.');
+              return;
+            }
+            await vote(agreement.id, btn.getAttribute('data-vote'), voterId, card);
+          };
+        });
+
+        // Show user's vote if already voted
+        if (voterId) {
+          getUserVote(agreement.id, voterId).then(voteValue => {
+            if (voteValue) {
+              card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
+            }
+          });
+        }
+
         container.appendChild(card);
       }
     }
