@@ -4,7 +4,7 @@
   "description": "A ceremonial static site with Supabase integration",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && copy change-password.html dist\\change-password.html", // For Windows
+    "build": "vite build && copy change-password.html dist\\change-password.html",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -13,5 +13,5 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.2",
     "vite": "^7.1.4"
-   }
+  }
 }
