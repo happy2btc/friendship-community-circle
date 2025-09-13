@@ -100,6 +100,16 @@
       }));
     }
 
+    async function getProposerName(proposerId) {
+      if (!proposerId) return 'A Circle Member';
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', proposerId)
+        .single();
+      return data?.full_name || 'A Circle Member';
+    }
+
     async function vote(agreementId, voteValue, voterId, card) {
       // Check if user already voted
       const existingVote = await getUserVote(agreementId, voterId);
@@ -184,7 +194,7 @@
 
         card.innerHTML = `
           <p><strong>${agreement.agreement_text}</strong></p>
-          <p class="proposer">Proposed by: ${agreement.proposer_id || 'A Circle Member'}</p>
+          <p class="proposer"></p>
           <div class="vote-info">Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</div>
           <div class="vote-buttons">
             <button class="agree" data-vote="agree">Agree</button>
@@ -194,6 +204,12 @@
           <div class="vote-status"></div>
           <div class="voters-list"></div>
         `;
+
+        // Set proposer name
+        const proposerP = card.querySelector('.proposer');
+        getProposerName(agreement.proposer_id).then(name => {
+          proposerP.textContent = `Proposed by: ${name}`;
+        });
 
         // Add voting button logic
         const buttons = card.querySelectorAll('.vote-buttons button');
@@ -233,6 +249,6 @@
     }
 
     loadAgreements();
-  </script>
+   </script>
 </body>
 </html>
