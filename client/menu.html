@@ -42,37 +42,81 @@
             background-color: #8c6f4e;
         }
         .logout-button {
-            background-color: #a94442; /* A distinct color for logout */
+            background-color: #a94442;
             cursor: pointer;
             border: none;
             width: 100%;
             margin-top: 20px;
-            grid-column: 1 / -1; /* Make it span both columns */
+            grid-column: 1 / -1;
+        }
+        /* Featured member styles */
+        #featured-member {
+            max-width: 400px;
+            margin: 2rem auto 0 auto;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #eee;
+            text-align: center;
+        }
+        #featured-member img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            background: #eee;
+        }
+        #featured-member h3 {
+            margin: 0.5rem 0 0.5rem 0;
+        }
+        #featured-member blockquote {
+            font-style: italic;
+            color: #4a7c59;
+            margin: 1rem 0 0 0;
+        }
+        #featured-member a {
+            color: #2e8b57;
+            text-decoration: underline;
+        }
+        #featured-member .activity-breakdown {
+            margin-top: 1rem;
+            font-size: 0.95em;
+            color: #555;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <h1>🌸 Welcome to the Circle</h1>
 
-    <div class="menu-container">
-        <a href="profile.html" class="menu-button">👤 My Profile</a>
-        <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
-        
-        <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
-        <a href="mutual-aid.html" class="menu-button">🌿 Tend to Mutual Aid</a>
-
-        <a href="contribute.html" class="menu-button">✍️ Submit Your Project</a>
-        <a href="view-scrolls.html" class="menu-button">📜 View All Projects</a>
-        
-        <a href="exchange.html" class="menu-button">🎁 Wants and Offers</a>
-        <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
-
-        <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
-        <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
-        <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
-
-        <button id="logout-button" class="logout-button">Log Out</button>
+    <div id="featured-member">
+      <h2>🌟 Most Active Member of the Week</h2>
+      <div id="member-profile"></div>
     </div>
+
+    <!-- ...existing code... -->
+<div class="menu-container">
+    <a href="profile.html" class="menu-button">👤 My Profile</a>
+    <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
+    
+    <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
+    <a href="mutual-aid.html" class="menu-button">🌿 Tend to Mutual Aid</a>
+
+    <a href="contribute.html" class="menu-button">✍️ Submit Your Project</a>
+    <a href="view-scrolls.html" class="menu-button">📜 View All Projects</a>
+    
+    <a href="exchange.html" class="menu-button">🎁 Wants and Offers</a>
+    <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
+
+    <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
+    <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
+    <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
+    <a href="activities.html" class="menu-button">🏆 Member Activities</a>
+
+    <button id="logout-button" class="logout-button">Log Out</button>
+</div>
+<!-- ...existing
 
     <script type="module">
         import { supabase } from '/lib/supabase.js';
@@ -84,10 +128,102 @@
             if (error) {
                 console.error('Error logging out:', error);
             } else {
-                // Redirect to the login page after successful logout
                 window.location.href = '/index.html';
             }
         });
-    </script>
+
+        // Featured member logic with activity breakdown
+        async function getMostActiveMember() {
+            const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+
+            // Get votes
+            const { data: votes } = await supabase
+                .from('agreement_votes')
+                .select('voter_id, created_at')
+                .gte('created_at', since);
+
+            // Get suggestions
+            const { data: suggestions } = await supabase
+                .from('suggestions')
+                .select('author_id, created_at')
+                .gte('created_at', since);
+
+            // Get connections (if you have a 'connections' table)
+            const { data: connections } = await supabase
+                .from('connections')
+                .select('user_id, created_at')
+                .gte('created_at', since);
+
+            // Get discussions (if you have a 'discussions' table)
+            const { data: discussions } = await supabase
+                .from('discussions')
+                .select('author_id, created_at')
+                .gte('created_at', since);
+
+            // Tally activity per user
+            const activity = {};
+            const breakdown = {};
+
+            votes?.forEach(v => {
+                activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
+                breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
+                breakdown[v.voter_id].votes += 1;
+            });
+            suggestions?.forEach(s => {
+                activity[s.author_id] = (activity[s.author_id] || 0) + 1;
+                breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
+                breakdown[s.author_id].suggestions += 1;
+            });
+            connections?.forEach(c => {
+                activity[c.user_id] = (activity[c.user_id] || 0) + 1;
+                breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
+                breakdown[c.user_id].connections += 1;
+            });
+            discussions?.forEach(d => {
+                activity[d.author_id] = (activity[d.author_id] || 0) + 1;
+                breakdown[d.author_id] = breakdown[d.author_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
+                breakdown[d.author_id].discussions += 1;
+            });
+
+            // Find top user
+            const topId = Object.entries(activity).sort((a,b) => b[1]-a[1])[0]?.[0];
+            if (!topId) return null;
+
+            // Get profile and story
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url, personal_story')
+                .eq('id', topId)
+                .single();
+
+            return { profile, breakdown: breakdown[topId] };
+        }
+
+        async function showFeaturedMember() {
+            const result = await getMostActiveMember();
+            const container = document.getElementById('member-profile');
+            if (!result || !result.profile) {
+                container.innerHTML = "<em>No active member this week yet!</em>";
+                return;
+            }
+            const member = result.profile;
+            const breakdown = result.breakdown;
+            container.innerHTML = `
+                <img src="${member.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
+                <h3>${member.full_name}</h3>
+                <p><a href="activities.html?user=${member.id}">See their activities</a></p>
+                <blockquote>${member.personal_story || 'No story yet.'}</blockquote>
+                <div class="activity-breakdown">
+                    <strong>This week:</strong><br>
+                    Votes: ${breakdown.votes || 0}<br>
+                    Suggestions: ${breakdown.suggestions || 0}<br>
+                    Connections: ${breakdown.connections || 0}<br>
+                    Discussions: ${breakdown.discussions || 0}
+                </div>
+            `;
+        }
+
+        showFeaturedMember();
+        </script>
 </body>
 </html>
