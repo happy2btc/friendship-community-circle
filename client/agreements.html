@@ -110,21 +110,24 @@
       return data?.full_name || 'A Circle Member';
     }
 
+    // Updated vote function to allow changing vote (upsert)
     async function vote(agreementId, voteValue, voterId, card) {
-      // Check if user already voted
-      const existingVote = await getUserVote(agreementId, voterId);
-      if (existingVote) {
-        alert('You have already voted on this agreement.');
-        return;
-      }
+      // Upsert the vote (insert or update if exists)
       const { error } = await supabase
         .from('agreement_votes')
-        .insert([{ agreement_id: agreementId, voter_id: voterId, vote_value: voteValue }]);
+        .upsert([
+          {
+            agreement_id: agreementId,
+            voter_id: voterId,
+            vote_value: voteValue
+          }
+        ], { onConflict: ['agreement_id', 'voter_id'] });
+
       if (error) {
         alert('Error submitting vote: ' + error.message);
       } else {
         card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
-        alert('Vote submitted!');
+        alert('Your vote has been recorded!');
         // Refresh voters list after voting
         getAllVoters(agreementId).then(voters => {
           const votersDiv = card.querySelector('.voters-list');
@@ -249,6 +252,6 @@
     }
 
     loadAgreements();
-   </script>
+  </script>
 </body>
 </html>
