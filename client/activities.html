@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Member Activities</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; max-width: 800px; margin: auto; }
+    h1 { text-align: center; }
+    .member-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+    .member-card img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #eee;
+    }
+    .member-info {
+      flex: 1;
+    }
+    .activity-breakdown {
+      font-size: 1em;
+      color: #555;
+      margin: 0.5rem 0 0 0;
+    }
+    .personal-story {
+      font-style: italic;
+      color: #4a7c59;
+      margin-top: 0.5rem;
+    }
+    .back-menu-btn {
+      display: inline-block;
+      margin: 2rem auto 0 auto;
+      padding: 12px 24px;
+      background: #2e8b57;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+      box-shadow: 0 2px 6px #eee;
+      transition: background 0.2s;
+    }
+    .back-menu-btn:hover {
+      background: #4a7c59;
+    }
+  </style>
+</head>
+<body>
+  <h1>Community Member Activities</h1>
+  <div id="members"></div>
+  <a href="menu.html" class="back-menu-btn">← Back to Menu</a>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function getActivities() {
+      const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+
+      // Get all activities in the last 7 days
+      const { data: votes } = await supabase
+        .from('agreement_votes')
+        .select('voter_id, created_at')
+        .gte('created_at', since);
+
+      const { data: suggestions } = await supabase
+        .from('suggestions')
+        .select('author_id, created_at')
+        .gte('created_at', since);
+
+      const { data: comments } = await supabase
+        .from('comments')
+        .select('author_id, created_at')
+        .gte('created_at', since);
+
+      // Tally activity per user
+      const activity = {};
+      const breakdown = {};
+
+      votes?.forEach(v => {
+        activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
+        breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
+        breakdown[v.voter_id].votes += 1;
+      });
+      suggestions?.forEach(s => {
+        activity[s.author_id] = (activity[s.author_id] || 0) + 1;
+        breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+        breakdown[s.author_id].suggestions += 1;
+      });
+      comments?.forEach(c => {
+        activity[c.author_id] = (activity[c.author_id] || 0) + 1;
+        breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+        breakdown[c.author_id].comments += 1;
+      });
+
+      // Get all involved user IDs
+      const userIds = Object.keys(activity);
+      if (userIds.length === 0) return [];
+
+      // Get profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, personal_story')
+        .in('id', userIds);
+
+      // Map profiles by id
+      const idToProfile = {};
+      profiles?.forEach(p => { idToProfile[p.id] = p; });
+
+      // Add these debug logs here:
+      console.log('userIds:', userIds);
+      console.log('profiles:', profiles);
+      
+      // Build member activity list
+      const members = userIds.map(id => ({
+        id,
+        profile: idToProfile[id] || { full_name: 'Unknown', avatar_url: '', personal_story: '' },
+        total: activity[id],
+        breakdown: breakdown[id]
+      }));
+
+      // Sort by most active
+      members.sort((a, b) => b.total - a.total);
+
+      return members;
+    }
+
+    async function showMembers() {
+      const members = await getActivities();
+      const container = document.getElementById('members');
+      if (!members || members.length === 0) {
+        container.innerHTML = "<em>No member activities in the past week.</em>";
+        return;
+      }
+      container.innerHTML = members.map(m => `
+        <div class="member-card">
+          <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
+          <div class="member-info">
+            <h2>${m.profile.full_name}</h2>
+            <div class="activity-breakdown">
+              <strong>Activities this week:</strong><br>
+              Votes: ${m.breakdown.votes || 0}<br>
+              Suggestions: ${m.breakdown.suggestions || 0}<br>
+              Comments: ${m.breakdown.comments || 0}<br>
+              <strong>Total:</strong> ${m.total}
+            </div>
+            <div class="personal-story">${m.profile.personal_story || ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    showMembers();
+  </script>
+</body>
+</html>
