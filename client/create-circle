@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create a Circle</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #e6f7f2;
+      color: #333;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #2e8b57;
+      margin-bottom: 2rem;
+    }
+    form {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #eee;
+      max-width: 400px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    input, textarea {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #bdbdbd;
+      font-size: 1em;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #2e8b57;
+      color: #fff;
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #4a7c59;
+    }
+    .menu-button {
+      display: block;
+      margin: 2rem auto 0 auto;
+      background-color: #6c757d;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+      width: fit-content;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create a New Circle</h1>
+  <form id="circle-form">
+    <label for="name">Circle Name</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="4"></textarea>
+
+    <button type="submit">Create Circle</button>
+  </form>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    const form = document.getElementById('circle-form');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      const description = form.description.value.trim();
+      if (!name) {
+        alert('Circle name is required.');
+        return;
+      }
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      // Removed login check and alert
+      // if (!userId) {
+      //   alert('You must be logged in to create a circle.');
+      //   return;
+      // }
+      const { data, error } = await supabase
+        .from('circles')
+        .insert([{ name, description, created_by: userId }]);
+      if (error) {
+        alert('Error creating circle: ' + error.message);
+        return;
+      }
+      if (data && data.length > 0) {
+        // Automatically add creator as a member
+        const circleId = data[0].id;
+        const { error: memberError } = await supabase.from('circle_members').insert([
+          { circle_id: circleId, user_id: userId }
+        ]);
+        if (memberError) {
+          alert('Circle created, but failed to add you as a member: ' + memberError.message);
+        } else {
+          alert('Circle created and you have been added as a member!');
+        }
+        window.location.href = 'menu.html';
+      } else {
+        alert('Unknown error creating circle.');
+      }
+    };
+   </script>
+</body>
+</html>
