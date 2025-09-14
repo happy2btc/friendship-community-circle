@@ -125,13 +125,11 @@
             }
         });
 
-        // Featured member logic with activity breakdown, excluding yourself
+        // Hard-code your user ID to exclude from featured member logic for all users
+        const excludedUserId = "YOUR-USER-ID-HERE"; // <-- Replace with your actual user ID
+
         async function getMostActiveMember() {
             const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-
-            // Get current user ID
-            const { data: userData } = await supabase.auth.getUser();
-            const myUserId = userData?.user?.id;
 
             // Get votes
             const { data: votes } = await supabase
@@ -169,40 +167,40 @@
                 discussions = [];
             }
 
-            // Tally activity per user, excluding yourself
+            // Tally activity per user, excluding the hard-coded user
             const activity = {};
             const breakdown = {};
 
             votes?.forEach(v => {
-                if (v.voter_id !== myUserId) {
+                if (v.voter_id !== excludedUserId) {
                     activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
                     breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
                     breakdown[v.voter_id].votes += 1;
                 }
             });
             suggestions?.forEach(s => {
-                if (s.author_id !== myUserId) {
+                if (s.author_id !== excludedUserId) {
                     activity[s.author_id] = (activity[s.author_id] || 0) + 1;
                     breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
                     breakdown[s.author_id].suggestions += 1;
                 }
             });
             connections?.forEach(c => {
-                if (c.user_id !== myUserId) {
+                if (c.user_id !== excludedUserId) {
                     activity[c.user_id] = (activity[c.user_id] || 0) + 1;
                     breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
                     breakdown[c.user_id].connections += 1;
                 }
             });
             discussions?.forEach(d => {
-                if (d.author_id !== myUserId) {
+                if (d.author_id !== excludedUserId) {
                     activity[d.author_id] = (activity[d.author_id] || 0) + 1;
                     breakdown[d.author_id] = breakdown[d.author_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
                     breakdown[d.author_id].discussions += 1;
                 }
             });
 
-            // Find top user (excluding yourself)
+            // Find top user (excluding the hard-coded user)
             const topId = Object.entries(activity).sort((a,b) => b[1]-a[1])[0]?.[0];
             if (!topId) return null;
 
@@ -241,6 +239,6 @@
         }
 
         showFeaturedMember();
-     </script>
+    </script>
 </body>
 </html>
