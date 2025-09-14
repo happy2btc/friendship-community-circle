@@ -49,7 +49,23 @@
             margin-top: 20px;
             grid-column: 1 / -1;
         }
-        /* Featured member styles */
+        #circle-selector {
+            margin: 1rem auto 2rem auto;
+            font-size: 1.1em;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #bdbdbd;
+            display: block;
+            min-width: 250px;
+            background: #fff;
+        }
+        #circle-selector-label {
+            font-weight: bold;
+            color: #2e8b57;
+            margin-bottom: 0.5rem;
+            display: block;
+            text-align: center;
+        }
         #featured-member {
             max-width: 400px;
             margin: 2rem auto 0 auto;
@@ -90,6 +106,11 @@
 <body>
     <h1>🌸 Welcome to the Circle</h1>
 
+    <label id="circle-selector-label" for="circle-selector">Select a Circle:</label>
+    <select id="circle-selector">
+        <option value="">Loading circles...</option>
+    </select>
+
     <div id="featured-member">
       <h2>🌟 Most Active Member of the Week</h2>
       <div id="member-profile"></div>
@@ -105,43 +126,88 @@
         <a href="exchange.html" class="menu-button">🎁 Wants and Offers</a>
         <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
         <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
+        <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements (by Circle)</a>
         <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
         <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
         <a href="activities.html" class="menu-button">🏆 Member Activities</a>
+        <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
         <button id="logout-button" class="logout-button">Log Out</button>
     </div>
 
     <script type="module">
         import { supabase } from '/lib/supabase.js';
 
-        const logoutButton = document.getElementById('logout-button');
+        // Circle selector logic
+        const selector = document.getElementById('circle-selector');
+        const label = document.getElementById('circle-selector-label');
 
-        logoutButton.addEventListener('click', async () => {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                console.error('Error logging out:', error);
-            } else {
-                window.location.href = '/index.html';
+        async function loadCircles() {
+            const { data: userData } = await supabase.auth.getUser();
+            const userId = userData?.user?.id;
+            if (!userId) {
+                selector.innerHTML = '<option value="">Please log in to see circles.</option>';
+                label.textContent = 'Select a Circle:';
+                return;
             }
-        });
+            const { data: memberships } = await supabase
+                .from('circle_members')
+                .select('circle_id')
+                .eq('user_id', userId);
 
+            if (!memberships || memberships.length === 0) {
+                selector.innerHTML = '<option value="">You are not a member of any circles.</option>';
+                label.textContent = 'Select a Circle:';
+                return;
+            }
+            const circleIds = memberships.map(m => m.circle_id);
+            const { data: circles } = await supabase
+                .from('circles')
+                .select('id, name')
+                .in('id', circleIds);
+
+            if (!circles || circles.length === 0) {
+                selector.innerHTML = '<option value="">No circles found.</option>';
+                label.textContent = 'Select a Circle:';
+                return;
+            }
+
+            selector.innerHTML = circles.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            label.textContent = 'Select a Circle:';
+
+            // Set selected circle from localStorage if exists
+            const savedCircleId = localStorage.getItem('selectedCircleId');
+            if (savedCircleId && circles.some(c => c.id === savedCircleId)) {
+                selector.value = savedCircleId;
+            } else {
+                selector.value = circles[0].id;
+                localStorage.setItem('selectedCircleId', circles[0].id);
+            }
+        }
+
+        selector.onchange = () => {
+            localStorage.setItem('selectedCircleId', selector.value);
+            // Optionally reload featured member and other content here
+            showFeaturedMember();
+        };
+
+        // Featured member logic (filtered by selected circle)
         async function getMostActiveMember() {
             const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-
-            // Get current user ID
-            const { data: userData } = await supabase.auth.getUser();
-            const myUserId = userData?.user?.id;
+            const selectedCircleId = localStorage.getItem('selectedCircleId');
+            if (!selectedCircleId) return null;
 
             // Get votes
             const { data: votes } = await supabase
                 .from('agreement_votes')
-                .select('voter_id, created_at')
+                .select('voter_id, created_at, circle_id')
+                .eq('circle_id', selectedCircleId)
                 .gte('created_at', since);
 
             // Get suggestions
             const { data: suggestions } = await supabase
                 .from('suggestions')
-                .select('author_id, created_at')
+                .select('author_id, created_at, circle_id')
+                .eq('circle_id', selectedCircleId)
                 .gte('created_at', since);
 
             // Get connections (if you have a 'connections' table)
@@ -149,7 +215,8 @@
             try {
                 const { data } = await supabase
                     .from('connections')
-                    .select('user_id, created_at')
+                    .select('user_id, created_at, circle_id')
+                    .eq('circle_id', selectedCircleId)
                     .gte('created_at', since);
                 connections = data || [];
             } catch (e) {
@@ -161,7 +228,8 @@
             try {
                 const { data } = await supabase
                     .from('discussions')
-                    .select('author_id, created_at')
+                    .select('author_id, created_at, circle_id')
+                    .eq('circle_id', selectedCircleId)
                     .gte('created_at', since);
                 discussions = data || [];
             } catch (e) {
@@ -194,8 +262,10 @@
             });
 
             // Remove your own user ID from the activity tally
-            delete activity["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
-            delete breakdown["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
+            const { data: userData } = await supabase.auth.getUser();
+            const myUserId = userData?.user?.id;
+            delete activity[myUserId];
+            delete breakdown[myUserId];
 
             // Find top user (excluding yourself)
             const topId = Object.entries(activity).sort((a,b) => b[1]-a[1])[0]?.[0];
@@ -235,7 +305,19 @@
             `;
         }
 
-        showFeaturedMember();
-        </script>
+        const logoutButton = document.getElementById('logout-button');
+        logoutButton.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error logging out:', error);
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+
+        // Initial load
+        await loadCircles();
+        await showFeaturedMember();
+    </script>
 </body>
 </html>
