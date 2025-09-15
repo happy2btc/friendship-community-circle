@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Circle Menu</title>
+    <title>Community Menu</title>
     <script type="module" src="/lib/supabase.js"></script>
     <style>
         body {
@@ -49,23 +49,6 @@
             margin-top: 20px;
             grid-column: 1 / -1;
         }
-        #circle-selector {
-            margin: 1rem auto 2rem auto;
-            font-size: 1.1em;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #bdbdbd;
-            display: block;
-            min-width: 250px;
-            background: #fff;
-        }
-        #circle-selector-label {
-            font-weight: bold;
-            color: #2e8b57;
-            margin-bottom: 0.5rem;
-            display: block;
-            text-align: center;
-        }
         #featured-member {
             max-width: 400px;
             margin: 2rem auto 0 auto;
@@ -86,33 +69,24 @@
         #featured-member h3 {
             margin: 0.5rem 0 0.5rem 0;
         }
-        #featured-member blockquote {
-            font-style: italic;
-            color: #4a7c59;
-            margin: 1rem 0 0 0;
-        }
-        #featured-member a {
-            color: #2e8b57;
-            text-decoration: underline;
-        }
         #featured-member .activity-breakdown {
             margin-top: 1rem;
             font-size: 0.95em;
             color: #555;
             text-align: left;
         }
+        #featured-member .personal-story {
+            font-style: italic;
+            color: #4a7c59;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
-    <h1>🌸 Welcome to the Circle</h1>
-
-    <label id="circle-selector-label" for="circle-selector">Select a Circle:</label>
-    <select id="circle-selector">
-        <option value="">Loading circles...</option>
-    </select>
+    <h1>🌸 Welcome to the Community</h1>
 
     <div id="featured-member">
-      <h2>🌟 Most Active Member of the Week</h2>
+      <h2>🌟 Most Active Member</h2>
       <div id="member-profile"></div>
     </div>
 
@@ -126,7 +100,7 @@
         <a href="exchange.html" class="menu-button">🎁 Wants and Offers</a>
         <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
         <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
-        <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements (by Circle)</a>
+        <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements</a>
         <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
         <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
         <a href="activities.html" class="menu-button">🏆 Member Activities</a>
@@ -137,171 +111,97 @@
     <script type="module">
         import { supabase } from '/lib/supabase.js';
 
-        // Circle selector logic
-        const selector = document.getElementById('circle-selector');
-        const label = document.getElementById('circle-selector-label');
-
-        async function loadCircles() {
-            const { data: userData } = await supabase.auth.getUser();
-            const userId = userData?.user?.id;
-            if (!userId) {
-                selector.innerHTML = '<option value="">Please log in to see circles.</option>';
-                label.textContent = 'Select a Circle:';
-                return;
-            }
-            const { data: memberships } = await supabase
-                .from('circle_members')
-                .select('circle_id')
-                .eq('user_id', userId);
-
-            if (!memberships || memberships.length === 0) {
-                selector.innerHTML = '<option value="">You are not a member of any circles.</option>';
-                label.textContent = 'Select a Circle:';
-                return;
-            }
-            const circleIds = memberships.map(m => m.circle_id);
-            const { data: circles } = await supabase
-                .from('circles')
-                .select('id, name')
-                .in('id', circleIds);
-
-            if (!circles || circles.length === 0) {
-                selector.innerHTML = '<option value="">No circles found.</option>';
-                label.textContent = 'Select a Circle:';
-                return;
-            }
-
-            selector.innerHTML = circles.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            label.textContent = 'Select a Circle:';
-
-            // Set selected circle from localStorage if exists
-            const savedCircleId = localStorage.getItem('selectedCircleId');
-            if (savedCircleId && circles.some(c => c.id === savedCircleId)) {
-                selector.value = savedCircleId;
-            } else {
-                selector.value = circles[0].id;
-                localStorage.setItem('selectedCircleId', circles[0].id);
-            }
-        }
-
-        selector.onchange = () => {
-            localStorage.setItem('selectedCircleId', selector.value);
-            // Optionally reload featured member and other content here
-            showFeaturedMember();
-        };
-
-        // Featured member logic (filtered by selected circle)
+        // Featured member logic (same as activities.html, no circles)
         async function getMostActiveMember() {
             const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-            const selectedCircleId = localStorage.getItem('selectedCircleId');
-            if (!selectedCircleId) return null;
+            const myUserId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
 
-            // Get votes
+            // Query all activity tables for the last 7 days
             const { data: votes } = await supabase
                 .from('agreement_votes')
-                .select('voter_id, created_at, circle_id')
-                .eq('circle_id', selectedCircleId)
-                .gte('created_at', since);
+                .select('voter_id, created_at');
 
-            // Get suggestions
             const { data: suggestions } = await supabase
                 .from('suggestions')
-                .select('author_id, created_at, circle_id')
-                .eq('circle_id', selectedCircleId)
-                .gte('created_at', since);
+                .select('author_id, created_at');
 
-            // Get connections (if you have a 'connections' table)
-            let connections = [];
-            try {
-                const { data } = await supabase
-                    .from('connections')
-                    .select('user_id, created_at, circle_id')
-                    .eq('circle_id', selectedCircleId)
-                    .gte('created_at', since);
-                connections = data || [];
-            } catch (e) {
-                connections = [];
-            }
-
-            // Get discussions (if you have a 'discussions' table)
-            let discussions = [];
-            try {
-                const { data } = await supabase
-                    .from('discussions')
-                    .select('author_id, created_at, circle_id')
-                    .eq('circle_id', selectedCircleId)
-                    .gte('created_at', since);
-                discussions = data || [];
-            } catch (e) {
-                discussions = [];
-            }
+            const { data: comments } = await supabase
+                .from('comments')
+                .select('author_id, created_at');
 
             // Tally activity per user
             const activity = {};
             const breakdown = {};
 
             votes?.forEach(v => {
-                activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-                breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
-                breakdown[v.voter_id].votes += 1;
+                if (v.created_at >= since) {
+                    activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
+                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[v.voter_id].votes += 1;
+                }
             });
             suggestions?.forEach(s => {
-                activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-                breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
-                breakdown[s.author_id].suggestions += 1;
+                if (s.created_at >= since) {
+                    activity[s.author_id] = (activity[s.author_id] || 0) + 1;
+                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[s.author_id].suggestions += 1;
+                }
             });
-            connections?.forEach(c => {
-                activity[c.user_id] = (activity[c.user_id] || 0) + 1;
-                breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
-                breakdown[c.user_id].connections += 1;
-            });
-            discussions?.forEach(d => {
-                activity[d.author_id] = (activity[d.author_id] || 0) + 1;
-                breakdown[d.author_id] = breakdown[d.author_id] || { votes: 0, suggestions: 0, connections: 0, discussions: 0 };
-                breakdown[d.author_id].discussions += 1;
+            comments?.forEach(c => {
+                if (c.created_at >= since) {
+                    activity[c.author_id] = (activity[c.author_id] || 0) + 1;
+                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[c.author_id].comments += 1;
+                }
             });
 
-            // Remove your own user ID from the activity tally
-            const { data: userData } = await supabase.auth.getUser();
-            const myUserId = userData?.user?.id;
-            delete activity[myUserId];
-            delete breakdown[myUserId];
+            // Exclude your own user ID
+            delete activity["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
+            delete breakdown["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
 
             // Find top user (excluding yourself)
             const topId = Object.entries(activity).sort((a,b) => b[1]-a[1])[0]?.[0];
-            if (!topId) return null;
+            if (!topId) {
+                // If no one else is active, show an empty member
+                return {
+                    profile: { full_name: '', avatar_url: '', personal_story: '' },
+                    breakdown: { votes: 0, suggestions: 0, comments: 0 },
+                    total: 0
+                };
+            }
 
-            // Get profile and story
+            // Get name and picture only from profiles
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, personal_story')
+                .select('full_name, avatar_url, personal_story')
                 .eq('id', topId)
                 .single();
 
-            return { profile, breakdown: breakdown[topId] };
+            return {
+                profile: profile || { full_name: 'Member', avatar_url: '', personal_story: '' },
+                breakdown: breakdown[topId],
+                total: activity[topId]
+            };
         }
 
         async function showFeaturedMember() {
-            const result = await getMostActiveMember();
+            const m = await getMostActiveMember();
             const container = document.getElementById('member-profile');
-            if (!result || !result.profile) {
-                container.innerHTML = "<em>No active member this week yet!</em>";
+            if (!m || !m.profile.full_name) {
+                container.innerHTML = "<em>No other member has been active in the past week.</em>";
                 return;
             }
-            const member = result.profile;
-            const breakdown = result.breakdown;
             container.innerHTML = `
-                <img src="${member.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
-                <h3>${member.full_name}</h3>
-                <p><a href="activities.html?user=${member.id}">See their activities</a></p>
-                <blockquote>${member.personal_story || 'No story yet.'}</blockquote>
+                <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
+                <h3>${m.profile.full_name}</h3>
                 <div class="activity-breakdown">
-                    <strong>This week:</strong><br>
-                    Votes: ${breakdown.votes || 0}<br>
-                    Suggestions: ${breakdown.suggestions || 0}<br>
-                    Connections: ${breakdown.connections || 0}<br>
-                    Discussions: ${breakdown.discussions || 0}
+                    <strong>Activities this week:</strong><br>
+                    Votes: ${m.breakdown.votes || 0}<br>
+                    Suggestions: ${m.breakdown.suggestions || 0}<br>
+                    Comments: ${m.breakdown.comments || 0}<br>
+                    <strong>Total:</strong> ${m.total}
                 </div>
+                <div class="personal-story">${m.profile.personal_story || ''}</div>
             `;
         }
 
@@ -315,8 +215,7 @@
             }
         });
 
-        // Initial load
-        await loadCircles();
+        // Initial loads
         await showFeaturedMember();
     </script>
 </body>
