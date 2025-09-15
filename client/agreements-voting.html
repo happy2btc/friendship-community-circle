@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Agreements for Voting</title>
+  <style>
+    body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    h1 { text-align: center; color: #6b4f1d; }
+    .agreements-container { max-width: 800px; margin: auto; }
+    .agreement-card { background: #fff; border: 1px solid #d8bfa3; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .agreement-card p { margin: 0.5rem 0; line-height: 1.5; font-size: 1.1em; }
+    .proposer { font-size: 0.95em; color: #666; }
+    .vote-info { font-size: 1em; font-weight: bold; margin-bottom: 1rem; color: #4a7c59; }
+    .vote-buttons { display: flex; gap: 1rem; margin-top: 1rem; }
+    .vote-buttons button {
+      flex: 1;
+      padding: 12px 0;
+      font-size: 1.1em;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .vote-buttons .agree { background-color: #4caf50; color: #fff; }
+    .vote-buttons .agree:hover { background-color: #388e3c; }
+    .vote-buttons .disagree { background-color: #e53935; color: #fff; }
+    .vote-buttons .disagree:hover { background-color: #b71c1c; }
+    .vote-buttons .abstain { background-color: #bdbdbd; color: #333; }
+    .vote-buttons .abstain:hover { background-color: #757575; color: #fff; }
+    .vote-status { margin-top: 0.5rem; font-size: 0.95em; color: #4a7c59; }
+    .voters-list { margin-top: 1rem; font-size: 1em; color: #333; }
+    .menu-button { display: block; width: fit-content; margin: 3rem auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+    #circle-select { margin: 1rem auto 2rem auto; display: block; font-size: 1.1em; padding: 8px; border-radius: 6px; border: 1px solid #d8bfa3; }
+  </style>
+</head>
+<body>
+  <h1>🗳️ Agreements for Voting</h1>
+  <select id="circle-select">
+    <option value="">Select a Circle...</option>
+  </select>
+  <div id="agreements-container" class="agreements-container">
+    <p>Select a circle to view agreements.</p>
+  </div>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const container = document.getElementById('agreements-container');
+    const circleSelect = document.getElementById('circle-select');
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+    // Get circles for current user
+    async function getMyCircles() {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      const { data: memberships } = await supabase
+        .from('circle_members')
+        .select('circle_id')
+        .eq('user_id', userId);
+
+      if (!memberships || memberships.length === 0) return [];
+      const circleIds = memberships.map(m => m.circle_id);
+      const { data: circles } = await supabase
+        .from('circles')
+        .select('id, name')
+        .in('id', circleIds);
+
+      return circles || [];
+    }
+
+    async function getMemberCount(circleId) {
+      const { count, error } = await supabase
+        .from('circle_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('circle_id', circleId);
+      return count || 1;
+    }
+
+    async function getVoteCount(agreementId) {
+      const { count, error } = await supabase
+        .from('agreement_votes')
+        .select('id', { count: 'exact', head: true })
+        .eq('agreement_id', agreementId);
+      return count || 0;
+    }
+
+    async function getUserVote(agreementId, voterId) {
+      const { data, error } = await supabase
+        .from('agreement_votes')
+        .select('vote_value')
+        .eq('agreement_id', agreementId)
+        .eq('voter_id', voterId)
+        .single();
+      return data ? data.vote_value : null;
+    }
+
+    async function getAllVoters(agreementId) {
+      const { data: votes, error } = await supabase
+        .from('agreement_votes')
+        .select('voter_id, vote_value')
+        .eq('agreement_id', agreementId);
+
+      if (!votes || votes.length === 0) return [];
+
+      const voterIds = votes.map(v => v.voter_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', voterIds);
+
+      const idToName = {};
+      profiles?.forEach(profile => {
+        idToName[profile.id] = profile.full_name;
+      });
+
+      return votes.map(v => ({
+        name: idToName[v.voter_id] || 'Unknown',
+        vote: v.vote_value
+      }));
+    }
+
+    async function getProposerName(proposerId) {
+      if (!proposerId) return 'A Circle Member';
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', proposerId)
+        .single();
+      return data?.full_name || 'A Circle Member';
+    }
+
+    async function vote(agreementId, voteValue, voterId, card) {
+      const { error } = await supabase
+        .from('agreement_votes')
+        .upsert([
+          {
+            agreement_id: agreementId,
+            voter_id: voterId,
+            vote_value: voteValue
+          }
+        ], { onConflict: ['agreement_id', 'voter_id'] });
+
+      if (error) {
+        alert('Error submitting vote: ' + error.message);
+      } else {
+        card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
+        alert('Your vote has been recorded!');
+        getAllVoters(agreementId).then(voters => {
+          const votersDiv = card.querySelector('.voters-list');
+          if (voters.length === 0) {
+            votersDiv.textContent = 'No votes yet.';
+          } else {
+            votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
+              voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
+              '</ul>';
+          }
+        });
+      }
+    }
+
+    async function loadAgreements(circleId) {
+      if (!circleId) {
+        container.innerHTML = '<p>Select a circle to view agreements.</p>';
+        return;
+      }
+
+      const { data: agreements, error } = await supabase
+        .from('agreements')
+        .select('id, agreement_text, proposer_id, created_at, status, circle_id')
+        .eq('status', 'voting')
+        .eq('circle_id', circleId);
+
+      if (error) {
+        container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
+        return;
+      }
+
+      if (!agreements || agreements.length === 0) {
+        container.innerHTML = '<p>There are no agreements up for voting in this circle.</p>';
+        return;
+      }
+
+      const memberCount = await getMemberCount(circleId);
+      const now = Date.now();
+
+      const { data: userData } = await supabase.auth.getUser();
+      const voterId = userData?.user?.id;
+
+      const filtered = [];
+      for (const agreement of agreements) {
+        const createdAt = new Date(agreement.created_at).getTime();
+        const age = now - createdAt;
+        const voteCount = await getVoteCount(agreement.id);
+        const percent = voteCount / memberCount;
+
+        if (age > ONE_WEEK_MS && percent < 0.5) continue;
+
+        agreement.voteCount = voteCount;
+        agreement.votePercent = Math.round(percent * 100);
+        filtered.push(agreement);
+      }
+
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p>No agreements meet the voting criteria in this circle.</p>';
+        return;
+      }
+
+      for (const agreement of filtered) {
+        const card = document.createElement('div');
+        card.className = 'agreement-card';
+
+        card.innerHTML = `
+          <p><strong>${agreement.agreement_text}</strong></p>
+          <p class="proposer"></p>
+          <div class="vote-info">Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</div>
+          <div class="vote-buttons">
+            <button class="agree" data-vote="agree">Agree</button>
+            <button class="disagree" data-vote="disagree">Disagree</button>
+            <button class="abstain" data-vote="abstain">Abstain</button>
+          </div>
+          <div class="vote-status"></div>
+          <div class="voters-list"></div>
+        `;
+
+        getProposerName(agreement.proposer_id).then(name => {
+          card.querySelector('.proposer').textContent = `Proposed by: ${name}`;
+        });
+
+        const buttons = card.querySelectorAll('.vote-buttons button');
+        buttons.forEach(btn => {
+          btn.onclick = async () => {
+            if (!voterId) {
+              alert('You must be signed in to vote.');
+              return;
+            }
+            await vote(agreement.id, btn.getAttribute('data-vote'), voterId, card);
+          };
+        });
+
+        if (voterId) {
+          getUserVote(agreement.id, voterId).then(voteValue => {
+            if (voteValue) {
+              card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
+            }
+          });
+        }
+
+        getAllVoters(agreement.id).then(voters => {
+          const votersDiv = card.querySelector('.voters-list');
+          if (voters.length === 0) {
+            votersDiv.textContent = 'No votes yet.';
+          } else {
+            votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
+              voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
+              '</ul>';
+          }
+        });
+
+        container.appendChild(card);
+      }
+    }
+
+    // Populate circle dropdown and load agreements
+    getMyCircles().then(circles => {
+      circleSelect.innerHTML = '<option value="">Select a Circle...</option>' +
+        circles.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      circleSelect.onchange = () => {
+        loadAgreements(circleSelect.value);
+      };
+    });
+  </script>
+</body>
+</html>
