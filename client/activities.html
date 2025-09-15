@@ -1,164 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Member Activities</title>
-  <style>
-    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; max-width: 800px; margin: auto; }
-    h1 { text-align: center; }
-    .member-card {
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      display: flex;
-      align-items: flex-start;
-      gap: 1.5rem;
-    }
-    .member-card img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #eee;
-    }
-    .member-info {
-      flex: 1;
-    }
-    .activity-breakdown {
-      font-size: 1em;
-      color: #555;
-      margin: 0.5rem 0 0 0;
-    }
-    .personal-story {
-      font-style: italic;
-      color: #4a7c59;
-      margin-top: 0.5rem;
-    }
-    .back-menu-btn {
-      display: inline-block;
-      margin: 2rem auto 0 auto;
-      padding: 12px 24px;
-      background: #2e8b57;
-      color: #fff;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1.1em;
-      box-shadow: 0 2px 6px #eee;
-      transition: background 0.2s;
-    }
-    .back-menu-btn:hover {
-      background: #4a7c59;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Community Menu</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #e6f7f2;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            color: #2e8b57;
+        }
+        .menu-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+        }
+        .menu-button, .logout-button {
+            background-color: #6b4f1d;
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1em;
+            transition: background-color 0.2s;
+        }
+        .menu-button:hover, .logout-button:hover {
+            background-color: #8c6f4e;
+        }
+        .logout-button {
+            background-color: #a94442;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+            grid-column: 1 / -1;
+        }
+        #featured-member {
+            max-width: 400px;
+            margin: 2rem auto 0 auto;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #eee;
+            text-align: center;
+        }
+        #featured-member img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            background: #eee;
+        }
+        #featured-member h3 {
+            margin: 0.5rem 0 0.5rem 0;
+        }
+        #featured-member .activity-breakdown {
+            margin-top: 1rem;
+            font-size: 0.95em;
+            color: #555;
+            text-align: left;
+        }
+        #featured-member .personal-story {
+            font-style: italic;
+            color: #4a7c59;
+            margin-top: 0.5rem;
+        }
+    </style>
 </head>
 <body>
-  <h1>Community Member Activities</h1>
-  <div id="members"></div>
-  <a href="menu.html" class="back-menu-btn">← Back to Menu</a>
-  <script type="module">
-    import { supabase } from '/lib/supabase.js';
+    <h1>🌸 Welcome to the Community</h1>
 
-    async function getActivities() {
-      const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    <div id="featured-member">
+      <h2>🌟 Most Active Member</h2>
+      <div id="member-profile"></div>
+    </div>
 
-      // Get all activities in the last 7 days
-      const { data: votes } = await supabase
-        .from('agreement_votes')
-        .select('voter_id, created_at')
-        .gte('created_at', since);
+    <div class="menu-container">
+        <a href="profile.html" class="menu-button">👤 My Profile</a>
+        <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
+        <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
+        <a href="mutual-aid.html" class="menu-button">🌿 Tend to Mutual Aid</a>
+        <a href="contribute.html" class="menu-button">✍️ Submit Your Project</a>
+        <a href="view-scrolls.html" class="menu-button">📜 View All Projects</a>
+        <a href="exchange.html" class="menu-button">🎁 Wants and Offers</a>
+        <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
+        <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
+        <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements</a>
+        <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
+        <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
+        <a href="activities.html" class="menu-button">🏆 Member Activities</a>
+        <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
+        <button id="logout-button" class="logout-button">Log Out</button>
+    </div>
 
-      const { data: suggestions } = await supabase
-        .from('suggestions')
-        .select('author_id, created_at')
-        .gte('created_at', since);
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
 
-      const { data: comments } = await supabase
-        .from('comments')
-        .select('author_id, created_at')
-        .gte('created_at', since);
+        async function getMostActiveMember() {
+            const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+            const myUserId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
 
-      // Tally activity per user
-      const activity = {};
-      const breakdown = {};
+            const { data: votes } = await supabase
+                .from('agreement_votes')
+                .select('voter_id, created_at');
 
-      votes?.forEach(v => {
-        activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-        breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
-        breakdown[v.voter_id].votes += 1;
-      });
-      suggestions?.forEach(s => {
-        activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-        breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
-        breakdown[s.author_id].suggestions += 1;
-      });
-      comments?.forEach(c => {
-        activity[c.author_id] = (activity[c.author_id] || 0) + 1;
-        breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
-        breakdown[c.author_id].comments += 1;
-      });
+            const { data: suggestions } = await supabase
+                .from('suggestions')
+                .select('author_id, created_at');
 
-      // Get all involved user IDs
-      const userIds = Object.keys(activity);
-      if (userIds.length === 0) return [];
+            const { data: comments } = await supabase
+                .from('comments')
+                .select('author_id, created_at');
 
-      // Get profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url, personal_story')
-        .in('id', userIds);
+            const activity = {};
+            const breakdown = {};
 
-      // Map profiles by id
-      const idToProfile = {};
-      profiles?.forEach(p => { idToProfile[p.id] = p; });
+            votes?.forEach(v => {
+                if (v.created_at >= since) {
+                    activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
+                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[v.voter_id].votes += 1;
+                }
+            });
+            suggestions?.forEach(s => {
+                if (s.created_at >= since) {
+                    activity[s.author_id] = (activity[s.author_id] || 0) + 1;
+                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[s.author_id].suggestions += 1;
+                }
+            });
+            comments?.forEach(c => {
+                if (c.created_at >= since) {
+                    activity[c.author_id] = (activity[c.author_id] || 0) + 1;
+                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[c.author_id].comments += 1;
+                }
+            });
 
-      // Add these debug logs here:
-      console.log('userIds:', userIds);
-      console.log('profiles:', profiles);
-      
-      // Build member activity list
-      const members = userIds.map(id => ({
-        id,
-        profile: idToProfile[id] || { full_name: 'Unknown', avatar_url: '', personal_story: '' },
-        total: activity[id],
-        breakdown: breakdown[id]
-      }));
+            delete activity["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
+            delete breakdown["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
 
-      // Sort by most active
-      members.sort((a, b) => b.total - a.total);
+            const topId = Object.entries(activity).sort((a,b) => b[1]-a[1])[0]?.[0];
+            if (!topId) {
+                return {
+                    profile: { full_name: '', avatar_url: '', personal_story: '' },
+                    breakdown: { votes: 0, suggestions: 0, comments: 0 },
+                    total: 0
+                };
+            }
 
-      return members;
-    }
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('full_name, avatar_url, personal_story')
+                .eq('id', topId)
+                .single();
 
-    async function showMembers() {
-      const members = await getActivities();
-      const container = document.getElementById('members');
-      if (!members || members.length === 0) {
-        container.innerHTML = "<em>No member activities in the past week.</em>";
-        return;
-      }
-      container.innerHTML = members.map(m => `
-        <div class="member-card">
-          <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
-          <div class="member-info">
-            <h2>${m.profile.full_name}</h2>
-            <div class="activity-breakdown">
-              <strong>Activities this week:</strong><br>
-              Votes: ${m.breakdown.votes || 0}<br>
-              Suggestions: ${m.breakdown.suggestions || 0}<br>
-              Comments: ${m.breakdown.comments || 0}<br>
-              <strong>Total:</strong> ${m.total}
-            </div>
-            <div class="personal-story">${m.profile.personal_story || ''}</div>
-          </div>
-        </div>
-      `).join('');
-    }
+            return {
+                profile: profile || { full_name: 'Member', avatar_url: '', personal_story: '' },
+                breakdown: breakdown[topId],
+                total: activity[topId]
+            };
+        }
 
-    showMembers();
-  </script>
+        async function showFeaturedMember() {
+            const m = await getMostActiveMember();
+            const container = document.getElementById('member-profile');
+            if (!m || !m.profile.full_name) {
+                container.innerHTML = "<em>No other member has been active in the past week.</em>";
+                return;
+            }
+            container.innerHTML = `
+                <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
+                <h3>${m.profile.full_name}</h3>
+                <div class="activity-breakdown">
+                    <strong>Activities this week:</strong><br>
+                    Votes: ${m.breakdown.votes || 0}<br>
+                    Suggestions: ${m.breakdown.suggestions || 0}<br>
+                    Comments: ${m.breakdown.comments || 0}<br>
+                    <strong>Total:</strong> ${m.total}
+                </div>
+                <div class="personal-story">${m.profile.personal_story || ''}</div>
+            `;
+        }
+
+        const logoutButton = document.getElementById('logout-button');
+        logoutButton.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error logging out:', error);
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+
+        await showFeaturedMember();
+    </script>
 </body>
 </html>
