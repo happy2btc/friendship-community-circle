@@ -38,9 +38,17 @@
         alert('Circle name is required.');
         return;
       }
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user?.id) {
+        alert('You must be signed in to create a circle.');
+        return;
+      }
+      const created_by = userData.user.id;
+
       const { data, error } = await supabase
         .from('circles')
-        .insert([{ name, description }]);
+        .insert([{ name, description, created_by }]);
       if (error) {
         alert('Error creating circle: ' + error.message);
         return;

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Circles</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .circle-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .circle-actions { margin-top: 1rem; }
+    button { margin-right: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Circles</h1>
+  <div id="circles"></div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    const circlesDiv = document.getElementById('circles');
+    let currentUserId = null;
+    let userCircleIds = [];
+
+    async function getCurrentUser() {
+      const { data: userData } = await supabase.auth.getUser();
+      currentUserId = userData?.user?.id;
+    }
+
+    async function getUserCircles() {
+      const { data } = await supabase
+        .from('circle_members')
+        .select('circle_id')
+        .eq('user_id', currentUserId);
+      userCircleIds = data ? data.map(row => row.circle_id) : [];
+    }
+
+    async function loadCircles() {
+      await getCurrentUser();
+      await getUserCircles();
+      const { data: circles } = await supabase.from('circles').select('*');
+      circlesDiv.innerHTML = '';
+      circles.forEach(circle => {
+        const card = document.createElement('div');
+        card.className = 'circle-card';
+        card.innerHTML = `
+          <strong>${circle.name}</strong><br>
+          <span>${circle.description || ''}</span>
+          <div class="circle-actions"></div>
+        `;
+        const actions = card.querySelector('.circle-actions');
+        if (userCircleIds.includes(circle.id)) {
+          // Already a member: show Leave and Switch
+          const leaveBtn = document.createElement('button');
+          leaveBtn.textContent = 'Leave Circle';
+          leaveBtn.onclick = async () => {
+            await supabase
+              .from('circle_members')
+              .delete()
+              .eq('circle_id', circle.id)
+              .eq('user_id', currentUserId);
+            alert('Left circle!');
+            loadCircles();
+          };
+          actions.appendChild(leaveBtn);
+
+          const switchBtn = document.createElement('button');
+          switchBtn.textContent = 'Switch to Circle';
+          switchBtn.onclick = () => {
+            localStorage.setItem('active_circle_id', circle.id);
+            alert('Switched to ' + circle.name);
+            // Optionally redirect to the circle's page
+            window.location.href = `circle.html?id=${circle.id}`;
+          };
+          actions.appendChild(switchBtn);
+        } else {
+          // Not a member: show Join
+          const joinBtn = document.createElement('button');
+          joinBtn.textContent = 'Join Circle';
+          joinBtn.onclick = async () => {
+            await supabase
+              .from('circle_members')
+              .insert([{ circle_id: circle.id, user_id: currentUserId }]);
+            alert('Joined circle!');
+            loadCircles();
+          };
+          actions.appendChild(joinBtn);
+        }
+        circlesDiv.appendChild(card);
+      });
+    }
+
+    loadCircles();
+  </script>
+</body>
+</html>
