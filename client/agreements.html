@@ -46,13 +46,14 @@
     const container = document.getElementById('agreements-container');
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-    async function getMemberCount() {
+     
+async function getMemberCount() {
       const { count, error } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true });
       return count || 1;
     }
-
+    // Count votes for an agreement from agreement_votes table
     async function getVoteCount(agreementId) {
       const { count, error } = await supabase
         .from('agreement_votes')
@@ -61,6 +62,7 @@
       return count || 0;
     }
 
+    // Get the current user's vote for an agreement
     async function getUserVote(agreementId, voterId) {
       const { data, error } = await supabase
         .from('agreement_votes')
@@ -71,8 +73,8 @@
       return data ? data.vote_value : null;
     }
 
+    // Get all voters and their votes for an agreement
     async function getAllVoters(agreementId) {
-      // Get all votes for this agreement
       const { data: votes, error } = await supabase
         .from('agreement_votes')
         .select('voter_id, vote_value')
@@ -80,23 +82,21 @@
 
       if (!votes || votes.length === 0) return [];
 
-      // Get all voter profiles in one query
       const voterIds = votes.map(v => v.voter_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
         .in('id', voterIds);
 
-      // Map voter_id to name
       const idToName = {};
       profiles?.forEach(profile => {
         idToName[profile.id] = profile.full_name;
       });
 
-      // Return array of {name, vote}
       return votes.map(v => ({
         name: idToName[v.voter_id] || 'Unknown',
-        vote: v.vote_value
+        vote: v.vote_value,
+        voter_id: v.voter_id
       }));
     }
 
@@ -110,7 +110,7 @@
       return data?.full_name || 'A Circle Member';
     }
 
-    // Updated vote function to allow changing vote (upsert)
+    // Allow changing vote (upsert logic)
     async function vote(agreementId, voteValue, voterId, card) {
       // Upsert the vote (insert or update if exists)
       const { error } = await supabase
@@ -126,9 +126,11 @@
       if (error) {
         alert('Error submitting vote: ' + error.message);
       } else {
+        // Update the UI to show the new vote
         card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
-        alert('Your vote has been recorded!');
-        // Refresh voters list after voting
+        // Optionally, show a message only if the vote was changed
+        alert('Your vote has been recorded! You can change your vote at any time.');
+        // Refresh the voters list after voting
         getAllVoters(agreementId).then(voters => {
           const votersDiv = card.querySelector('.voters-list');
           if (voters.length === 0) {
@@ -143,7 +145,7 @@
     }
 
     async function loadAgreements() {
-      // Fetch agreements with status 'voting'
+      // Fetch agreements with status 'voting' (proposals)
       const { data: agreements, error } = await supabase
         .from('agreements')
         .select('id, agreement_text, proposer_id, created_at, status')
@@ -235,7 +237,7 @@
           });
         }
 
-        // Show all voters and their votes
+        // Show all voters and their votes with debug info
         getAllVoters(agreement.id).then(voters => {
           const votersDiv = card.querySelector('.voters-list');
           if (voters.length === 0) {

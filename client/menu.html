@@ -111,12 +111,11 @@
     <script type="module">
         import { supabase } from '/lib/supabase.js';
 
-        // Featured member logic (same as activities.html, no circles)
+        // Featured member logic (all-time, no circles)
         async function getMostActiveMember() {
-            const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
             const myUserId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
 
-            // Query all activity tables for the last 7 days
+            // Query all activity tables (all time)
             const { data: votes } = await supabase
                 .from('agreement_votes')
                 .select('voter_id, created_at');
@@ -129,30 +128,24 @@
                 .from('comments')
                 .select('author_id, created_at');
 
-            // Tally activity per user
+            // Tally activity per user (all time)
             const activity = {};
             const breakdown = {};
 
             votes?.forEach(v => {
-                if (v.created_at >= since) {
-                    activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
-                    breakdown[v.voter_id].votes += 1;
-                }
+                activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
+                breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
+                breakdown[v.voter_id].votes += 1;
             });
             suggestions?.forEach(s => {
-                if (s.created_at >= since) {
-                    activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
-                    breakdown[s.author_id].suggestions += 1;
-                }
+                activity[s.author_id] = (activity[s.author_id] || 0) + 1;
+                breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                breakdown[s.author_id].suggestions += 1;
             });
             comments?.forEach(c => {
-                if (c.created_at >= since) {
-                    activity[c.author_id] = (activity[c.author_id] || 0) + 1;
-                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
-                    breakdown[c.author_id].comments += 1;
-                }
+                activity[c.author_id] = (activity[c.author_id] || 0) + 1;
+                breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                breakdown[c.author_id].comments += 1;
             });
 
             // Exclude your own user ID
@@ -188,14 +181,14 @@
             const m = await getMostActiveMember();
             const container = document.getElementById('member-profile');
             if (!m || !m.profile.full_name) {
-                container.innerHTML = "<em>No other member has been active in the past week.</em>";
+                container.innerHTML = "<em>No other member has been active.</em>";
                 return;
             }
             container.innerHTML = `
                 <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
                 <h3>${m.profile.full_name}</h3>
                 <div class="activity-breakdown">
-                    <strong>Activities this week:</strong><br>
+                    <strong>All-Time Activities:</strong><br>
                     Votes: ${m.breakdown.votes || 0}<br>
                     Suggestions: ${m.breakdown.suggestions || 0}<br>
                     Comments: ${m.breakdown.comments || 0}<br>

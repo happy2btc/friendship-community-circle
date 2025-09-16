@@ -129,9 +129,12 @@
         return;
       }
 
-      // Only show discussions with status 'open'
+      // Separate open and voting discussions
       const openDiscussions = discussions.filter(d => d.status === 'open');
-      const suggestionIds = openDiscussions
+      const votingDiscussions = discussions.filter(d => d.status === 'voting');
+
+      // Get all suggestion IDs for comments
+      const suggestionIds = discussions
         .map(d => d.id)
         .filter(id => typeof id === 'number' || (typeof id === 'string' && id.length > 0));
 
@@ -156,7 +159,7 @@
       // Gather all unique author_ids from discussions and comments
       const authorIds = [
         ...new Set([
-          ...openDiscussions.map(d => (d.author_id || '').trim().toLowerCase()),
+          ...discussions.map(d => (d.author_id || '').trim().toLowerCase()),
           ...allCommentsSafe.map(c => (c.author_id || '').trim().toLowerCase())
         ])
       ];
@@ -172,78 +175,68 @@
         profiles[(profile.id || '').trim().toLowerCase()] = profile.full_name;
       });
 
-      function getLatestCommentTime(suggestionId, comments) {
+      function getLatestCommentTime(suggestionId, comments, fallbackCreatedAt) {
         const relevant = comments.filter(c => c.suggestion_id === suggestionId);
-        if (relevant.length === 0) return new Date(openDiscussions.find(d => d.id === suggestionId).created_at).getTime();
+        if (relevant.length === 0) return new Date(fallbackCreatedAt).getTime();
         return Math.max(...relevant.map(c => new Date(c.created_at).getTime()));
       }
 
+      // Sort open discussions by latest activity (comments or creation)
       openDiscussions.sort((a, b) => {
-        const aId = a.id;
-        const bId = b.id;
-        const aLatest = getLatestCommentTime(aId, allCommentsSafe);
-        const bLatest = getLatestCommentTime(bId, allCommentsSafe);
+        const aLatest = getLatestCommentTime(a.id, allCommentsSafe, a.created_at);
+        const bLatest = getLatestCommentTime(b.id, allCommentsSafe, b.created_at);
         return bLatest - aLatest;
       });
 
+      // Sort voting discussions by creation date (oldest first)
+      votingDiscussions.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
       discussionContainer.innerHTML = '';
 
+      // Render open discussions first
       for (const discussion of openDiscussions) {
         if (!discussion.title) continue;
-
         const normalizedAuthorId = (discussion.author_id || '').trim().toLowerCase();
         const suggestionId = discussion.id;
         const commentsForThisDiscussion = allCommentsSafe
           ? allCommentsSafe.filter(c => c.suggestion_id === suggestionId)
           : [];
         const totalCommentCount = commentsForThisDiscussion.length;
-
         const isAuthor = currentUser && ((currentUser.id || '').trim().toLowerCase() === normalizedAuthorId);
-
         const discussionBlock = document.createElement('details');
         discussionBlock.className = 'discussion-block';
         discussionBlock.dataset.suggestionId = suggestionId;
-
         const summary = document.createElement('summary');
         const authorName = profiles[normalizedAuthorId] || 'A member';
         summary.textContent = `${discussion.title} `;
-
         const summaryMeta = document.createElement('span');
         summaryMeta.className = 'summary-meta';
         summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments)`;
         summary.appendChild(summaryMeta);
-
         const contentDiv = document.createElement('div');
         contentDiv.className = 'discussion-content';
         contentDiv.dataset.suggestionId = suggestionId;
-
         const descriptionP = document.createElement('p');
         descriptionP.textContent = discussion.description;
-
         const commentButton = document.createElement('button');
         commentButton.className = 'action-button';
         commentButton.dataset.action = 'add-comment';
         commentButton.dataset.suggestionId = suggestionId;
         commentButton.textContent = 'Make a Comment';
-
         const threadDiv = document.createElement('div');
         threadDiv.className = 'comment-thread';
         threadDiv.id = `thread-for-${suggestionId}`;
-
         contentDiv.appendChild(descriptionP);
         contentDiv.appendChild(commentButton);
         contentDiv.appendChild(threadDiv);
-
         // Agreement box logic
         if (isAuthor && discussion.status === 'open') {
           const agreementBox = document.createElement('div');
           agreementBox.className = 'agreement-box';
-
           const instruction = document.createElement('div');
           instruction.className = 'author-instruction';
           instruction.textContent =
             'As the author, when you feel the discussion is complete, you may propose an agreement for the group to vote on.';
-
           const h3 = document.createElement('h3');
           h3.textContent = 'Propose an Agreement';
           const p = document.createElement('p');
@@ -260,15 +253,47 @@
           button.dataset.action = 'submit-agreement';
           button.dataset.suggestionId = suggestionId;
           button.textContent = 'Submit and Start Vote';
-
           agreementBox.append(instruction, h3, p, label1, textarea, br, button);
           contentDiv.appendChild(agreementBox);
         }
-
         discussionBlock.appendChild(summary);
         discussionBlock.appendChild(contentDiv);
         discussionContainer.appendChild(discussionBlock);
+        renderComments(commentsForThisDiscussion, threadDiv, null, profiles, currentUser);
+      }
 
+      // Render voting discussions at the bottom
+      for (const discussion of votingDiscussions) {
+        if (!discussion.title) continue;
+        const normalizedAuthorId = (discussion.author_id || '').trim().toLowerCase();
+        const suggestionId = discussion.id;
+        const commentsForThisDiscussion = allCommentsSafe
+          ? allCommentsSafe.filter(c => c.suggestion_id === suggestionId)
+          : [];
+        const totalCommentCount = commentsForThisDiscussion.length;
+        const discussionBlock = document.createElement('details');
+        discussionBlock.className = 'discussion-block';
+        discussionBlock.dataset.suggestionId = suggestionId;
+        const summary = document.createElement('summary');
+        const authorName = profiles[normalizedAuthorId] || 'A member';
+        summary.textContent = `${discussion.title} `;
+        const summaryMeta = document.createElement('span');
+        summaryMeta.className = 'summary-meta';
+        summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments, sent to voting)`;
+        summary.appendChild(summaryMeta);
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'discussion-content';
+        contentDiv.dataset.suggestionId = suggestionId;
+        const descriptionP = document.createElement('p');
+        descriptionP.textContent = discussion.description;
+        const threadDiv = document.createElement('div');
+        threadDiv.className = 'comment-thread';
+        threadDiv.id = `thread-for-${suggestionId}`;
+        contentDiv.appendChild(descriptionP);
+        contentDiv.appendChild(threadDiv);
+        discussionBlock.appendChild(summary);
+        discussionBlock.appendChild(contentDiv);
+        discussionContainer.appendChild(discussionBlock);
         renderComments(commentsForThisDiscussion, threadDiv, null, profiles, currentUser);
       }
     }
