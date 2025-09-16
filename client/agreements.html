@@ -41,10 +41,12 @@
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
   <script type="module">
-    import { supabase } from '/lib/supabase.js';
+  import { supabase } from '/lib/supabase.js';
 
-    const container = document.getElementById('agreements-container');
-    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const container = document.getElementById('agreements-container');
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  // Get active circle_id from localStorage
+  const activeCircleId = localStorage.getItem('active_circle_id');
 
      
 async function getMemberCount() {
@@ -145,11 +147,12 @@ async function getMemberCount() {
     }
 
     async function loadAgreements() {
-      // Fetch agreements with status 'voting' (proposals)
+      // Fetch agreements with status 'voting' (proposals) and filter by active circle
       const { data: agreements, error } = await supabase
         .from('agreements')
-        .select('id, agreement_text, proposer_id, created_at, status')
-        .eq('status', 'voting');
+        .select('id, agreement_text, proposer_id, created_at, status, circle_id')
+        .eq('status', 'voting')
+        .eq('circle_id', activeCircleId);
 
       if (error) {
         container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
@@ -157,7 +160,7 @@ async function getMemberCount() {
       }
 
       if (!agreements || agreements.length === 0) {
-        container.innerHTML = '<p>There are no agreements up for voting at this time.</p>';
+        container.innerHTML = '<p>There are no agreements up for voting in this circle.</p>';
         return;
       }
 
@@ -194,7 +197,7 @@ async function getMemberCount() {
       container.innerHTML = '';
 
       if (filtered.length === 0) {
-        container.innerHTML = '<p>No agreements meet the voting criteria.</p>';
+        container.innerHTML = '<p>No agreements meet the voting criteria for this circle.</p>';
         return;
       }
 
