@@ -15,6 +15,13 @@
 <body>
   <h1 id="circle-name">Loading...</h1>
   <div id="circle-description" class="section"></div>
+  <div class="menu-container" style="display:flex;flex-direction:column;align-items:center;gap:1.2em;margin:2em 0;">
+    <a id="agreements-menu" class="menu-button">🗳️ Agreements for Voting</a>
+    <a id="activities-menu" class="menu-button">🌟 Member Activities</a>
+    <a id="chat-menu" class="menu-button">💬 Circle Chat Room</a>
+    <a id="exchange-menu" class="menu-button">🌐 Circle of Exchange</a>
+    <a href="menu.html" class="menu-button">🔙 Return to Main Menu</a>
+  </div>
   <div id="agreements-section" class="section"></div>
   <div id="members-section" class="section"></div>
   <div id="chat-section" class="section">
@@ -30,6 +37,20 @@
     import { supabase } from '/lib/supabase.js';
     const params = new URLSearchParams(window.location.search);
     const circleId = params.get('id');
+
+    // Menu button navigation
+    document.getElementById('agreements-menu').onclick = () => {
+      window.location.href = `agreements.html?circle_id=${circleId}`;
+    };
+    document.getElementById('activities-menu').onclick = () => {
+      window.location.href = `activities.html?circle_id=${circleId}`;
+    };
+    document.getElementById('chat-menu').onclick = () => {
+      document.getElementById('chat-section').scrollIntoView({ behavior: 'smooth' });
+    };
+    document.getElementById('exchange-menu').onclick = () => {
+      window.location.href = `exchange.html?circle_id=${circleId}`;
+    };
 
     async function loadCircle() {
       // Load circle info
