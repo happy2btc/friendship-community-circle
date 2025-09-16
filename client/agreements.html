@@ -147,12 +147,11 @@ async function getMemberCount() {
     }
 
     async function loadAgreements() {
-      // Fetch agreements with status 'voting' (proposals) and filter by active circle
+      // Fetch agreements with status 'voting' (proposals)
       const { data: agreements, error } = await supabase
         .from('agreements')
-        .select('id, agreement_text, proposer_id, created_at, status, circle_id')
-        .eq('status', 'voting')
-        .eq('circle_id', activeCircleId);
+        .select('id, agreement_text, proposer_id, created_at, status')
+        .eq('status', 'voting');
 
       if (error) {
         container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
