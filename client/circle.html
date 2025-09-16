@@ -17,6 +17,14 @@
   <div id="circle-description" class="section"></div>
   <div id="agreements-section" class="section"></div>
   <div id="members-section" class="section"></div>
+  <div id="chat-section" class="section">
+    <h2>Circle Chat Room</h2>
+    <div id="chat-messages" style="height:300px;overflow-y:auto;border:1px solid #ccc;padding:1em;background:#fff;margin-bottom:1em;"></div>
+    <form id="chat-form" style="display:flex;gap:1em;">
+      <input type="text" id="chat-input" placeholder="Type your message..." style="flex:1;">
+      <button type="submit">Send</button>
+    </form>
+  </div>
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
@@ -89,6 +97,61 @@
       document.getElementById('members-section').innerHTML = memberListHtml;
     }
 
+    // --- Chat Integration ---
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+
+    async function loadMessages() {
+      const { data: messages } = await supabase
+        .from('circle_messages')
+        .select('message, created_at, user_id')
+        .eq('circle_id', circleId)
+        .order('created_at', { ascending: true });
+      chatMessages.innerHTML = '';
+      for (const msg of messages || []) {
+        // Get sender profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', msg.user_id)
+          .single();
+        chatMessages.innerHTML += `
+          <div style="margin-bottom:1em;">
+            <img src="${profile?.avatar_url || 'default-avatar.png'}" width="24" height="24" style="vertical-align:middle;border-radius:50%;">
+            <strong>${profile?.full_name || 'Unknown'}:</strong>
+            <span>${msg.message}</span>
+            <small style="color:#888;">${new Date(msg.created_at).toLocaleTimeString()}</small>
+          </div>
+        `;
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const message = chatInput.value.trim();
+      if (!message) return;
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) {
+        alert('You must be signed in to send messages.');
+        return;
+      }
+      await supabase
+        .from('circle_messages')
+        .insert([{ circle_id: circleId, user_id: userId, message }]);
+      chatInput.value = '';
+      await loadMessages();
+    });
+
+    // Initial chat load
+    loadMessages();
+    // Optionally, reload messages every 10 seconds for near real-time updates
+    setInterval(loadMessages, 10000);
+
+    // ...existing loadCircle() call...
     loadCircle();
   </script>
 </body>
