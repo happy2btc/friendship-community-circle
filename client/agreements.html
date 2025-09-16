@@ -169,9 +169,14 @@ async function getMemberCount() {
       const { data: userData } = await supabase.auth.getUser();
       const voterId = userData?.user?.id;
 
+      // Sort agreements by created_at descending (most recent first)
+      const sortedAgreements = (agreements || []).sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
       // For each agreement, get vote count and filter
       const filtered = [];
-      for (const agreement of agreements) {
+      for (const agreement of sortedAgreements) {
         const createdAt = new Date(agreement.created_at).getTime();
         const age = now - createdAt;
         const voteCount = await getVoteCount(agreement.id);
