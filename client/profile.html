@@ -68,12 +68,61 @@
                 <label for="bio">About Me / Short Bio</label>
                 <textarea id="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
             </div>
+            <div class="form-group">
+                <label for="youtube">YouTube</label>
+                <input type="text" id="youtube" placeholder="YouTube channel URL">
+                <div id="youtube-link" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label for="twitter">Twitter/X</label>
+                <input type="text" id="twitter" placeholder="Twitter/X profile URL">
+                <div id="twitter-link" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label for="substack">Substack</label>
+                <input type="text" id="substack" placeholder="Substack profile URL">
+                <div id="substack-link" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label for="website">Website</label>
+                <input type="text" id="website" placeholder="Personal or business website URL">
+                <div id="website-link" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label for="linkedin">LinkedIn</label>
+                <input type="text" id="linkedin" placeholder="LinkedIn profile URL">
+                <div id="linkedin-link" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label for="facebook">Facebook</label>
+                <input type="text" id="facebook" placeholder="Facebook profile URL">
+                <div id="facebook-link" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label for="instagram">Instagram</label>
+                <input type="text" id="instagram" placeholder="Instagram profile URL">
+                <div id="instagram-link" style="margin-top:8px;"></div>
+            </div>
             <button type="submit" id="update-button">Update Profile</button>
             <p id="status"></p>
         </form>
         <a href="menu.html" class="menu-button">← Back to Menu</a>
     </div>
     <script type="module">
+    const linkedinEl = document.getElementById('linkedin');
+    const linkedinLinkDiv = document.getElementById('linkedin-link');
+    const websiteEl = document.getElementById('website');
+    const websiteLinkDiv = document.getElementById('website-link');
+    const substackEl = document.getElementById('substack');
+    const substackLinkDiv = document.getElementById('substack-link');
+    const instagramEl = document.getElementById('instagram');
+    const instagramLinkDiv = document.getElementById('instagram-link');
+    const facebookEl = document.getElementById('facebook');
+    const facebookLinkDiv = document.getElementById('facebook-link');
+    const twitterEl = document.getElementById('twitter');
+    const twitterLinkDiv = document.getElementById('twitter-link');
+    const youtubeEl = document.getElementById('youtube');
+    const youtubeLinkDiv = document.getElementById('youtube-link');
         import { supabase } from '/lib/supabase.js';
 
         const profileForm = document.getElementById('profile-form');
@@ -100,7 +149,7 @@
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('full_name, phone, avatar_url, bio')
+                .select('full_name, phone, avatar_url, bio, youtube, twitter, substack, website, linkedin, facebook, instagram')
                 .eq('id', user.id)
                 .single();
 
@@ -115,8 +164,63 @@
                 fullNameEl.value = data.full_name || '';
                 phoneEl.value = data.phone || '';
                 bioEl.value = data.bio || '';
+                youtubeEl.value = data.youtube || '';
+                twitterEl.value = data.twitter || '';
+                substackEl.value = data.substack || '';
+                websiteEl.value = data.website || '';
+                linkedinEl.value = data.linkedin || '';
+                facebookEl.value = data.facebook || '';
+                instagramEl.value = data.instagram || '';
+                // Show YouTube link if present
+                if (data.youtube && data.youtube.trim() !== '') {
+                    let url = data.youtube.trim();
+                    youtubeLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    youtubeLinkDiv.innerHTML = '';
+                }
+                // Show Twitter/X link if present
+                if (data.twitter && data.twitter.trim() !== '') {
+                    let url = data.twitter.trim();
+                    twitterLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    twitterLinkDiv.innerHTML = '';
+                }
+                // Show Substack link if present
+                if (data.substack && data.substack.trim() !== '') {
+                    let url = data.substack.trim();
+                    substackLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    substackLinkDiv.innerHTML = '';
+                }
+                // Show Website link if present
+                if (data.website && data.website.trim() !== '') {
+                    let url = data.website.trim();
+                    websiteLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    websiteLinkDiv.innerHTML = '';
+                }
+                // Show LinkedIn link if present
+                if (data.linkedin && data.linkedin.trim() !== '') {
+                    let url = data.linkedin.trim();
+                    linkedinLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    linkedinLinkDiv.innerHTML = '';
+                }
+                // Show Facebook link if present
+                if (data.facebook && data.facebook.trim() !== '') {
+                    let url = data.facebook.trim();
+                    facebookLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    facebookLinkDiv.innerHTML = '';
+                }
+                // Show Instagram link if present
+                if (data.instagram && data.instagram.trim() !== '') {
+                    let url = data.instagram.trim();
+                    instagramLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+                } else {
+                    instagramLinkDiv.innerHTML = '';
+                }
                 const imageUrl = data.avatar_url;
-
                 if (imageUrl && imageUrl.trim() !== '') {
                     // If it's a full URL, use it directly
                     if (imageUrl.startsWith('http')) {
@@ -147,6 +251,55 @@
         });
 
         profileForm.addEventListener('submit', async (event) => {
+            // Update YouTube link after save
+            if (youtubeEl.value.trim() !== '') {
+                let url = youtubeEl.value.trim();
+                youtubeLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                youtubeLinkDiv.innerHTML = '';
+            }
+            // Update Twitter/X link after save
+            if (twitterEl.value.trim() !== '') {
+                let url = twitterEl.value.trim();
+                twitterLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                twitterLinkDiv.innerHTML = '';
+            }
+            // Update Substack link after save
+            if (substackEl.value.trim() !== '') {
+                let url = substackEl.value.trim();
+                substackLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                substackLinkDiv.innerHTML = '';
+            }
+            // Update Website link after save
+            if (websiteEl.value.trim() !== '') {
+                let url = websiteEl.value.trim();
+                websiteLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                websiteLinkDiv.innerHTML = '';
+            }
+            // Update LinkedIn link after save
+            if (linkedinEl.value.trim() !== '') {
+                let url = linkedinEl.value.trim();
+                linkedinLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                linkedinLinkDiv.innerHTML = '';
+            }
+            // Update Facebook link after save
+            if (facebookEl.value.trim() !== '') {
+                let url = facebookEl.value.trim();
+                facebookLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                facebookLinkDiv.innerHTML = '';
+            }
+            // Update Instagram link after save
+            if (instagramEl.value.trim() !== '') {
+                let url = instagramEl.value.trim();
+                instagramLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
+            } else {
+                instagramLinkDiv.innerHTML = '';
+            }
             event.preventDefault();
             updateButton.disabled = true;
             statusEl.textContent = 'Updating...';
@@ -179,16 +332,26 @@
                         full_name: newFullName,
                         phone: newPhone,
                         avatar_url: newAvatarPath,
-                        bio: newBio
+                        bio: newBio,
+                        youtube: youtubeEl.value.trim(),
+                        twitter: twitterEl.value.trim(),
+                        substack: substackEl.value.trim(),
+                        website: websiteEl.value.trim(),
+                        linkedin: linkedinEl.value.trim(),
+                        facebook: facebookEl.value.trim(),
+                        instagram: instagramEl.value.trim()
                     })
                     .eq('id', currentUser.id);
 
-                if (updateError) throw updateError;
-
-                statusEl.textContent = '✅ Profile updated successfully!';
-                statusEl.style.color = 'green';
-
-                window.location.reload();
+                if (updateError) {
+                    statusEl.textContent = `❌ Update failed: ${updateError.message}`;
+                    statusEl.style.color = 'red';
+                    console.error('Supabase update error:', updateError);
+                } else {
+                    statusEl.textContent = '✅ Profile updated successfully!';
+                    statusEl.style.color = 'green';
+                    window.location.reload();
+                }
 
             } catch (error) {
                 statusEl.textContent = `Error: ${error.message}`;

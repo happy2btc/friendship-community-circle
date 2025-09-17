@@ -89,7 +89,7 @@
     async function loadProfiles() {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, bio')
+        .select('id, full_name, avatar_url, bio, youtube, twitter, substack, website, linkedin, facebook, instagram')
         .order('full_name', { ascending: true });
 
       if (error) {
@@ -132,6 +132,32 @@
 
         detailsDiv.appendChild(nameDiv);
         detailsDiv.appendChild(bioDiv);
+
+        // Social links
+        const socialFields = [
+          { key: 'youtube', label: 'YouTube' },
+          { key: 'twitter', label: 'Twitter/X' },
+          { key: 'substack', label: 'Substack' },
+          { key: 'website', label: 'Website' },
+          { key: 'linkedin', label: 'LinkedIn' },
+          { key: 'facebook', label: 'Facebook' },
+          { key: 'instagram', label: 'Instagram' }
+        ];
+        socialFields.forEach(field => {
+          const value = profile[field.key];
+          if (value && value.trim() !== '') {
+            const link = document.createElement('a');
+            link.href = value.trim();
+            link.textContent = field.label;
+            link.target = '_blank';
+            link.style.color = '#2196f3';
+            link.style.textDecoration = 'underline';
+            link.style.display = 'inline-block';
+            link.style.marginRight = '12px';
+            link.style.marginTop = '4px';
+            detailsDiv.appendChild(link);
+          }
+        });
 
         li.appendChild(img);
         li.appendChild(detailsDiv);
