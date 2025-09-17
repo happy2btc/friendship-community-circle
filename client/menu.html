@@ -110,72 +110,7 @@
 
     <script type="module">
         import { supabase } from '/lib/supabase.js';
-
-        // Featured member logic (all-time, no circles)
-        async function getMostActiveMember() {
-            const myUserId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
-
-            // Query all activity tables (all time)
-            const { data: votes } = await supabase
-                .from('agreement_votes')
-                .select('voter_id, created_at');
-
-            const { data: suggestions } = await supabase
-                .from('suggestions')
-                .select('author_id, created_at');
-
-            const { data: comments } = await supabase
-                .from('comments')
-                .select('author_id, created_at');
-
-            // Tally activity per user (all time)
-            const activity = {};
-            const breakdown = {};
-
-            votes?.forEach(v => {
-                activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-                breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
-                breakdown[v.voter_id].votes += 1;
-            });
-            suggestions?.forEach(s => {
-                activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-                breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
-                breakdown[s.author_id].suggestions += 1;
-            });
-            comments?.forEach(c => {
-                activity[c.author_id] = (activity[c.author_id] || 0) + 1;
-                breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
-                breakdown[c.author_id].comments += 1;
-            });
-
-            // Exclude your own user ID
-            delete activity["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
-            delete breakdown["81c50097-74f3-4c7a-b00c-598995b8d1cb"];
-
-            // Find top user (excluding yourself)
-            const topId = Object.entries(activity).sort((a,b) => b[1]-a[1])[0]?.[0];
-            if (!topId) {
-                // If no one else is active, show an empty member
-                return {
-                    profile: { full_name: '', avatar_url: '', personal_story: '' },
-                    breakdown: { votes: 0, suggestions: 0, comments: 0 },
-                    total: 0
-                };
-            }
-
-            // Get name and picture only from profiles
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name, avatar_url, personal_story')
-                .eq('id', topId)
-                .single();
-
-            return {
-                profile: profile || { full_name: 'Member', avatar_url: '', personal_story: '' },
-                breakdown: breakdown[topId],
-                total: activity[topId]
-            };
-        }
+        import { getMostActiveMember } from '/lib/activity.js';
 
         async function showFeaturedMember() {
             const m = await getMostActiveMember();
@@ -192,6 +127,11 @@
                     Votes: ${m.breakdown.votes || 0}<br>
                     Suggestions: ${m.breakdown.suggestions || 0}<br>
                     Comments: ${m.breakdown.comments || 0}<br>
+                    Wants: ${m.breakdown.wants || 0}<br>
+                    Offers: ${m.breakdown.offers || 0}<br>
+                    Passion: ${m.breakdown.passion || 0}<br>
+                    Projects & Struggles: ${m.breakdown.projects || 0}<br>
+                    Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                     <strong>Total:</strong> ${m.total}
                 </div>
                 <div class="personal-story">${m.profile.personal_story || ''}</div>
