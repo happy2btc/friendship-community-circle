@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h1>✍️ Edit Your Scroll</h1>
+  <h1>✍️ Edit Your Projects & Struggles</h1>
 
   <form id="contribution-form">
     <label for="project">🌱 What is your project or what are you working on?</label>
@@ -42,13 +42,13 @@
     <label for="contact">📬 How would you like to be contacted or supported?</label>
     <input type="text" id="contact" name="contact" />
 
-    <button type="submit" id="save-btn">Save Scroll</button>
-    <button type="button" id="delete-btn" class="delete-button" style="display:none;">Delete Scroll</button>
+    <button type="submit" id="save-btn">Save Projects & Struggles</button>
+    <button type="button" id="delete-btn" class="delete-button" style="display:none;">Delete Projects & Struggles</button>
   </form>
 
   <div id="status-message"></div>
 
-  <a href="view-scrolls.html" class="menu-button">📜 View All Scrolls</a>
+  <a href="view-scrolls.html" class="menu-button">📜 View All Projects & Struggles</a>
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
   <script type="module">
@@ -85,23 +85,23 @@
       }
 
       if (data && data.length > 0) {
-        // Always use the first scroll if multiple exist
-        const scroll = data[0];
-        existingScrollId = scroll.id;
-        form.project.value = scroll.project || '';
-        form.challenge.value = scroll.challenge || '';
-        form.help.value = scroll.help || '';
-        form.collab.value = scroll.collab || '';
-        form.skills.value = scroll.skills || '';
-        form.urgency.value = scroll.urgency || '';
-        form.contact.value = scroll.contact || '';
-        deleteBtn.style.display = '';
-        saveBtn.textContent = 'Update Scroll';
+  // Always use the first scroll if multiple exist
+  const scroll = data[0];
+  existingScrollId = scroll.id;
+  form.project.value = scroll.project || '';
+  form.challenge.value = scroll.challenge || '';
+  form.help.value = scroll.help || '';
+  form.collab.value = scroll.collab || '';
+  form.skills.value = scroll.skills || '';
+  form.urgency.value = scroll.urgency || '';
+  form.contact.value = scroll.contact || '';
+  deleteBtn.style.display = '';
+  saveBtn.textContent = 'Update Projects & Struggles';
       } else {
-        existingScrollId = null;
-        form.reset();
-        deleteBtn.style.display = 'none';
-        saveBtn.textContent = 'Submit Your Scroll';
+  existingScrollId = null;
+  form.reset();
+  deleteBtn.style.display = 'none';
+  saveBtn.textContent = 'Submit Your Projects & Struggles';
       }
     }
 
@@ -141,7 +141,7 @@
         statusMessage.textContent = `Error: ${error.message}`;
         statusMessage.style.color = 'red';
       } else {
-        statusMessage.textContent = '✅ Your scroll has been saved!';
+  statusMessage.textContent = '✅ Your Projects & Struggles have been saved!';
         statusMessage.style.color = 'green';
         setTimeout(() => {
           statusMessage.textContent = '';
@@ -167,7 +167,7 @@
         statusMessage.textContent = `Error: ${error.message}`;
         statusMessage.style.color = 'red';
       } else {
-        statusMessage.textContent = '✅ Your scroll has been deleted.';
+  statusMessage.textContent = '✅ Your Projects & Struggles have been deleted.';
         form.reset();
         existingScrollId = null;
         deleteBtn.style.display = 'none';

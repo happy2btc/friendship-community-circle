@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📜 Community Scrolls</title>
+  <title>📜 Community Projects & Struggles</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
     body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; }
@@ -18,9 +18,9 @@
   </style>
 </head>
 <body>
-  <h1>📜 Community Scrolls</h1>
+  <h1>📜 Community Projects & Struggles</h1>
   <div id="scrolls-container">
-    <p>Loading scrolls...</p>
+  <p>Loading projects & struggles...</p>
   </div>
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
@@ -33,12 +33,12 @@
       const { data: scrolls, error } = await supabase.rpc('get_all_scrolls');
 
       if (error) {
-        container.innerHTML = `<p style="color: red;">Error loading scrolls: ${error.message}</p>`;
+        container.innerHTML = `<p style="color: red;">Error loading projects & struggles: ${error.message}</p>`;
         return;
       }
 
       if (scrolls.length === 0) {
-        container.innerHTML = '<p>No scrolls have been submitted yet.</p>';
+        container.innerHTML = '<p>No projects & struggles have been submitted yet.</p>';
         return;
       }
 
@@ -59,10 +59,10 @@
         
         content += `<div class="spacer"></div>`;
 
-        if (scroll.email) {
-            const mailtoLink = `mailto:${scroll.email}?subject=Response to your Community Scroll`;
-            content += `<a href="${mailtoLink}" class="respond-button">Respond to ${scroll.full_name || 'Member'}</a>`;
-        }
+    if (scroll.email) {
+      const mailtoLink = `mailto:${scroll.email}?subject=Response to your Community Project & Struggle`;
+      content += `<a href="${mailtoLink}" class="respond-button">Respond to ${scroll.full_name || 'Member'}</a>`;
+    }
 
         card.innerHTML = content;
         container.appendChild(card);

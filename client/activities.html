@@ -76,6 +76,21 @@
                 .from('comments')
                 .select('author_id, created_at');
 
+            // New: member_offerings (wants, offers, passion)
+            const { data: offerings } = await supabase
+                .from('member_offerings')
+                .select('user_id, want, give, passion');
+
+            // New: contributions (projects and struggles)
+            const { data: contributions } = await supabase
+                .from('contributions')
+                .select('user_id, project, challenge, help, collab, skills, urgency, contact');
+
+            // New: profiles (profile completion)
+            const { data: profilesFull } = await supabase
+                .from('profiles')
+                .select('id, full_name, bio, avatar_url, youtube, twitter, substack, facebook, instagram, linkedin, website');
+
             // Tally activity per user
             const activity = {};
             const breakdown = {};
@@ -86,22 +101,74 @@
             votes?.forEach(v => {
                 if (v.voter_id !== builderId) {
                     activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
                     breakdown[v.voter_id].votes += 1;
                 }
             });
             suggestions?.forEach(s => {
                 if (s.author_id !== builderId) {
                     activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
                     breakdown[s.author_id].suggestions += 1;
                 }
             });
             comments?.forEach(c => {
                 if (c.author_id !== builderId) {
                     activity[c.author_id] = (activity[c.author_id] || 0) + 1;
-                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0 };
+                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
                     breakdown[c.author_id].comments += 1;
+                }
+            });
+
+            // Count wants, offers, passion
+            offerings?.forEach(o => {
+                if (o.user_id !== builderId) {
+                    let points = 0;
+                    breakdown[o.user_id] = breakdown[o.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                    if (o.want && o.want.trim() !== "") { breakdown[o.user_id].wants += 1; points += 1; }
+                    if (o.give && o.give.trim() !== "") { breakdown[o.user_id].offers += 1; points += 1; }
+                    if (o.passion && o.passion.trim() !== "") { breakdown[o.user_id].passion += 1; points += 1; }
+                    activity[o.user_id] = (activity[o.user_id] || 0) + points;
+                }
+            });
+
+            // Count projects and struggles
+            // Aggregate all contributions per user
+            const contribByUser = {};
+            contributions?.forEach(con => {
+                if (con.user_id !== builderId) {
+                    if (!contribByUser[con.user_id]) contribByUser[con.user_id] = [];
+                    contribByUser[con.user_id].push(con);
+                }
+            });
+            Object.entries(contribByUser).forEach(([userId, contribs]) => {
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                let fieldsFilled = 0;
+                contribs.forEach(con => {
+                    ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
+                        if (con[field] && con[field].trim() !== '') {
+                            fieldsFilled += 1;
+                        }
+                    });
+                });
+                breakdown[userId].projects += fieldsFilled;
+                activity[userId] = (activity[userId] || 0) + fieldsFilled;
+            });
+
+            // Count profile completion
+            profilesFull?.forEach(p => {
+                if (p.id !== builderId) {
+                    let filled = 0;
+                    if (p.full_name && p.full_name.trim() !== "") filled++;
+                    if (p.bio && p.bio.trim() !== "") filled++;
+                    if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
+                    // Count any social media field filled
+                    if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
+                    if (filled >= 2) { // At least 2 fields filled counts as completed
+                        breakdown[p.id] = breakdown[p.id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                        breakdown[p.id].profile = 1;
+                        activity[p.id] = (activity[p.id] || 0) + 5;
+                    }
                 }
             });
 
@@ -109,11 +176,10 @@
             const userIds = Object.keys(activity).filter(id => id && id !== 'null');
             if (userIds.length === 0) return [];
 
-            // Get profiles
+            // Get profiles for display
             const { data: profiles } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, personal_story')
-                .in('id', userIds);
+                .select('id, full_name, avatar_url, personal_story');
 
             // Map profiles by id
             const idToProfile = {};
@@ -122,7 +188,7 @@
             // Build member activity list
             const members = userIds.map(id => ({
                 id,
-                profile: idToProfile[id] || { full_name: 'Unknown', avatar_url: '', personal_story: '' },
+                profile: idToProfile[id] || { full_name: id, avatar_url: '', personal_story: '' },
                 total: activity[id],
                 breakdown: breakdown[id]
             }));
@@ -140,25 +206,23 @@
                 container.innerHTML = "<em>No member activities yet.</em>";
                 return;
             }
-            // Debug: show which IDs are missing from profiles
-            const missingIds = members.filter(m => m.profile.full_name === 'Unknown').map(m => m.id);
-            if (missingIds.length > 0) {
-                const debugDiv = document.createElement('div');
-                debugDiv.style = 'color: #b71c1c; font-size: 1em; margin-bottom: 1em;';
-                debugDiv.innerHTML = `<strong>Debug:</strong> Missing profiles for user IDs: <code>${missingIds.join(', ')}</code>`;
-                container.appendChild(debugDiv);
-                console.warn('Missing profiles for user IDs:', missingIds);
-            }
+
+            // Always display all members with activity, even if profile is 'Unknown'
             container.innerHTML += members.map(m => `
                 <div class="member-card">
                     <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
                     <div class="member-info">
-                        <h2>${m.profile.full_name}</h2>
+                        <h2>${m.profile.full_name || m.id}</h2>
                         <div class="activity-breakdown">
                             <strong>All-Time Activities:</strong><br>
                             Votes: ${m.breakdown.votes || 0}<br>
                             Suggestions: ${m.breakdown.suggestions || 0}<br>
                             Comments: ${m.breakdown.comments || 0}<br>
+                            Wants: ${m.breakdown.wants || 0}<br>
+                            Offers: ${m.breakdown.offers || 0}<br>
+                            Passion: ${m.breakdown.passion || 0}<br>
+                            Projects & Struggles: ${m.breakdown.projects || 0}<br>
+                            Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                             <strong>Total:</strong> ${m.total}
                         </div>
                         <div class="personal-story">${m.profile.personal_story || ''}</div>
