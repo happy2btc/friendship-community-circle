@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Community Chat</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .chat-form { margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px #eee; }
+    .message-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .username { font-weight: bold; color: #2e8b57; }
+    .timestamp { color: #888; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>Community Chat</h1>
+  <a href="menu.html" class="back-menu-btn" style="display:inline-block;margin-bottom:1.5rem;padding:12px 24px;background:#2e8b57;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.1em;box-shadow:0 2px 6px #eee;transition:background 0.2s;">← Back to Menu</a>
+  <form id="chat-form" class="chat-form">
+    <textarea id="message" rows="3" style="width:100%;" placeholder="Type your message..." required></textarea>
+    <button type="submit">Send</button>
+    <span id="chat-status"></span>
+  </form>
+  <div id="messages"></div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    // Submit a new message
+    document.getElementById('chat-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const message = document.getElementById('message').value.trim();
+      const status = document.getElementById('chat-status');
+      status.textContent = '';
+      if (!message) {
+        status.textContent = 'Please enter a message.';
+        return;
+      }
+      const { data: userData } = await supabase.auth.getUser();
+      const user_id = userData?.user?.id;
+      if (!user_id) {
+        status.textContent = 'You must be signed in to send a message.';
+        return;
+      }
+      const { error } = await supabase
+        .from('community_messages')
+        .insert([{ message, user_id }]);
+      if (error) {
+        status.textContent = 'Error: ' + error.message;
+        return;
+      }
+      status.textContent = 'Message sent!';
+      document.getElementById('chat-form').reset();
+      loadMessages();
+    };
+
+    // Load and display messages
+    async function loadMessages() {
+      const { data: messages } = await supabase
+        .from('community_messages')
+        .select('id, user_id, message, created_at')
+        .order('created_at', { ascending: false });
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = '';
+      for (const msg of messages || []) {
+        // Optionally fetch username from profiles table
+        let username = msg.user_id;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', msg.user_id)
+          .single();
+        if (profile && profile.full_name) username = profile.full_name;
+        messagesDiv.innerHTML += `
+          <div class="message-card">
+            <span class="username">${username}</span>:
+            <span>${msg.message}</span>
+            <div class="timestamp">${new Date(msg.created_at).toLocaleString()}</div>
+          </div>
+        `;
+      }
+    }
+    loadMessages();
+  </script>
+</body>
+</html>
