@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Celebration & Gratitude Wall</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .wall-form { margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px #eee; }
+    .story-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .headline { font-weight: bold; font-size: 1.2em; margin-bottom: 0.5em; }
+    .read-more { color: #007bff; text-decoration: underline; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Celebration & Gratitude Wall</h1>
+  <a href="menu.html" class="back-menu-btn" style="display:inline-block;margin-bottom:1.5rem;padding:12px 24px;background:#2e8b57;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.1em;box-shadow:0 2px 6px #eee;transition:background 0.2s;">← Back to Menu</a>
+  <form id="wall-form" class="wall-form">
+    <div>
+      <label for="headline">Headline</label><br>
+      <input type="text" id="headline" maxlength="80" style="width:100%;" required>
+    </div>
+    <div>
+      <label for="story">Your Story</label><br>
+      <textarea id="story" rows="4" maxlength="1000" style="width:100%;" required></textarea>
+    </div>
+    <button type="submit">Share Your Story</button>
+    <span id="wall-status"></span>
+  </form>
+  <div id="stories"></div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    // Submit a new story
+    document.getElementById('wall-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const headline = document.getElementById('headline').value.trim();
+      const story = document.getElementById('story').value.trim();
+      const status = document.getElementById('wall-status');
+      status.textContent = '';
+      if (!headline || !story) {
+        status.textContent = 'Please fill out both fields.';
+        return;
+      }
+      const { data: userData } = await supabase.auth.getUser();
+      const user_id = userData?.user?.id;
+      if (!user_id) {
+        status.textContent = 'You must be signed in to share a story.';
+        return;
+      }
+      const { error } = await supabase
+        .from('celebrations')
+        .insert([{ headline, story, user_id }]);
+      if (error) {
+        status.textContent = 'Error: ' + error.message;
+        return;
+      }
+      status.textContent = 'Story shared!';
+      document.getElementById('wall-form').reset();
+      loadStories();
+    };
+
+    // Load and display stories
+    async function loadStories() {
+      const { data: stories } = await supabase
+        .from('celebrations')
+        .select('id, headline, story, created_at')
+        .eq('visible', true)
+        .order('created_at', { ascending: false });
+      const storiesDiv = document.getElementById('stories');
+      storiesDiv.innerHTML = '';
+      stories?.forEach(story => {
+        const shortText = story.story.length > 120
+          ? story.story.slice(0, 120) + '...'
+          : story.story;
+        storiesDiv.innerHTML += `
+          <div class="story-card">
+            <div class="headline">${story.headline}</div>
+            <div>${shortText} <span class="read-more" onclick="document.getElementById('full-${story.id}').style.display='block';this.style.display='none';">Read More</span></div>
+            <div id="full-${story.id}" style="display:none;margin-top:0.5em;">${story.story}</div>
+            <div style="color:#888;font-size:0.9em;">${new Date(story.created_at).toLocaleString()}</div>
+          </div>
+        `;
+      });
+    }
+    loadStories();
+  </script>
+</body>
+</html>
