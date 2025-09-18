@@ -63,7 +63,7 @@
         import { supabase } from '/lib/supabase.js';
 
         async function getActivities() {
-            // Get all activities (no time filter)
+            // Restore missing queries for legacy activities
             const { data: votes } = await supabase
                 .from('agreement_votes')
                 .select('voter_id, created_at');
@@ -76,46 +76,55 @@
                 .from('comments')
                 .select('author_id, created_at');
 
-            // New: member_offerings (wants, offers, passion)
             const { data: offerings } = await supabase
                 .from('member_offerings')
                 .select('user_id, want, give, passion');
 
-            // New: contributions (projects and struggles)
             const { data: contributions } = await supabase
                 .from('contributions')
                 .select('user_id, project, challenge, help, collab, skills, urgency, contact');
 
-            // New: profiles (profile completion)
             const { data: profilesFull } = await supabase
                 .from('profiles')
                 .select('id, full_name, bio, avatar_url, youtube, twitter, substack, facebook, instagram, linkedin, website');
 
+            // Get new activities
+            const { data: circles } = await supabase
+                .from('circles')
+                .select('user_id');
+
+            const { data: membersData } = await supabase
+                .from('circle_members')
+                .select('added_by');
+
+            const { data: celebrations } = await supabase
+                .from('celebrations')
+                .select('user_id');
+
             // Tally activity per user
             const activity = {};
             const breakdown = {};
-
-            // Exclude builder's user ID
             const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
 
+            // Existing activities
             votes?.forEach(v => {
                 if (v.voter_id !== builderId) {
                     activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
                     breakdown[v.voter_id].votes += 1;
                 }
             });
             suggestions?.forEach(s => {
                 if (s.author_id !== builderId) {
                     activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
                     breakdown[s.author_id].suggestions += 1;
                 }
             });
             comments?.forEach(c => {
                 if (c.author_id !== builderId) {
                     activity[c.author_id] = (activity[c.author_id] || 0) + 1;
-                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
                     breakdown[c.author_id].comments += 1;
                 }
             });
@@ -124,7 +133,7 @@
             offerings?.forEach(o => {
                 if (o.user_id !== builderId) {
                     let points = 0;
-                    breakdown[o.user_id] = breakdown[o.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                    breakdown[o.user_id] = breakdown[o.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
                     if (o.want && o.want.trim() !== "") { breakdown[o.user_id].wants += 1; points += 1; }
                     if (o.give && o.give.trim() !== "") { breakdown[o.user_id].offers += 1; points += 1; }
                     if (o.passion && o.passion.trim() !== "") { breakdown[o.user_id].passion += 1; points += 1; }
@@ -133,7 +142,6 @@
             });
 
             // Count projects and struggles
-            // Aggregate all contributions per user
             const contribByUser = {};
             contributions?.forEach(con => {
                 if (con.user_id !== builderId) {
@@ -142,7 +150,7 @@
                 }
             });
             Object.entries(contribByUser).forEach(([userId, contribs]) => {
-                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
                 let fieldsFilled = 0;
                 contribs.forEach(con => {
                     ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
@@ -162,13 +170,39 @@
                     if (p.full_name && p.full_name.trim() !== "") filled++;
                     if (p.bio && p.bio.trim() !== "") filled++;
                     if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
-                    // Count any social media field filled
                     if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
-                    if (filled >= 2) { // At least 2 fields filled counts as completed
-                        breakdown[p.id] = breakdown[p.id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0 };
+                    if (filled >= 2) {
+                        breakdown[p.id] = breakdown[p.id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
                         breakdown[p.id].profile = 1;
                         activity[p.id] = (activity[p.id] || 0) + 5;
                     }
+                }
+            });
+
+            // New: Count circles created (10 points each)
+            circles?.forEach(c => {
+                if (c.user_id && c.user_id !== builderId) {
+                    activity[c.user_id] = (activity[c.user_id] || 0) + 10;
+                    breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[c.user_id].circles_created = (breakdown[c.user_id].circles_created || 0) + 1;
+                }
+            });
+
+            // New: Count members added (2 points each)
+            membersData?.forEach(m => {
+                if (m.added_by && m.added_by !== builderId) {
+                    activity[m.added_by] = (activity[m.added_by] || 0) + 2;
+                    breakdown[m.added_by] = breakdown[m.added_by] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[m.added_by].members_added = (breakdown[m.added_by].members_added || 0) + 1;
+                }
+            });
+
+            // New: Count celebration wall posts (5 points each)
+            celebrations?.forEach(c => {
+                if (c.user_id && c.user_id !== builderId) {
+                    activity[c.user_id] = (activity[c.user_id] || 0) + 5;
+                    breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[c.user_id].celebrations_posted = (breakdown[c.user_id].celebrations_posted || 0) + 1;
                 }
             });
 
@@ -223,6 +257,9 @@
                             Passion: ${m.breakdown.passion || 0}<br>
                             Projects & Struggles: ${m.breakdown.projects || 0}<br>
                             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
+                            Circles Created: ${m.breakdown.circles_created || 0}<br>
+                            Members Added: ${m.breakdown.members_added || 0}<br>
+                            Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                             <strong>Total:</strong> ${m.total}
                         </div>
                         <div class="personal-story">${m.profile.personal_story || ''}</div>

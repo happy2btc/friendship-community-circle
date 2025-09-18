@@ -112,17 +112,187 @@
 
     <script type="module">
         import { supabase } from '/lib/supabase.js';
-        import { getMostActiveMember } from '/lib/activity.js';
 
-        async function showFeaturedMember() {
-            const m = await getMostActiveMember();
-            const container = document.getElementById('member-profile');
-            if (!m || !m.profile.full_name) {
-                container.innerHTML = "<em>No other member has been active.</em>";
+        async function showFeaturedMemberDirect() {
+            // Fetch all activities
+            const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes] = await Promise.all([
+                supabase.from('agreement_votes').select('voter_id, created_at'),
+                supabase.from('suggestions').select('author_id, created_at'),
+                supabase.from('comments').select('author_id, created_at'),
+                supabase.from('member_offerings').select('user_id, want, give, passion'),
+                supabase.from('contributions').select('user_id, project, challenge, help, collab, skills, urgency, contact'),
+                supabase.from('profiles').select('id, full_name, avatar_url, personal_story, bio, youtube, twitter, substack, facebook, instagram, linkedin, website'),
+                supabase.from('circles').select('user_id'),
+                supabase.from('circle_members').select('added_by'),
+                supabase.from('celebrations').select('user_id')
+            ]);
+            const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
+            const breakdown = {};
+            function initBreakdown(id) {
+                if (!breakdown[id]) {
+                    breakdown[id] = {
+                        votes: 0,
+                        suggestions: 0,
+                        comments: 0,
+                        wants: 0,
+                        offers: 0,
+                        passion: 0,
+                        projects: 0,
+                        profile: 0,
+                        circles_created: 0,
+                        members_added: 0,
+                        celebrations_posted: 0
+                    };
+                }
+            }
+            // Votes
+            votesRes.data?.forEach(v => {
+                if (v.voter_id !== builderId) {
+                    initBreakdown(v.voter_id);
+                    breakdown[v.voter_id].votes += 1;
+                }
+            });
+            // Suggestions
+            suggestionsRes.data?.forEach(s => {
+                if (s.author_id !== builderId) {
+                    initBreakdown(s.author_id);
+                    breakdown[s.author_id].suggestions += 1;
+                }
+            });
+            // Comments
+            commentsRes.data?.forEach(c => {
+                if (c.author_id !== builderId) {
+                    initBreakdown(c.author_id);
+                    breakdown[c.author_id].comments += 1;
+                }
+            });
+            // Wants, Offers, Passion
+            offeringsRes.data?.forEach(o => {
+                if (o.user_id !== builderId) {
+                    initBreakdown(o.user_id);
+                    if (o.want && o.want.trim() !== "") breakdown[o.user_id].wants += 1;
+                    if (o.give && o.give.trim() !== "") breakdown[o.user_id].offers += 1;
+                    if (o.passion && o.passion.trim() !== "") breakdown[o.user_id].passion += 1;
+                }
+            });
+            // Projects & Struggles
+            const contribByUser = {};
+            contributionsRes.data?.forEach(con => {
+                if (con.user_id !== builderId) {
+                    if (!contribByUser[con.user_id]) contribByUser[con.user_id] = [];
+                    contribByUser[con.user_id].push(con);
+                }
+            });
+            Object.entries(contribByUser).forEach(([userId, contribs]) => {
+                initBreakdown(userId);
+                let fieldsFilled = 0;
+                contribs.forEach(con => {
+                    ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
+                        if (con[field] && con[field].trim() !== '') {
+                            fieldsFilled += 1;
+                        }
+                    });
+                });
+                breakdown[userId].projects += fieldsFilled;
+            });
+            // Profile completion
+            profilesFullRes.data?.forEach(p => {
+                if (p.id !== builderId) {
+                    let filled = 0;
+                    if (p.full_name && p.full_name.trim() !== "") filled++;
+                    if (p.bio && p.bio.trim() !== "") filled++;
+                    if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
+                    if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
+                    if (filled >= 2) {
+                        initBreakdown(p.id);
+                        breakdown[p.id].profile = 1;
+                    }
+                }
+            });
+            // Debug: log raw data for circles and celebrations
+            console.log('Circles:', circlesRes.data);
+            console.log('Celebrations:', celebrationsRes.data);
+            // Circles created
+            if (Array.isArray(circlesRes.data)) {
+                circlesRes.data.forEach(c => {
+                    const userId = c && c.user_id;
+                    if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+                        initBreakdown(userId);
+                        breakdown[userId].circles_created += 1;
+                    }
+                });
+            } else if (circlesRes.data && typeof circlesRes.data === 'object' && circlesRes.data.user_id) {
+                // If circlesRes.data is a single object
+                const userId = circlesRes.data.user_id;
+                if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+                    initBreakdown(userId);
+                    breakdown[userId].circles_created += 1;
+                }
+            }
+            // Members added
+            if (Array.isArray(membersRes.data)) {
+                membersRes.data.forEach(m => {
+                    const userId = m.added_by || m.user_id;
+                    if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+                        initBreakdown(userId);
+                        breakdown[userId].members_added += 1;
+                    }
+                });
+            }
+            // Celebration wall posts
+            if (Array.isArray(celebrationsRes.data)) {
+                celebrationsRes.data.forEach(c => {
+                    const userId = c.user_id || c.creator_id;
+                    if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+                        initBreakdown(userId);
+                        breakdown[userId].celebrations_posted += 1;
+                    }
+                });
+            }
+
+            // Get profiles for display
+            const idToProfile = {};
+            if (Array.isArray(profilesFullRes.data)) {
+                profilesFullRes.data.forEach(p => {
+                    if (p && typeof p.id === 'string' && p.id.trim() !== '') {
+                        idToProfile[p.id] = p;
+                    }
+                });
+            }
+            // Build member activity list
+            const userIds = Object.keys(breakdown).filter(id => id && id !== 'null');
+            if (userIds.length === 0) {
+                document.getElementById('member-profile').innerHTML = "<em>No other member has been active.</em>";
                 return;
             }
+            // Calculate total for each user (same as before, but not aggregate)
+            const members = userIds.map(id => {
+                const b = breakdown[id];
+                const profile = idToProfile[id] || { full_name: id, avatar_url: '', personal_story: '' };
+                const total =
+                    (b.votes || 0) * 1 +
+                    (b.suggestions || 0) * 1 +
+                    (b.comments || 0) * 1 +
+                    (b.wants || 0) * 1 +
+                    (b.offers || 0) * 1 +
+                    (b.passion || 0) * 1 +
+                    (b.projects || 0) * 1 +
+                    (b.profile || 0) * 5 +
+                    (b.circles_created || 0) * 10 +
+                    (b.members_added || 0) * 2 +
+                    (b.celebrations_posted || 0) * 5;
+                return {
+                    id,
+                    profile,
+                    total,
+                    breakdown: b
+                };
+            });
+            members.sort((a, b) => b.total - a.total);
+            const m = members[0];
+            const container = document.getElementById('member-profile');
             container.innerHTML = `
-                <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
+                <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture">
                 <h3>${m.profile.full_name}</h3>
                 <div class="activity-breakdown">
                     <strong>All-Time Activities:</strong><br>
@@ -134,6 +304,9 @@
                     Passion: ${m.breakdown.passion || 0}<br>
                     Projects & Struggles: ${m.breakdown.projects || 0}<br>
                     Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
+                    Circles Created: ${m.breakdown.circles_created || 0}<br>
+                    Members Added: ${m.breakdown.members_added || 0}<br>
+                    Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                     <strong>Total:</strong> ${m.total}
                 </div>
                 <div class="personal-story">${m.profile.personal_story || ''}</div>
@@ -151,7 +324,7 @@
         });
 
         // Initial loads
-        await showFeaturedMember();
+        await showFeaturedMemberDirect();
     </script>
 </body>
 </html>
