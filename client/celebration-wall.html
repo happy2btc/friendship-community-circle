@@ -21,7 +21,7 @@
     </div>
     <div>
       <label for="story">Your Story</label><br>
-      <textarea id="story" rows="4" maxlength="1000" style="width:100%;" required></textarea>
+  <textarea id="story" rows="4" style="width:100%;" required></textarea>
     </div>
     <button type="submit">Share Your Story</button>
     <span id="wall-status"></span>
@@ -69,14 +69,16 @@
       const storiesDiv = document.getElementById('stories');
       storiesDiv.innerHTML = '';
       stories?.forEach(story => {
-        const shortText = story.story.length > 120
-          ? story.story.slice(0, 120) + '...'
-          : story.story;
+        // Show a preview (first 120 chars) and full story hidden until 'Read More' is clicked
+        const preview = story.story.length > 120 ? story.story.slice(0, 120) + '...' : story.story;
         storiesDiv.innerHTML += `
           <div class="story-card">
             <div class="headline">${story.headline}</div>
-            <div>${shortText} <span class="read-more" onclick="document.getElementById('full-${story.id}').style.display='block';this.style.display='none';">Read More</span></div>
-            <div id="full-${story.id}" style="display:none;margin-top:0.5em;">${story.story}</div>
+            <div>
+              <span id="preview-${story.id}">${preview}</span>
+              ${story.story.length > 120 ? `<span class="read-more" style="margin-left:8px;" onclick="document.getElementById('preview-${story.id}').style.display='none';document.getElementById('full-${story.id}').style.display='inline';this.style.display='none';">Read More</span>` : ''}
+              <span id="full-${story.id}" style="display:none;">${story.story}</span>
+            </div>
             <div style="color:#888;font-size:0.9em;">${new Date(story.created_at).toLocaleString()}</div>
           </div>
         `;
