@@ -14,12 +14,15 @@
 <body>
   <h1>Community Chat</h1>
   <a href="menu.html" class="back-menu-btn" style="display:inline-block;margin-bottom:1.5rem;padding:12px 24px;background:#2e8b57;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.1em;box-shadow:0 2px 6px #eee;transition:background 0.2s;">← Back to Menu</a>
-  <form id="chat-form" class="chat-form">
-    <textarea id="message" rows="3" style="width:100%;" placeholder="Type your message..." required></textarea>
-    <button type="submit">Send</button>
+  <div id="chat-section" style="max-width:600px;margin:auto;">
+    <h2>Chat Room</h2>
+    <div id="chat-messages" style="height:300px;overflow-y:auto;border:1px solid #ccc;padding:1em;background:#fff;margin-bottom:1em;"></div>
+    <form id="chat-form" style="display:flex;gap:1em;">
+      <textarea id="message" rows="3" style="flex:1;resize:vertical;" placeholder="Type your message..." required></textarea>
+      <button type="submit">Send</button>
+    </form>
     <span id="chat-status"></span>
-  </form>
-  <div id="messages"></div>
+  </div>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
@@ -48,34 +51,39 @@
       }
       status.textContent = 'Message sent!';
       document.getElementById('chat-form').reset();
-      loadMessages();
+        loadMessages(); // This line remains unchanged
     };
 
     // Load and display messages
-    async function loadMessages() {
-      const { data: messages } = await supabase
-        .from('community_messages')
-        .select('id, user_id, message, created_at')
-        .order('created_at', { ascending: false });
-      const messagesDiv = document.getElementById('messages');
-      messagesDiv.innerHTML = '';
-      for (const msg of messages || []) {
-        // Optionally fetch username from profiles table
-        let username = msg.user_id;
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', msg.user_id)
-          .single();
-        if (profile && profile.full_name) username = profile.full_name;
-        messagesDiv.innerHTML += `
-          <div class="message-card">
-            <span class="username">${username}</span>:
-            <span>${msg.message}</span>
-            <div class="timestamp">${new Date(msg.created_at).toLocaleString()}</div>
-          </div>
-        `;
-      }
+      async function loadMessages() {
+        const { data: messages } = await supabase
+          .from('community_messages')
+          .select('id, user_id, message, created_at')
+          .order('created_at', { ascending: true });
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        for (const msg of messages || []) {
+          let username = msg.user_id;
+          let avatar = 'default-avatar.png';
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', msg.user_id)
+            .single();
+          if (profile) {
+            if (profile.full_name) username = profile.full_name;
+            if (profile.avatar_url) avatar = profile.avatar_url;
+          }
+          chatMessages.innerHTML += `
+            <div style="margin-bottom:1em;">
+              <img src="${avatar}" width="24" height="24" style="vertical-align:middle;border-radius:50%;">
+              <strong>${username}:</strong>
+              <span>${msg.message}</span>
+              <small style="color:#888;">${new Date(msg.created_at).toLocaleTimeString()}</small>
+            </div>
+          `;
+        }
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
     loadMessages();
   </script>
