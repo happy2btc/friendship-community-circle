@@ -82,7 +82,7 @@
               <span id="full-${story.id}" style="display:none;">${story.story}</span>
             </div>
             <div style="color:#888;font-size:0.9em;">${new Date(story.created_at).toLocaleString()}</div>
-            ${isOwner ? `<button onclick="editStory('${story.id}', '${story.headline.replace(/'/g, "\\'")}', '${story.story.replace(/'/g, "\\'")}')">Edit</button>` : ''}
+            ${isOwner ? `<button class="edit-btn" data-id="${story.id}" data-headline="${story.headline.replace(/"/g, '&quot;')}" data-story="${story.story.replace(/"/g, '&quot;')}">Edit</button>` : ''}
             <div id="edit-form-${story.id}" style="display:none;margin-top:1em;"></div>
           </div>
         `;
@@ -96,9 +96,8 @@
         <form onsubmit="return false;">
           <input type="text" id="edit-headline-${id}" value="${headline}" style="width:100%;margin-bottom:0.5em;">
           <textarea id="edit-story-${id}" rows="4" style="width:100%;">${story}</textarea>
-          <button onclick="saveEdit('${id}')">Save</button>
-          <button onclick="cancelEdit('${id}')">Cancel</button>
-          <span id="edit-status-${id}"></span>
+          <button type="button" class="save-edit-btn" data-id="${id}">Save</button>
+          <button type="button" class="cancel-edit-btn" data-id="${id}">Cancel</button>
         </form>
       `;
       formDiv.style.display = 'block';
@@ -111,10 +110,8 @@
     window.saveEdit = async function(id) {
       const headline = document.getElementById(`edit-headline-${id}`).value.trim();
       const story = document.getElementById(`edit-story-${id}`).value.trim();
-      const status = document.getElementById(`edit-status-${id}`);
-      status.textContent = '';
       if (!headline || !story) {
-        status.textContent = 'Please fill out both fields.';
+        alert('Please fill out both fields.');
         return;
       }
       const { error } = await supabase
@@ -122,13 +119,30 @@
         .update({ headline, story })
         .eq('id', id);
       if (error) {
-        status.textContent = 'Error: ' + error.message;
+        alert('Error: ' + error.message);
         return;
       }
-      status.textContent = 'Story updated!';
       document.getElementById(`edit-form-${id}`).style.display = 'none';
       loadStories();
     };
+    // Event delegation for edit, save, and cancel buttons
+    document.getElementById('stories').addEventListener('click', function(e) {
+      if (e.target.classList.contains('edit-btn')) {
+        const id = e.target.getAttribute('data-id');
+        const headline = e.target.getAttribute('data-headline');
+        const story = e.target.getAttribute('data-story');
+        window.editStory(id, headline, story);
+      }
+      if (e.target.classList.contains('save-edit-btn')) {
+        const id = e.target.getAttribute('data-id');
+        window.saveEdit(id);
+      }
+      if (e.target.classList.contains('cancel-edit-btn')) {
+        const id = e.target.getAttribute('data-id');
+        window.cancelEdit(id);
+      }
+    });
   </script>
+</script>
 </body>
 </html>
