@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Members</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .container { background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px #eee; max-width: 700px; margin: auto; }
+    h1 { color: #2e8b57; }
+    .member-card { background: #f4f4f4; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; box-shadow: 0 2px 6px #eee; }
+    .profile-img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin-right: 1rem; vertical-align: middle; }
+    .circles-list { margin-top: 0.5em; color: #555; }
+    .date-joined { color: #888; font-size: 0.95em; }
+  </style>
+  <script type="module" src="/lib/supabase.js"></script>
+</head>
+<body>
+  <div class="container">
+    <a href="menu.html" class="back-main-btn" style="display:inline-block;margin-bottom:1.5rem;padding:12px 24px;background:#2e8b57;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.1em;box-shadow:0 2px 6px #eee;transition:background 0.2s;">← Back to Menu</a>
+    <h1>Newest Members (Joined Since 9/19/2025)</h1>
+    <div id="members-list"></div>
+  </div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function loadNewMembers() {
+      // Only show members who joined on or after 9/19/2025
+      const cutoffDate = new Date('2025-09-19T00:00:00Z');
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, affirmation_text')
+        .order('affirmation_text', { ascending: false });
+
+      if (error) {
+        document.getElementById('members-list').textContent = 'Error loading members.';
+        return;
+      }
+
+      // Filter for affirmation_text >= cutoffDate and sort descending
+      const recentProfiles = (profiles || [])
+        .filter(p => p.affirmation_text && new Date(p.affirmation_text) >= cutoffDate)
+        .sort((a, b) => new Date(b.affirmation_text) - new Date(a.affirmation_text))
+        .slice(0, 5); // Only show the 5 most recent
+
+      for (const profile of recentProfiles) {
+        // Get circles this member has joined
+        const { data: circles } = await supabase
+          .from('circle_members')
+          .select('circle_id')
+          .eq('user_id', profile.id);
+
+        // Optionally fetch circle names if you have a circles table
+        let circleNames = [];
+        if (circles && circles.length > 0) {
+          const circleIds = circles.map(c => c.circle_id);
+          const { data: circleData } = await supabase
+            .from('circles')
+            .select('id, name')
+            .in('id', circleIds);
+          circleNames = circleData ? circleData.map(c => c.name) : [];
+        }
+
+        const memberDiv = document.createElement('div');
+        memberDiv.className = 'member-card';
+        memberDiv.innerHTML = `
+          <img src="${profile.avatar_url || 'default-avatar.png'}" class="profile-img" alt="Profile">
+          <strong>${profile.full_name || 'Unnamed Member'}</strong>
+          <div class="date-joined">Joined: ${profile.affirmation_text ? new Date(profile.affirmation_text).toLocaleDateString() : '—'}</div>
+          <div class="circles-list">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
+        `;
+        document.getElementById('members-list').appendChild(memberDiv);
+      }
+    }
+
+    loadNewMembers();
+  </script>
+</body>
+</html> 

@@ -85,10 +85,16 @@
 <body>
     <h1>🌸 Welcome to the Community</h1>
 
-    <div id="featured-member">
-      <h2>🌟 Most Active Member</h2>
-      <div id="member-profile"></div>
-    </div>
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
+            <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
+                <h2>🌟 Most Active Member</h2>
+                <div id="most-active-member"></div>
+            </div>
+            <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
+                <h2>🆕 Newest Member</h2>
+                <div id="newest-member"></div>
+            </div>
+        </div>
 
     <div class="menu-container">
     <a href="profile.html" class="menu-button">👤 My Profile</a>
@@ -107,224 +113,255 @@
     <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
     <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
     <a href="circle-list.html" class="menu-button">🌐 Manage Circles</a>
+    <a href="new-members.html" class="menu-button">🆕 New Members</a>
     <button id="logout-button" class="logout-button">Log Out</button>
     </div>
 
     <script type="module">
-        import { supabase } from '/lib/supabase.js';
+import { supabase } from '/lib/supabase.js';
 
-        async function showFeaturedMemberDirect() {
-            // Fetch all activities
-            const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes] = await Promise.all([
-                supabase.from('agreement_votes').select('voter_id, created_at'),
-                supabase.from('suggestions').select('author_id, created_at'),
-                supabase.from('comments').select('author_id, created_at'),
-                supabase.from('member_offerings').select('user_id, want, give, passion'),
-                supabase.from('contributions').select('user_id, project, challenge, help, collab, skills, urgency, contact'),
-                supabase.from('profiles').select('id, full_name, avatar_url, personal_story, bio, youtube, twitter, substack, facebook, instagram, linkedin, website'),
-                supabase.from('circles').select('user_id'),
-                supabase.from('circle_members').select('added_by'),
-                supabase.from('celebrations').select('user_id')
-            ]);
-            const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
-            const breakdown = {};
-            function initBreakdown(id) {
-                if (!breakdown[id]) {
-                    breakdown[id] = {
-                        votes: 0,
-                        suggestions: 0,
-                        comments: 0,
-                        wants: 0,
-                        offers: 0,
-                        passion: 0,
-                        projects: 0,
-                        profile: 0,
-                        circles_created: 0,
-                        members_added: 0,
-                        celebrations_posted: 0
-                    };
-                }
-            }
-            // Votes
-            votesRes.data?.forEach(v => {
-                if (v.voter_id !== builderId) {
-                    initBreakdown(v.voter_id);
-                    breakdown[v.voter_id].votes += 1;
-                }
-            });
-            // Suggestions
-            suggestionsRes.data?.forEach(s => {
-                if (s.author_id !== builderId) {
-                    initBreakdown(s.author_id);
-                    breakdown[s.author_id].suggestions += 1;
-                }
-            });
-            // Comments
-            commentsRes.data?.forEach(c => {
-                if (c.author_id !== builderId) {
-                    initBreakdown(c.author_id);
-                    breakdown[c.author_id].comments += 1;
-                }
-            });
-            // Wants, Offers, Passion
-            offeringsRes.data?.forEach(o => {
-                if (o.user_id !== builderId) {
-                    initBreakdown(o.user_id);
-                    if (o.want && o.want.trim() !== "") breakdown[o.user_id].wants += 1;
-                    if (o.give && o.give.trim() !== "") breakdown[o.user_id].offers += 1;
-                    if (o.passion && o.passion.trim() !== "") breakdown[o.user_id].passion += 1;
-                }
-            });
-            // Projects & Struggles
-            const contribByUser = {};
-            contributionsRes.data?.forEach(con => {
-                if (con.user_id !== builderId) {
-                    if (!contribByUser[con.user_id]) contribByUser[con.user_id] = [];
-                    contribByUser[con.user_id].push(con);
-                }
-            });
-            Object.entries(contribByUser).forEach(([userId, contribs]) => {
-                initBreakdown(userId);
-                let fieldsFilled = 0;
-                contribs.forEach(con => {
-                    ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
-                        if (con[field] && con[field].trim() !== '') {
-                            fieldsFilled += 1;
-                        }
-                    });
-                });
-                breakdown[userId].projects += fieldsFilled;
-            });
-            // Profile completion
-            profilesFullRes.data?.forEach(p => {
-                if (p.id !== builderId) {
-                    let filled = 0;
-                    if (p.full_name && p.full_name.trim() !== "") filled++;
-                    if (p.bio && p.bio.trim() !== "") filled++;
-                    if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
-                    if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
-                    if (filled >= 2) {
-                        initBreakdown(p.id);
-                        breakdown[p.id].profile = 1;
-                    }
-                }
-            });
-            // Debug: log raw data for circles and celebrations
-            console.log('Circles:', circlesRes.data);
-            console.log('Celebrations:', celebrationsRes.data);
-            // Circles created
-            if (Array.isArray(circlesRes.data)) {
-                circlesRes.data.forEach(c => {
-                    const userId = c && c.user_id;
-                    if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
-                        initBreakdown(userId);
-                        breakdown[userId].circles_created += 1;
-                    }
-                });
-            } else if (circlesRes.data && typeof circlesRes.data === 'object' && circlesRes.data.user_id) {
-                // If circlesRes.data is a single object
-                const userId = circlesRes.data.user_id;
-                if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
-                    initBreakdown(userId);
-                    breakdown[userId].circles_created += 1;
-                }
-            }
-            // Members added
-            if (Array.isArray(membersRes.data)) {
-                membersRes.data.forEach(m => {
-                    const userId = m.added_by || m.user_id;
-                    if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
-                        initBreakdown(userId);
-                        breakdown[userId].members_added += 1;
-                    }
-                });
-            }
-            // Celebration wall posts
-            if (Array.isArray(celebrationsRes.data)) {
-                celebrationsRes.data.forEach(c => {
-                    const userId = c.user_id || c.creator_id;
-                    if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
-                        initBreakdown(userId);
-                        breakdown[userId].celebrations_posted += 1;
-                    }
-                });
-            }
-
-            // Get profiles for display
-            const idToProfile = {};
-            if (Array.isArray(profilesFullRes.data)) {
-                profilesFullRes.data.forEach(p => {
-                    if (p && typeof p.id === 'string' && p.id.trim() !== '') {
-                        idToProfile[p.id] = p;
-                    }
-                });
-            }
-            // Build member activity list
-            const userIds = Object.keys(breakdown).filter(id => id && id !== 'null');
-            if (userIds.length === 0) {
-                document.getElementById('member-profile').innerHTML = "<em>No other member has been active.</em>";
-                return;
-            }
-            // Calculate total for each user (same as before, but not aggregate)
-            const members = userIds.map(id => {
-                const b = breakdown[id];
-                const profile = idToProfile[id] || { full_name: id, avatar_url: '', personal_story: '' };
-                const total =
-                    (b.votes || 0) * 1 +
-                    (b.suggestions || 0) * 1 +
-                    (b.comments || 0) * 1 +
-                    (b.wants || 0) * 1 +
-                    (b.offers || 0) * 1 +
-                    (b.passion || 0) * 1 +
-                    (b.projects || 0) * 1 +
-                    (b.profile || 0) * 5 +
-                    (b.circles_created || 0) * 10 +
-                    (b.members_added || 0) * 2 +
-                    (b.celebrations_posted || 0) * 5;
-                return {
-                    id,
-                    profile,
-                    total,
-                    breakdown: b
-                };
-            });
-            members.sort((a, b) => b.total - a.total);
-            const m = members[0];
-            const container = document.getElementById('member-profile');
-            container.innerHTML = `
-                <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture">
-                <h3>${m.profile.full_name}</h3>
-                <div class="activity-breakdown">
-                    <strong>All-Time Activities:</strong><br>
-                    Votes: ${m.breakdown.votes || 0}<br>
-                    Suggestions: ${m.breakdown.suggestions || 0}<br>
-                    Comments: ${m.breakdown.comments || 0}<br>
-                    Wants: ${m.breakdown.wants || 0}<br>
-                    Offers: ${m.breakdown.offers || 0}<br>
-                    Passion: ${m.breakdown.passion || 0}<br>
-                    Projects & Struggles: ${m.breakdown.projects || 0}<br>
-                    Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
-                    Circles Created: ${m.breakdown.circles_created || 0}<br>
-                    Members Added: ${m.breakdown.members_added || 0}<br>
-                    Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
-                    <strong>Total:</strong> ${m.total}
-                </div>
-                <div class="personal-story">${m.profile.personal_story || ''}</div>
-            `;
+// Most Active Member
+async function showMostActiveMember() {
+    // Fetch all activities
+    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes] = await Promise.all([
+        supabase.from('agreement_votes').select('voter_id, created_at'),
+        supabase.from('suggestions').select('author_id, created_at'),
+        supabase.from('comments').select('author_id, created_at'),
+        supabase.from('member_offerings').select('user_id, want, give, passion'),
+        supabase.from('contributions').select('user_id, project, challenge, help, collab, skills, urgency, contact'),
+        supabase.from('profiles').select('id, full_name, avatar_url, personal_story, bio, youtube, twitter, substack, facebook, instagram, linkedin, website'),
+        supabase.from('circles').select('user_id'),
+        supabase.from('circle_members').select('added_by'),
+        supabase.from('celebrations').select('user_id')
+    ]);
+    const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
+    const breakdown = {};
+    function initBreakdown(id) {
+        if (!breakdown[id]) {
+            breakdown[id] = {
+                votes: 0,
+                suggestions: 0,
+                comments: 0,
+                wants: 0,
+                offers: 0,
+                passion: 0,
+                projects: 0,
+                profile: 0,
+                circles_created: 0,
+                members_added: 0,
+                celebrations_posted: 0
+            };
         }
-
-        const logoutButton = document.getElementById('logout-button');
-        logoutButton.addEventListener('click', async () => {
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                console.error('Error logging out:', error);
-            } else {
-                window.location.href = window.location.origin + '/index.html';
+    }
+    // Votes
+    votesRes.data?.forEach(v => {
+        if (v.voter_id !== builderId) {
+            initBreakdown(v.voter_id);
+            breakdown[v.voter_id].votes += 1;
+        }
+    });
+    // Suggestions
+    suggestionsRes.data?.forEach(s => {
+        if (s.author_id !== builderId) {
+            initBreakdown(s.author_id);
+            breakdown[s.author_id].suggestions += 1;
+        }
+    });
+    // Comments
+    commentsRes.data?.forEach(c => {
+        if (c.author_id !== builderId) {
+            initBreakdown(c.author_id);
+            breakdown[c.author_id].comments += 1;
+        }
+    });
+    // Wants, Offers, Passion
+    offeringsRes.data?.forEach(o => {
+        if (o.user_id !== builderId) {
+            initBreakdown(o.user_id);
+            if (o.want && o.want.trim() !== "") breakdown[o.user_id].wants += 1;
+            if (o.give && o.give.trim() !== "") breakdown[o.user_id].offers += 1;
+            if (o.passion && o.passion.trim() !== "") breakdown[o.user_id].passion += 1;
+        }
+    });
+    // Projects & Struggles
+    const contribByUser = {};
+    contributionsRes.data?.forEach(con => {
+        if (con.user_id !== builderId) {
+            if (!contribByUser[con.user_id]) contribByUser[con.user_id] = [];
+            contribByUser[con.user_id].push(con);
+        }
+    });
+    Object.entries(contribByUser).forEach(([userId, contribs]) => {
+        initBreakdown(userId);
+        let fieldsFilled = 0;
+        contribs.forEach(con => {
+            ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
+                if (con[field] && con[field].trim() !== '') {
+                    fieldsFilled += 1;
+                }
+            });
+        });
+        breakdown[userId].projects += fieldsFilled;
+    });
+    // Profile completion
+    profilesFullRes.data?.forEach(p => {
+        if (p.id !== builderId) {
+            let filled = 0;
+            if (p.full_name && p.full_name.trim() !== "") filled++;
+            if (p.bio && p.bio.trim() !== "") filled++;
+            if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
+            if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
+            if (filled >= 2) {
+                initBreakdown(p.id);
+                breakdown[p.id].profile = 1;
+            }
+        }
+    });
+    // Circles created
+    if (Array.isArray(circlesRes.data)) {
+        circlesRes.data.forEach(c => {
+            const userId = c && c.user_id;
+            if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+                initBreakdown(userId);
+                breakdown[userId].circles_created += 1;
             }
         });
+    } else if (circlesRes.data && typeof circlesRes.data === 'object' && circlesRes.data.user_id) {
+        const userId = circlesRes.data.user_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+            initBreakdown(userId);
+            breakdown[userId].circles_created += 1;
+        }
+    }
+    // Members added
+    membersRes.data?.forEach(m => {
+        const userId = m.added_by || m.user_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+            initBreakdown(userId);
+            breakdown[userId].members_added += 1;
+        }
+    });
+    // Celebration wall posts
+    celebrationsRes.data?.forEach(c => {
+        const userId = c.user_id || c.creator_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+            initBreakdown(userId);
+            breakdown[userId].celebrations_posted += 1;
+        }
+    });
+    // Get profiles for display
+    const idToProfile = {};
+    if (Array.isArray(profilesFullRes.data)) {
+        profilesFullRes.data.forEach(p => {
+            if (p && typeof p.id === 'string' && p.id.trim() !== '') {
+                idToProfile[p.id] = p;
+            }
+        });
+    }
+    // Build member activity list
+    const userIds = Object.keys(breakdown).filter(id => id && id !== 'null');
+    if (userIds.length === 0) {
+        document.getElementById('most-active-member').innerHTML = "<em>No other member has been active.</em>";
+        return;
+    }
+    // Calculate total for each user
+    const members = userIds.map(id => {
+        const b = breakdown[id];
+        const profile = idToProfile[id] || { full_name: id, avatar_url: '', personal_story: '' };
+        const total =
+            (b.votes || 0) * 1 +
+            (b.suggestions || 0) * 1 +
+            (b.comments || 0) * 1 +
+            (b.wants || 0) * 1 +
+            (b.offers || 0) * 1 +
+            (b.passion || 0) * 1 +
+            (b.projects || 0) * 1 +
+            (b.profile || 0) * 5 +
+            (b.circles_created || 0) * 10 +
+            (b.members_added || 0) * 2 +
+            (b.celebrations_posted || 0) * 5;
+        return {
+            id,
+            profile,
+            total,
+            breakdown: b
+        };
+    });
+    members.sort((a, b) => b.total - a.total);
+    const m = members[0];
+    const container = document.getElementById('most-active-member');
+    container.innerHTML = `
+        <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
+        <h3>${m.profile.full_name}</h3>
+        <div class="activity-breakdown">
+            <strong>All-Time Activities:</strong><br>
+            Votes: ${m.breakdown.votes || 0}<br>
+            Suggestions: ${m.breakdown.suggestions || 0}<br>
+            Comments: ${m.breakdown.comments || 0}<br>
+            Wants: ${m.breakdown.wants || 0}<br>
+            Offers: ${m.breakdown.offers || 0}<br>
+            Passion: ${m.breakdown.passion || 0}<br>
+            Projects & Struggles: ${m.breakdown.projects || 0}<br>
+            Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
+            Circles Created: ${m.breakdown.circles_created || 0}<br>
+            Members Added: ${m.breakdown.members_added || 0}<br>
+            Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
+            <strong>Total:</strong> ${m.total}
+        </div>
+        <div class="personal-story">${m.profile.personal_story || ''}</div>
+    `;
+}
 
-        // Initial loads
-        await showFeaturedMemberDirect();
-    </script>
+// Newest Member
+async function showNewestMember() {
+    const cutoffDate = new Date('2025-09-19T00:00:00Z');
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, affirmation_text')
+        .order('affirmation_text', { ascending: false });
+    const recentProfiles = (profiles || [])
+        .filter(p => p.affirmation_text && new Date(p.affirmation_text) >= cutoffDate)
+        .sort((a, b) => new Date(b.affirmation_text) - new Date(a.affirmation_text));
+    const newest = recentProfiles[0];
+    if (!newest) {
+        document.getElementById('newest-member').innerHTML = "<em>No new member since 9/19/2025.</em>";
+        return;
+    }
+    // Get circles for newest member
+    const { data: circles } = await supabase
+        .from('circle_members')
+        .select('circle_id')
+        .eq('user_id', newest.id);
+    let circleNames = [];
+    if (circles && circles.length > 0) {
+        const circleIds = circles.map(c => c.circle_id);
+        const { data: circleData } = await supabase
+            .from('circles')
+            .select('id, name')
+            .in('id', circleIds);
+        circleNames = circleData ? circleData.map(c => c.name) : [];
+    }
+    document.getElementById('newest-member').innerHTML = `
+        <img src="${newest.avatar_url || 'default-avatar.png'}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
+        <strong>${newest.full_name || 'Unnamed Member'}</strong>
+        <div style="color:#888;">Joined: ${newest.affirmation_text ? new Date(newest.affirmation_text).toLocaleDateString() : '—'}</div>
+        <div style="color:#555;">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
+    `;
+}
+
+const logoutButton = document.getElementById('logout-button');
+logoutButton.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        console.error('Error logging out:', error);
+    } else {
+        window.location.href = window.location.origin + '/index.html';
+    }
+});
+
+// Initial loads
+showMostActiveMember();
+showNewestMember();
+</script>
 </body>
 </html>
