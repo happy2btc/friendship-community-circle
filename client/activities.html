@@ -101,6 +101,10 @@
                 .from('celebrations')
                 .select('user_id');
 
+                // Get group projects for proposal points
+                const { data: groupProjects } = await supabase
+                    .from('group_projects')
+                    .select('proposer_id');
             // Tally activity per user
             const activity = {};
             const breakdown = {};
@@ -128,6 +132,19 @@
                     breakdown[c.author_id].comments += 1;
                 }
             });
+
+                // Count projects proposed (5 points each)
+                const proposalsByUser = {};
+                groupProjects?.forEach(gp => {
+                    if (gp.proposer_id && gp.proposer_id !== builderId) {
+                        proposalsByUser[gp.proposer_id] = (proposalsByUser[gp.proposer_id] || 0) + 1;
+                    }
+                });
+                Object.entries(proposalsByUser).forEach(([userId, count]) => {
+                    breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[userId].projects_proposed = count;
+                    activity[userId] = (activity[userId] || 0) + (count * 5);
+                });
 
             // Count wants, offers, passion
             offerings?.forEach(o => {
@@ -260,6 +277,7 @@
                             Circles Created: ${m.breakdown.circles_created || 0}<br>
                             Members Added: ${m.breakdown.members_added || 0}<br>
                             Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
+                           Projects Proposed: ${m.breakdown.projects_proposed || 0}<br>
                             <strong>Total:</strong> ${m.total}
                         </div>
                         <div class="personal-story">${m.profile.personal_story || ''}</div>
