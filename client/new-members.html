@@ -24,53 +24,81 @@
     import { supabase } from '/lib/supabase.js';
 
     async function loadNewMembers() {
+  // Only log after profiles is initialized
       // Only show members who joined on or after 9/19/2025
       const cutoffDate = new Date('2025-09-19T00:00:00Z');
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, affirmation_text')
-        .order('affirmation_text', { ascending: false });
+        .select('id, full_name, avatar_url, affirmation_text, affirmation_date')
+        .order('affirmation_date', { ascending: false });
 
       if (error) {
         document.getElementById('members-list').textContent = 'Error loading members.';
         return;
       }
 
-      // Filter for affirmation_text >= cutoffDate and sort descending
-      const recentProfiles = (profiles || [])
-        .filter(p => p.affirmation_text && new Date(p.affirmation_text) >= cutoffDate)
-        .sort((a, b) => new Date(b.affirmation_text) - new Date(a.affirmation_text))
-        .slice(0, 5); // Only show the 5 most recent
+      // Log all affirmation_date values for debugging
+      console.log('[Debug] Raw profiles:', profiles);
 
-      for (const profile of recentProfiles) {
-        // Get circles this member has joined
-        const { data: circles } = await supabase
-          .from('circle_members')
-          .select('circle_id')
-          .eq('user_id', profile.id);
+      // Filter for affirmation_date >= cutoffDate and sort descending
+      console.log('[Debug] Cutoff date:', cutoffDate.toISOString());
+      (profiles || []).forEach(p => {
+        console.log(`[Debug] Profile ${p.id}: affirmation_date =`, p.affirmation_date);
+      });
+      let recentProfiles = (profiles || [])
+        .filter(p => p.affirmation_date && new Date(p.affirmation_date) >= cutoffDate)
+        .sort((a, b) => new Date(b.affirmation_date) - new Date(a.affirmation_date))
+        .slice(0, 3); // Only show the 3 most recent
 
-        // Optionally fetch circle names if you have a circles table
-        let circleNames = [];
-        if (circles && circles.length > 0) {
-          const circleIds = circles.map(c => c.circle_id);
-          const { data: circleData } = await supabase
-            .from('circles')
-            .select('id, name')
-            .in('id', circleIds);
-          circleNames = circleData ? circleData.map(c => c.name) : [];
+      // Clear the members-list before rendering
+      const membersListDiv = document.getElementById('members-list');
+      membersListDiv.innerHTML = '';
+
+      for (let i = 0; i < 3; i++) {
+        const profile = recentProfiles[i];
+        if (profile) {
+          // Get circles this member has joined
+          const { data: circles } = await supabase
+            .from('circle_members')
+            .select('circle_id')
+            .eq('user_id', profile.id);
+
+          // Optionally fetch circle names if you have a circles table
+          let circleNames = [];
+          if (circles && circles.length > 0) {
+            const circleIds = circles.map(c => c.circle_id);
+            const { data: circleData } = await supabase
+              .from('circles')
+              .select('id, name')
+              .in('id', circleIds);
+            circleNames = circleData ? circleData.map(c => c.name) : [];
+          }
+
+          const memberDiv = document.createElement('div');
+          memberDiv.className = 'member-card';
+          memberDiv.innerHTML = `
+            <img src="${profile.avatar_url || 'default-avatar.png'}" class="profile-img" alt="Profile">
+            <strong>${profile.full_name || 'Unnamed Member'}</strong>
+            <div class="date-joined">Joined: ${profile.affirmation_date ? new Date(profile.affirmation_date).toLocaleDateString() : '—'}</div>
+            <div class="circles-list">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
+            <div class="affirmation-text">${profile.affirmation_text ? profile.affirmation_text : ''}</div>
+          `;
+          membersListDiv.appendChild(memberDiv);
+        } else {
+          // Placeholder card for empty slot
+          const placeholderDiv = document.createElement('div');
+          placeholderDiv.className = 'member-card';
+          placeholderDiv.innerHTML = `
+            <img src="default-avatar.png" class="profile-img" alt="Profile">
+            <strong>No member</strong>
+            <div class="date-joined">—</div>
+            <div class="circles-list">Circles: —</div>
+          `;
+          membersListDiv.appendChild(placeholderDiv);
         }
-
-        const memberDiv = document.createElement('div');
-        memberDiv.className = 'member-card';
-        memberDiv.innerHTML = `
-          <img src="${profile.avatar_url || 'default-avatar.png'}" class="profile-img" alt="Profile">
-          <strong>${profile.full_name || 'Unnamed Member'}</strong>
-          <div class="date-joined">Joined: ${profile.affirmation_text ? new Date(profile.affirmation_text).toLocaleDateString() : '—'}</div>
-          <div class="circles-list">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
-        `;
-        document.getElementById('members-list').appendChild(memberDiv);
       }
-    }
+      }
+  // ...existing code...
 
     loadNewMembers();
   </script>

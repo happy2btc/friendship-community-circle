@@ -90,6 +90,8 @@
 </head>
 <body>
   <h1>Circle of Discussion</h1>
+  <label for="circle-filter" style="font-weight:bold;">Filter by Circle:</label>
+  <select id="circle-filter" style="margin-bottom:1em;"></select>
   <div id="discussion-container"></div>
   <div id="error-message" class="error-message" style="display:none;"></div>
   <div class="floating-controls">
@@ -98,6 +100,12 @@
     <a href="menu.html" class="menu-button">Return to Menu</a>
   </div>
   <script type="module">
+    // Read circle_id from URL if present
+    function getCircleIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('circle_id') || '';
+    }
+  let selectedCircleId = getCircleIdFromUrl();
     import { supabase } from '/lib/supabase.js';
 
     const discussionContainer = document.getElementById('discussion-container');
@@ -112,13 +120,48 @@
       }, 6000);
     }
 
+    // --- Circle filter logic ---
+    let circles = [];
+
+    async function loadCircleFilter() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Get all circles
+      const { data: circlesData } = await supabase
+        .from('circles')
+        .select('id, name');
+      circles = circlesData || [];
+      let optionsHtml = '<option value="">Everyone (Public)</option>';
+      circles.forEach(circle => {
+        optionsHtml += `<option value="${circle.id}">${circle.name}</option>`;
+      });
+      const filter = document.getElementById('circle-filter');
+      filter.innerHTML = optionsHtml;
+      // Pre-select circle if circle_id is in URL
+      if (selectedCircleId) {
+        filter.value = selectedCircleId;
+      }
+      filter.addEventListener('change', () => {
+        selectedCircleId = filter.value;
+        loadDiscussions();
+      });
+    }
+
     async function loadDiscussions() {
       const { data: { user } } = await supabase.auth.getUser();
       currentUser = user;
 
-      // Fetch discussions (all, including status)
-      const { data: discussions, error: discussionsError } = await supabase
-        .rpc('get_all_open_discussions_with_authors');
+      // Fetch only open and voting discussions
+      let query = supabase.from('suggestions').select('*');
+      if (selectedCircleId) {
+        query = query.eq('circle_id', selectedCircleId)
+                     .eq('status', 'open');
+      } else {
+        // Show all 'Everyone' discussions (circle_id IS NULL)
+        query = query.is('circle_id', null)
+                     .eq('status', 'open');
+      }
+      const { data: discussions, error: discussionsError } = await query;
       if (discussionsError) {
         showError(`Error loading discussions: ${discussionsError.message}`);
         discussionContainer.innerHTML = `<p>Error loading discussions: ${discussionsError.message}</p>`;
@@ -213,6 +256,12 @@
         summaryMeta.className = 'summary-meta';
         summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments)`;
         summary.appendChild(summaryMeta);
+        // Add link to reply-enabled page
+        const replyLink = document.createElement('a');
+        replyLink.href = `circle-discussion.html?discussion_id=${suggestionId}`;
+        replyLink.textContent = 'View & Reply';
+        replyLink.style.marginLeft = '1em';
+        summary.appendChild(replyLink);
         const contentDiv = document.createElement('div');
         contentDiv.className = 'discussion-content';
         contentDiv.dataset.suggestionId = suggestionId;
@@ -297,6 +346,10 @@
         renderComments(commentsForThisDiscussion, threadDiv, null, profiles, currentUser);
       }
     }
+  // Load filter and discussions on page load
+  loadCircleFilter();
+  selectedCircleId = '';
+  loadDiscussions();
 
     function renderComments(commentList, parentElement, parentId = null, profiles = {}, currentUser = null) {
       const commentsToRender = commentList.filter(c => c.parent_id === parentId);

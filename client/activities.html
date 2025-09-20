@@ -91,7 +91,7 @@
             // Get new activities
             const { data: circles } = await supabase
                 .from('circles')
-                .select('user_id');
+                .select('created_by');
 
             const { data: membersData } = await supabase
                 .from('circle_members')
@@ -181,10 +181,10 @@
 
             // New: Count circles created (10 points each)
             circles?.forEach(c => {
-                if (c.user_id && c.user_id !== builderId) {
-                    activity[c.user_id] = (activity[c.user_id] || 0) + 10;
-                    breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
-                    breakdown[c.user_id].circles_created = (breakdown[c.user_id].circles_created || 0) + 1;
+                if (c.created_by && c.created_by !== builderId) {
+                    activity[c.created_by] = (activity[c.created_by] || 0) + 10;
+                    breakdown[c.created_by] = breakdown[c.created_by] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[c.created_by].circles_created = (breakdown[c.created_by].circles_created || 0) + 1;
                 }
             });
 

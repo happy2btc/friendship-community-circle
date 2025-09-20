@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Agreements for Voting</title>
+  <script type="module" src="/lib/supabase.js"></script>
   <style>
     body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; padding: 2rem; }
     h1 { text-align: center; color: #6b4f1d; }
@@ -35,232 +36,277 @@
 </head>
 <body>
   <h1>🗳️ Agreements for Voting</h1>
+  <div style="max-width:800px;margin:auto;">
+    <label for="circle-select"><strong>Circle:</strong></label>
+    <select id="circle-select" style="margin:0 1em 1em 1em;padding:0.5em 1em;font-size:1em;width:220px;max-width:100%;"></select>
+  </div>
   <div id="agreements-container" class="agreements-container">
     <p>Loading agreements for voting...</p>
   </div>
   <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
 
   <script type="module">
-  import { supabase } from '/lib/supabase.js';
+import { supabase } from '/lib/supabase.js';
 
-  const container = document.getElementById('agreements-container');
-  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-  // Get active circle_id from localStorage
-  const activeCircleId = localStorage.getItem('active_circle_id');
+console.log('agreements.html script loaded');
 
-     
-async function getMemberCount() {
-      const { count, error } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true });
-      return count || 1;
-    }
-    // Count votes for an agreement from agreement_votes table
-    async function getVoteCount(agreementId) {
-      const { count, error } = await supabase
-        .from('agreement_votes')
-        .select('id', { count: 'exact', head: true })
-        .eq('agreement_id', agreementId);
-      return count || 0;
-    }
+const container = document.getElementById('agreements-container');
+const circleSelect = document.getElementById('circle-select');
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+let selectedCircleId = null;
 
-    // Get the current user's vote for an agreement
-    async function getUserVote(agreementId, voterId) {
-      const { data, error } = await supabase
-        .from('agreement_votes')
-        .select('vote_value')
-        .eq('agreement_id', agreementId)
-        .eq('voter_id', voterId)
-        .single();
-      return data ? data.vote_value : null;
-    }
+// ...existing code...
+// Move function definition above usage
+async function populateCircleDropdown() {
+  // Always clear dropdown before populating
+  circleSelect.innerHTML = '';
+  // Add 'Everyone' option
+  const everyoneOption = document.createElement('option');
+  everyoneOption.value = '';
+  everyoneOption.textContent = 'Everyone';
+  circleSelect.appendChild(everyoneOption);
 
-    // Get all voters and their votes for an agreement
-    async function getAllVoters(agreementId) {
-      const { data: votes, error } = await supabase
-        .from('agreement_votes')
-        .select('voter_id, vote_value')
-        .eq('agreement_id', agreementId);
+  // Get all circles from the circles table
+  const { data: circles, error: circlesError } = await supabase
+    .from('circles')
+    .select('id, name');
+  console.log('[CircleDropdown] circles:', circles, 'error:', circlesError);
+  if (circles && circles.length > 0) {
+    circles.forEach(circle => {
+      console.log('[CircleDropdown] Adding circle option:', circle);
+      const opt = document.createElement('option');
+      opt.value = circle.id;
+      opt.textContent = circle.name;
+      circleSelect.appendChild(opt);
+    });
+    console.log('[CircleDropdown] Finished adding circle options');
+  } else {
+    console.log('[CircleDropdown] No circles returned from Supabase');
+  }
+}
 
-      if (!votes || votes.length === 0) return [];
+// Populate dropdown and load agreements on page load
+populateCircleDropdown().then(() => {
+  selectedCircleId = circleSelect.value === '' ? null : circleSelect.value;
+  loadAgreements();
+});
 
-      const voterIds = votes.map(v => v.voter_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', voterIds);
+async function loadAgreements() {
+  console.log('Calling loadAgreements, selectedCircleId:', selectedCircleId);
+  // Fetch agreements for selected circle or 'Everyone' (circle_id IS NULL)
+  let query = supabase
+    .from('agreements')
+    .select('id, agreement_text, proposer_id, created_at, status, circle_id');
+  if (selectedCircleId && selectedCircleId !== '') {
+    query = query.eq('circle_id', selectedCircleId);
+  }
+  const { data: agreements, error } = await query;
 
-      const idToName = {};
-      profiles?.forEach(profile => {
-        idToName[profile.id] = profile.full_name;
-      });
+  if (error) {
+    container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
+    return;
+  }
 
-      return votes.map(v => ({
-        name: idToName[v.voter_id] || 'Unknown',
-        vote: v.vote_value,
-        voter_id: v.voter_id
-      }));
-    }
+  if (!agreements || agreements.length === 0) {
+    container.innerHTML = '<p>There are no agreements up for voting in this circle.</p>';
+    return;
+  }
 
-    async function getProposerName(proposerId) {
-      if (!proposerId) return 'A Circle Member';
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', proposerId)
-        .single();
-      return data?.full_name || 'A Circle Member';
-    }
+  // Get total member count
+  const memberCount = await getMemberCount();
+  const now = Date.now();
 
-    // Allow changing vote (upsert logic)
-    async function vote(agreementId, voteValue, voterId, card) {
-      // Upsert the vote (insert or update if exists)
-      const { error } = await supabase
-        .from('agreement_votes')
-        .upsert([
-          {
-            agreement_id: agreementId,
-            voter_id: voterId,
-            vote_value: voteValue
-          }
-        ], { onConflict: ['agreement_id', 'voter_id'] });
+  // Get current user
+  const { data: userData } = await supabase.auth.getUser();
+  const voterId = userData?.user?.id;
 
-      if (error) {
-        alert('Error submitting vote: ' + error.message);
-      } else {
-        // Update the UI to show the new vote
-        card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
-        // Optionally, show a message only if the vote was changed
-        alert('Your vote has been recorded! You can change your vote at any time.');
-        // Refresh the voters list after voting
-        getAllVoters(agreementId).then(voters => {
-          const votersDiv = card.querySelector('.voters-list');
-          if (voters.length === 0) {
-            votersDiv.textContent = 'No votes yet.';
-          } else {
-            votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
-              voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
-              '</ul>';
-          }
-        });
-      }
-    }
+  // Sort agreements by created_at descending (most recent first)
+  const sortedAgreements = (agreements || []).sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
 
-    async function loadAgreements() {
-      // Fetch agreements with status 'voting' (proposals)
-      const { data: agreements, error } = await supabase
-        .from('agreements')
-        .select('id, agreement_text, proposer_id, created_at, status')
-        .eq('status', 'voting');
+  // For each agreement, get vote count and filter
+  const filtered = [];
+  for (const agreement of sortedAgreements) {
+    const voteCount = await getVoteCount(agreement.id);
+    const percent = memberCount ? Math.round((voteCount / memberCount) * 100) : 0;
+    agreement.voteCount = voteCount;
+    agreement.votePercent = percent;
+    filtered.push(agreement);
+  }
 
-      if (error) {
-        container.innerHTML = `<p style="color: red;">Error loading agreements: ${error.message}</p>`;
-        return;
-      }
+  container.innerHTML = '';
 
-      if (!agreements || agreements.length === 0) {
-        container.innerHTML = '<p>There are no agreements up for voting in this circle.</p>';
-        return;
-      }
+  if (filtered.length === 0) {
+    container.innerHTML = '<p>No agreements meet the voting criteria for this circle.</p>';
+    return;
+  }
 
-      // Get total member count
-      const memberCount = await getMemberCount();
-      const now = Date.now();
+  for (const agreement of filtered) {
+    const card = document.createElement('div');
+    card.className = 'agreement-card';
 
-      // Get current user
-      const { data: userData } = await supabase.auth.getUser();
-      const voterId = userData?.user?.id;
+    card.innerHTML = `
+      <p><strong>${agreement.agreement_text}</strong></p>
+      <p class="proposer"></p>
+      <div class="vote-info">Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</div>
+      <div class="vote-buttons">
+        <button class="agree" data-vote="agree">Agree</button>
+        <button class="disagree" data-vote="disagree">Disagree</button>
+        <button class="abstain" data-vote="abstain">Abstain</button>
+      </div>
+      <div class="vote-status"></div>
+      <div class="voters-list"></div>
+    `;
 
-      // Sort agreements by created_at descending (most recent first)
-      const sortedAgreements = (agreements || []).sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      );
+    // Set proposer name
+    const proposerP = card.querySelector('.proposer');
+    getProposerName(agreement.proposer_id).then(name => {
+      proposerP.textContent = `Proposed by: ${name}`;
+    });
 
-      // For each agreement, get vote count and filter
-      const filtered = [];
-      for (const agreement of sortedAgreements) {
-        const createdAt = new Date(agreement.created_at).getTime();
-        const age = now - createdAt;
-        const voteCount = await getVoteCount(agreement.id);
-        const percent = voteCount / memberCount;
-
-        // Hide if older than a week and less than 50% voted
-        if (age > ONE_WEEK_MS && percent < 0.5) continue;
-
-        // Attach vote info for display
-        agreement.voteCount = voteCount;
-        agreement.votePercent = Math.round(percent * 100);
-        filtered.push(agreement);
-      }
-
-      container.innerHTML = '';
-
-      if (filtered.length === 0) {
-        container.innerHTML = '<p>No agreements meet the voting criteria for this circle.</p>';
-        return;
-      }
-
-      for (const agreement of filtered) {
-        const card = document.createElement('div');
-        card.className = 'agreement-card';
-
-        card.innerHTML = `
-          <p><strong>${agreement.agreement_text}</strong></p>
-          <p class="proposer"></p>
-          <div class="vote-info">Votes: ${agreement.voteCount} (${agreement.votePercent}% of members)</div>
-          <div class="vote-buttons">
-            <button class="agree" data-vote="agree">Agree</button>
-            <button class="disagree" data-vote="disagree">Disagree</button>
-            <button class="abstain" data-vote="abstain">Abstain</button>
-          </div>
-          <div class="vote-status"></div>
-          <div class="voters-list"></div>
-        `;
-
-        // Set proposer name
-        const proposerP = card.querySelector('.proposer');
-        getProposerName(agreement.proposer_id).then(name => {
-          proposerP.textContent = `Proposed by: ${name}`;
-        });
-
-        // Add voting button logic
-        const buttons = card.querySelectorAll('.vote-buttons button');
-        buttons.forEach(btn => {
-          btn.onclick = async () => {
-            if (!voterId) {
-              alert('You must be signed in to vote.');
-              return;
-            }
-            await vote(agreement.id, btn.getAttribute('data-vote'), voterId, card);
-          };
-        });
-
-        // Show user's vote if already voted
-        if (voterId) {
-          getUserVote(agreement.id, voterId).then(voteValue => {
-            if (voteValue) {
-              card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
-            }
-          });
+    // Add voting button logic
+    const buttons = card.querySelectorAll('.vote-buttons button');
+    buttons.forEach(btn => {
+      btn.onclick = async () => {
+        if (!voterId) {
+          alert('You must be signed in to vote.');
+          return;
         }
+        await vote(agreement.id, btn.getAttribute('data-vote'), voterId, card);
+      };
+    });
 
-        // Show all voters and their votes with debug info
-        getAllVoters(agreement.id).then(voters => {
-          const votersDiv = card.querySelector('.voters-list');
-          if (voters.length === 0) {
-            votersDiv.textContent = 'No votes yet.';
-          } else {
-            votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
-              voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
-              '</ul>';
-          }
-        });
-
-        container.appendChild(card);
-      }
+    // Show user's vote if already voted
+    if (voterId) {
+      getUserVote(agreement.id, voterId).then(voteValue => {
+        if (voteValue) {
+          card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
+        }
+      });
     }
 
-    loadAgreements();
+    // Show all voters and their votes with debug info
+    getAllVoters(agreement.id).then(voters => {
+      const votersDiv = card.querySelector('.voters-list');
+      if (voters.length === 0) {
+        votersDiv.textContent = 'No votes yet.';
+      } else {
+        votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
+          voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
+          '</ul>';
+      }
+    });
+
+    container.appendChild(card);
+  }
+}
+
+circleSelect.addEventListener('change', () => {
+  selectedCircleId = circleSelect.value === '' ? null : circleSelect.value;
+  loadAgreements();
+});
+selectedCircleId = circleSelect.value === '' ? null : circleSelect.value;
+loadAgreements();
+
+async function getMemberCount() {
+  const { count, error } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true });
+  return count || 1;
+}
+
+// Count votes for an agreement from agreement_votes table
+async function getVoteCount(agreementId) {
+  const { count, error } = await supabase
+    .from('agreement_votes')
+    .select('id', { count: 'exact', head: true })
+    .eq('agreement_id', agreementId);
+  return count || 0;
+}
+
+// Get the current user's vote for an agreement
+async function getUserVote(agreementId, voterId) {
+  const { data, error } = await supabase
+    .from('agreement_votes')
+    .select('vote_value')
+    .eq('agreement_id', agreementId)
+    .eq('voter_id', voterId)
+    .limit(1);
+  return data && data.length > 0 ? data[0].vote_value : null;
+}
+
+// Get all voters and their votes for an agreement
+async function getAllVoters(agreementId) {
+  const { data: votes, error } = await supabase
+    .from('agreement_votes')
+    .select('voter_id, vote_value')
+    .eq('agreement_id', agreementId);
+
+  if (!votes || votes.length === 0) return [];
+
+  const voterIds = votes.map(v => v.voter_id);
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', voterIds);
+
+  const idToName = {};
+  profiles?.forEach(profile => {
+    idToName[profile.id] = profile.full_name;
+  });
+
+  return votes.map(v => ({
+    name: idToName[v.voter_id] || 'Unknown',
+    vote: v.vote_value,
+    voter_id: v.voter_id
+  }));
+}
+
+async function getProposerName(proposerId) {
+  if (!proposerId) return 'A Circle Member';
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', proposerId)
+    .single();
+  return data?.full_name || 'A Circle Member';
+}
+
+// Allow changing vote (upsert logic)
+async function vote(agreementId, voteValue, voterId, card) {
+  // Upsert the vote (insert or update if exists)
+  const { error } = await supabase
+    .from('agreement_votes')
+    .upsert([
+      {
+        agreement_id: agreementId,
+        voter_id: voterId,
+        vote_value: voteValue
+      }
+    ], { onConflict: ['agreement_id', 'voter_id'] });
+
+  if (error) {
+    alert('Error submitting vote: ' + error.message);
+  } else {
+    // Update the UI to show the new vote
+    card.querySelector('.vote-status').textContent = `Your vote: ${voteValue.charAt(0).toUpperCase() + voteValue.slice(1)}`;
+    // Optionally, show a message only if the vote was changed
+    alert('Your vote has been recorded! You can change your vote at any time.');
+    // Refresh the voters list after voting
+    getAllVoters(agreementId).then(voters => {
+      const votersDiv = card.querySelector('.voters-list');
+      if (voters.length === 0) {
+        votersDiv.textContent = 'No votes yet.';
+      } else {
+        votersDiv.innerHTML = '<strong>Voters:</strong><ul style="margin:0; padding-left:1em;">' +
+          voters.map(v => `<li>${v.name}: ${v.vote.charAt(0).toUpperCase() + v.vote.slice(1)}</li>`).join('') +
+          '</ul>';
+      }
+    });
+  }
+}
+
   </script>
 </body>
 </html>

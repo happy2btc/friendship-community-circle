@@ -10,170 +10,456 @@
     .agreement-card { background: #fff; border: 1px solid #d8bfa3; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
     .member-list { margin-top: 1rem; }
     .menu-button { display: block; width: fit-content; margin: 2rem auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid #d8bfa3;
+      margin-bottom: 0;
+      background: #f3e7d3;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 -2px 8px #eee;
+    }
+    .tab-btn {
+      background: #f3e7d3;
+      border: 1px solid #d8bfa3;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 10px 28px;
+      font-size: 1.1em;
+      font-family: inherit;
+      color: #3b2f2f;
+      cursor: pointer;
+      margin-right: 2px;
+      transition: background 0.2s, color 0.2s;
+      outline: none;
+    }
+    .tab-btn.active {
+      background: #fff;
+      color: #2e8b57;
+      font-weight: bold;
+      border-bottom: 2px solid #fff;
+      z-index: 2;
+    }
+    .tab-btn:not(.active):hover {
+      background: #e6f7f2;
+      color: #2e8b57;
+    }
+    #tab-content {
+      background: #fff;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px #eee;
+      padding: 0.5em 1em;
+      min-height: 32px;
+      margin-bottom: 0.5em;
+    }
   </style>
 </head>
 <body>
   <h1 id="circle-name">Loading...</h1>
   <div id="circle-description" class="section"></div>
-  <div class="menu-container" style="display:flex;flex-direction:column;align-items:center;gap:1.2em;margin:2em 0;">
-    <a id="agreements-menu" class="menu-button">🗳️ Agreements for Voting</a>
-    <a id="activities-menu" class="menu-button">🌟 Member Activities</a>
-    <a id="chat-menu" class="menu-button">💬 Circle Chat Room</a>
-    <a id="exchange-menu" class="menu-button">🌐 Circle of Exchange</a>
-    <a href="menu.html" class="menu-button">🔙 Return to Main Menu</a>
+
+  <div class="tabs-container" style="margin:2em 0;">
+    <div class="tabs" style="display:flex;gap:1em;justify-content:center;">
+  <button class="tab-btn" data-tab="chat">Chat</button>
+  <button class="tab-btn" data-tab="discussions">Discussions</button>
+  <button class="tab-btn" data-tab="agreements">Agreements</button>
+  <button class="tab-btn" data-tab="members">Members</button>
+      <!-- Future tabs: <button class="tab-btn" data-tab="activities">Activities</button> <button class="tab-btn" data-tab="projects">Projects</button> <button class="tab-btn" data-tab="resources">Resources</button> <button class="tab-btn" data-tab="links">Links</button> -->
+    </div>
+    <div id="tab-content" style="margin-top:2em;"></div>
   </div>
-  <div id="agreements-section" class="section"></div>
-  <div id="members-section" class="section"></div>
-  <div id="chat-section" class="section">
-    <h2>Circle Chat Room</h2>
-    <div id="chat-messages" style="height:300px;overflow-y:auto;border:1px solid #ccc;padding:1em;background:#fff;margin-bottom:1em;"></div>
-    <form id="chat-form" style="display:flex;gap:1em;">
-      <input type="text" id="chat-input" placeholder="Type your message..." style="flex:1;">
-      <button type="submit">Send</button>
-    </form>
-  </div>
-  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  <a href="menu.html" class="menu-button">🔙 Return to Main Menu</a>
   <script type="module">
-    import { supabase } from '/lib/supabase.js';
-    const params = new URLSearchParams(window.location.search);
-    const circleId = params.get('id');
+import { supabase } from '/lib/supabase.js';
+const params = new URLSearchParams(window.location.search);
+const circleId = params.get('id');
 
-    // Menu button navigation
-    document.getElementById('agreements-menu').onclick = () => {
-      window.location.href = `agreements.html?circle_id=${circleId}`;
-    };
-    document.getElementById('activities-menu').onclick = () => {
-      window.location.href = `activities.html?circle_id=${circleId}`;
-    };
-    document.getElementById('chat-menu').onclick = () => {
-      document.getElementById('chat-section').scrollIntoView({ behavior: 'smooth' });
-    };
-    document.getElementById('exchange-menu').onclick = () => {
-      window.location.href = `exchange.html?circle_id=${circleId}`;
-    };
+// Access control: Only allow members to view the circle
+async function checkCircleAccess() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) {
+    document.body.innerHTML = '<h2>You must be signed in to view this circle.</h2>';
+    return false;
+  }
+  const { data: membership } = await supabase
+    .from('circle_members')
+    .select('id')
+    .eq('circle_id', circleId)
+    .eq('user_id', userId)
+    .single();
+  if (!membership) {
+    document.body.innerHTML = '<h2>Access denied: You are not a member of this circle.</h2>';
+    return false;
+  }
+  return true;
+}
 
-    async function loadCircle() {
-      // Load circle info
-      const { data: circle, error } = await supabase
-        .from('circles')
-        .select('*')
-        .eq('id', circleId)
-        .single();
-      if (!circle) {
-        document.getElementById('circle-name').textContent = "Circle not found.";
-        return;
-      }
-      document.getElementById('circle-name').textContent = circle.name;
-      document.getElementById('circle-description').textContent = circle.description || '';
+async function loadCircle() {
+  // Load circle info
+  const { data: circle, error } = await supabase
+    .from('circles')
+    .select('*')
+    .eq('id', circleId)
+    .single();
+  if (!circle) {
+    document.getElementById('circle-name').textContent = "Circle not found.";
+    return;
+  }
+  document.getElementById('circle-name').textContent = circle.name;
+  document.getElementById('circle-description').textContent = circle.description || '';
 
-      // Load agreements for this circle
-      const { data: agreements } = await supabase
-        .from('agreements')
-        .select('id, agreement_text, status, created_at')
-        .eq('circle_id', circleId)
-        .order('created_at', { ascending: false });
-      const agreementsSection = document.getElementById('agreements-section');
-      agreementsSection.innerHTML = '<h2>Agreements</h2>';
-      if (!agreements || agreements.length === 0) {
-        agreementsSection.innerHTML += '<p>No agreements yet for this circle.</p>';
-      } else {
-        agreements.forEach(agreement => {
+  // Agreements
+  const { data: agreements } = await supabase
+    .from('agreements')
+    .select('id, agreement_text, status, created_at')
+    .eq('circle_id', circleId)
+    .order('created_at', { ascending: false });
+  const agreementsSection = document.getElementById('agreements-section');
+  agreementsSection.innerHTML = '<h2>Agreements</h2>';
+  if (!agreements || agreements.length === 0) {
+    agreementsSection.innerHTML += '<p>No agreements yet for this circle.</p>';
+  } else {
+    agreements.forEach(agreement => {
+      const card = document.createElement('div');
+      card.className = 'agreement-card';
+      card.innerHTML = `
+        <strong>${agreement.agreement_text}</strong><br>
+        <span>Status: ${agreement.status}</span><br>
+        <span>Created: ${new Date(agreement.created_at).toLocaleString()}</span>
+      `;
+      agreementsSection.appendChild(card);
+    });
+  }
+
+  // Activities
+  const { data: activities } = await supabase
+    .from('activities')
+    .select('id, title, description, date, type')
+    .eq('circle_id', circleId)
+    .order('date', { ascending: false });
+  const activitiesSection = document.getElementById('activities-section');
+  activitiesSection.innerHTML = '<h2>Activities</h2>';
+  if (!activities || activities.length === 0) {
+    activitiesSection.innerHTML += '<p>No activities yet for this circle.</p>';
+  } else {
+    activities.forEach(activity => {
+      activitiesSection.innerHTML += `
+        <div class="agreement-card">
+          <strong>${activity.title}</strong><br>
+          <span>${activity.description || ''}</span><br>
+          <span>Date: ${activity.date ? new Date(activity.date).toLocaleDateString() : '—'}</span><br>
+          <span>Type: ${activity.type || 'General'}</span>
+        </div>
+      `;
+    });
+  }
+
+  // Projects
+  const { data: projects } = await supabase
+    .from('projects')
+    .select('id, title, description, status, link')
+    .eq('circle_id', circleId)
+    .order('id', { ascending: false });
+  const projectsSection = document.getElementById('projects-section');
+  projectsSection.innerHTML = '<h2>Projects</h2>';
+  if (!projects || projects.length === 0) {
+    projectsSection.innerHTML += '<p>No projects yet for this circle.</p>';
+  } else {
+    projects.forEach(project => {
+      projectsSection.innerHTML += `
+        <div class="agreement-card">
+          <strong>${project.title}</strong><br>
+          <span>${project.description || ''}</span><br>
+          <span>Status: ${project.status || '—'}</span><br>
+          ${project.link ? `<a href="${project.link}" target="_blank">Project Link</a>` : ''}
+        </div>
+      `;
+    });
+  }
+
+  // Resources
+  const { data: resources } = await supabase
+    .from('resources')
+    .select('id, title, url, description, type')
+    .eq('circle_id', circleId)
+    .order('id', { ascending: false });
+  const resourcesSection = document.getElementById('resources-section');
+  resourcesSection.innerHTML = '<h2>Resources</h2>';
+  if (!resources || resources.length === 0) {
+    resourcesSection.innerHTML += '<p>No resources yet for this circle.</p>';
+  } else {
+    resources.forEach(resource => {
+      resourcesSection.innerHTML += `
+        <div class="agreement-card">
+          <strong>${resource.title}</strong><br>
+          <span>${resource.description || ''}</span><br>
+          <span>Type: ${resource.type || 'General'}</span><br>
+          ${resource.url ? `<a href="${resource.url}" target="_blank">Resource Link</a>` : ''}
+        </div>
+      `;
+    });
+  }
+
+  // Links (if you want a separate links table, otherwise use resources)
+  if (typeof supabase.from('circle_links') !== 'undefined') {
+    const { data: links } = await supabase
+      .from('circle_links')
+      .select('id, title, url, description')
+      .eq('circle_id', circleId)
+      .order('id', { ascending: false });
+    const linksSection = document.getElementById('links-section');
+    linksSection.innerHTML = '<h2>Links</h2>';
+    if (!links || links.length === 0) {
+      linksSection.innerHTML += '<p>No links yet for this circle.</p>';
+    } else {
+      links.forEach(link => {
+        linksSection.innerHTML += `
+          <div class="agreement-card">
+            <strong>${link.title}</strong><br>
+            <span>${link.description || ''}</span><br>
+            ${link.url ? `<a href="${link.url}" target="_blank">Visit Link</a>` : ''}
+          </div>
+        `;
+      });
+    }
+  }
+
+  // Members
+  const { data: members } = await supabase
+    .from('circle_members')
+    .select('user_id')
+    .eq('circle_id', circleId);
+  const memberIds = members ? members.map(m => m.user_id) : [];
+  let memberListHtml = '<h2>Members</h2>';
+  if (memberIds.length === 0) {
+    memberListHtml += '<p>No members yet.</p>';
+  } else {
+    // Get member profiles
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .in('id', memberIds);
+    memberListHtml += '<div class="member-list">';
+    profiles.forEach(profile => {
+      memberListHtml += `
+        <div>
+          <img src="${profile.avatar_url || 'default-avatar.png'}" alt="avatar" width="32" height="32" style="vertical-align:middle;border-radius:50%;">
+          <span>${profile.full_name}</span>
+        </div>
+      `;
+    });
+    memberListHtml += '</div>';
+  }
+  document.getElementById('members-section').innerHTML = memberListHtml;
+}
+
+    // --- Chat Integration ---
+      // ...existing code...
+
+      function renderTab(tab) {
+  const tabContent = document.getElementById('tab-content');
+        if (tab === 'discussions') {
+          tabContent.innerHTML = '<h2>Discussions</h2><div id="discussions-section">Loading discussions...</div>';
+          renderDiscussions(circleId);
+        } else if (tab === 'agreements') {
+          tabContent.innerHTML = '<h2>Agreements</h2><div id="agreements-section"></div>';
+          renderAgreements(circleId);
+        } else if (tab === 'members') {
+          tabContent.innerHTML = '<h2>Members</h2><div id="members-section"></div>';
+          renderMembers(circleId);
+        } else if (tab === 'chat') {
+          tabContent.innerHTML = `<h2>Circle Chat Room</h2>
+            <div id="chat-messages" style="height:300px;overflow-y:auto;border:1px solid #ccc;padding:1em;background:#fff;margin-bottom:1em;"></div>
+            <form id="chat-form" style="display:flex;gap:1em;">
+              <input type="text" id="chat-input" placeholder="Type your message..." style="flex:1;">
+              <button type="submit">Send</button>
+            </form>`;
+          setupChat(circleId);
+        }
+      // Render Discussions tab (placeholder, shows 'no discussions' message)
+      async function renderDiscussions(circleId) {
+        const discussionsSection = document.getElementById('discussions-section');
+        discussionsSection.innerHTML = '<p>Loading discussions...</p>';
+        // Only show suggestions for this circle with status 'open'
+        const { data: discussions, error } = await supabase
+          .from('suggestions')
+          .select('*')
+          .eq('circle_id', circleId)
+          .eq('status', 'open');
+        if (error) {
+          discussionsSection.innerHTML = `<p>Error loading discussions: ${error.message}</p>`;
+          return;
+        }
+        if (!discussions || discussions.length === 0) {
+          discussionsSection.innerHTML = '<p>No discussions yet for this circle.</p>';
+          return;
+        }
+        discussionsSection.innerHTML = '';
+        discussions.forEach(discussion => {
           const card = document.createElement('div');
           card.className = 'agreement-card';
           card.innerHTML = `
-            <strong>${agreement.agreement_text}</strong><br>
-            <span>Status: ${agreement.status}</span><br>
-            <span>Created: ${new Date(agreement.created_at).toLocaleString()}</span>
+            <strong>${discussion.title}</strong><br>
+            <span>${discussion.description || ''}</span><br>
+            <span>Created: ${new Date(discussion.created_at).toLocaleString()}</span>
           `;
-          agreementsSection.appendChild(card);
+          discussionsSection.appendChild(card);
         });
       }
-
-      // Load members for this circle
-      const { data: members } = await supabase
-        .from('circle_members')
-        .select('user_id')
-        .eq('circle_id', circleId);
-      const memberIds = members ? members.map(m => m.user_id) : [];
-      let memberListHtml = '<h2>Members</h2>';
-      if (memberIds.length === 0) {
-        memberListHtml += '<p>No members yet.</p>';
-      } else {
-        // Get member profiles
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .in('id', memberIds);
-        memberListHtml += '<div class="member-list">';
-        profiles.forEach(profile => {
-          memberListHtml += `
-            <div>
-              <img src="${profile.avatar_url || 'default-avatar.png'}" alt="avatar" width="32" height="32" style="vertical-align:middle;border-radius:50%;">
-              <span>${profile.full_name}</span>
-            </div>
-          `;
-        });
-        memberListHtml += '</div>';
+      // Render Agreements tab
+      async function renderAgreements(circleId) {
+        const agreementsSection = document.getElementById('agreements-section');
+        agreementsSection.innerHTML = '';
+        const { data: agreements } = await supabase
+          .from('agreements')
+          .select('id, agreement_text, status, created_at')
+          .eq('circle_id', circleId)
+          .order('created_at', { ascending: false });
+        if (!agreements || agreements.length === 0) {
+          agreementsSection.innerHTML += '<p>No agreements yet for this circle.</p>';
+        } else {
+          agreements.forEach(agreement => {
+            const card = document.createElement('div');
+            card.className = 'agreement-card';
+            card.innerHTML = `
+              <strong>${agreement.agreement_text}</strong><br>
+              <span>Status: ${agreement.status}</span><br>
+              <span>Created: ${new Date(agreement.created_at).toLocaleString()}</span>
+            `;
+            agreementsSection.appendChild(card);
+          });
+        }
       }
-      document.getElementById('members-section').innerHTML = memberListHtml;
-    }
+      // Render Members tab
+      async function renderMembers(circleId) {
+        const membersSection = document.getElementById('members-section');
+        membersSection.innerHTML = '';
+        const { data: members } = await supabase
+          .from('circle_members')
+          .select('user_id')
+          .eq('circle_id', circleId);
+        const memberIds = members ? members.map(m => m.user_id) : [];
+        let memberListHtml = '';
+        if (memberIds.length === 0) {
+          memberListHtml += '<p>No members yet.</p>';
+        } else {
+          // Get member profiles
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .in('id', memberIds);
+          memberListHtml += '<div class="member-list">';
+          profiles.forEach(profile => {
+            memberListHtml += `
+              <div>
+                <img src="${profile.avatar_url || 'default-avatar.png'}" alt="avatar" width="32" height="32" style="vertical-align:middle;border-radius:50%;">
+                <span>${profile.full_name}</span>
+              </div>
+            `;
+          });
+          memberListHtml += '</div>';
+        }
+        membersSection.innerHTML = memberListHtml;
+      }
+      // Setup Chat tab
+      function setupChat(circleId) {
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
 
-    // --- Chat Integration ---
-    const chatMessages = document.getElementById('chat-messages');
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
+        if (!chatMessages || !chatForm || !chatInput) return;
 
-    async function loadMessages() {
-      const { data: messages } = await supabase
-        .from('circle_messages')
-        .select('message, created_at, user_id')
-        .eq('circle_id', circleId)
-        .order('created_at', { ascending: true });
-      chatMessages.innerHTML = '';
-      for (const msg of messages || []) {
-        // Get sender profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('id', msg.user_id)
+        async function loadMessages() {
+          const { data: messages } = await supabase
+            .from('circle_messages')
+            .select('message, created_at, user_id')
+            .eq('circle_id', circleId)
+            .order('created_at', { ascending: true });
+          chatMessages.innerHTML = '';
+          for (const msg of messages || []) {
+            // Get sender profile
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', msg.user_id)
+              .single();
+            chatMessages.innerHTML += `
+              <div style="margin-bottom:1em;">
+                <img src="${profile?.avatar_url || 'default-avatar.png'}" width="24" height="24" style="vertical-align:middle;border-radius:50%;">
+                <strong>${profile?.full_name || 'Unknown'}:</strong>
+                <span>${msg.message}</span>
+                <small style="color:#888;">${new Date(msg.created_at).toLocaleTimeString()}</small>
+              </div>
+            `;
+          }
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const message = chatInput.value.trim();
+          if (!message) return;
+          // Get current user
+          const { data: userData } = await supabase.auth.getUser();
+          const userId = userData?.user?.id;
+          if (!userId) {
+            alert('You must be signed in to send messages.');
+            return;
+          }
+          await supabase
+            .from('circle_messages')
+            .insert([{ circle_id: circleId, user_id: userId, message }]);
+          chatInput.value = '';
+          await loadMessages();
+        });
+
+        // Initial chat load
+        loadMessages();
+        setInterval(loadMessages, 10000);
+      }
+      }
+
+      // Load circle name/description and initialize tabs only if access is granted
+      async function loadCircleHeader() {
+        const { data: circle } = await supabase
+          .from('circles')
+          .select('name, description')
+          .eq('id', circleId)
           .single();
-        chatMessages.innerHTML += `
-          <div style="margin-bottom:1em;">
-            <img src="${profile?.avatar_url || 'default-avatar.png'}" width="24" height="24" style="vertical-align:middle;border-radius:50%;">
-            <strong>${profile?.full_name || 'Unknown'}:</strong>
-            <span>${msg.message}</span>
-            <small style="color:#888;">${new Date(msg.created_at).toLocaleTimeString()}</small>
-          </div>
-        `;
+        if (circle) {
+          document.getElementById('circle-name').textContent = circle.name;
+          document.getElementById('circle-description').textContent = circle.description || '';
+        } else {
+          document.getElementById('circle-name').textContent = 'Circle not found.';
+          document.getElementById('circle-description').textContent = '';
+        }
       }
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
 
-    chatForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const message = chatInput.value.trim();
-      if (!message) return;
-      // Get current user
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (!userId) {
-        alert('You must be signed in to send messages.');
-        return;
+      window.addEventListener('DOMContentLoaded', async () => {
+      // Tab switching logic (fix ReferenceError)
+      let currentTab = 'chat';
+      function setTab(tab) {
+        currentTab = tab;
+        // Update active tab button
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        renderTab(tab);
       }
-      await supabase
-        .from('circle_messages')
-        .insert([{ circle_id: circleId, user_id: userId, message }]);
-      chatInput.value = '';
-      await loadMessages();
-    });
-
-    // Initial chat load
-    loadMessages();
-    // Optionally, reload messages every 10 seconds for near real-time updates
-    setInterval(loadMessages, 10000);
-
-    // ...existing loadCircle() call...
-    loadCircle();
-  </script>
-</body>
-</html>
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            setTab(btn.dataset.tab);
+          });
+        });
+        const access = await checkCircleAccess();
+        if (access) {
+          await loadCircleHeader();
+          setTab(currentTab);
+        }
+      });
+      </script>
+      </body>
+      </html>

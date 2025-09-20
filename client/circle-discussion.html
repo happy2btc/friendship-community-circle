@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Circle Discussion</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    .discussion-container { max-width: 800px; margin: auto; }
+    .discussion-title { font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; }
+    .discussion-details { margin-bottom: 2em; }
+    #replies-section { background: #fff; border-radius: 8px; padding: 1.5em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    #replies-list { margin-bottom: 1em; }
+    .reply-card { border-bottom: 1px solid #eee; padding: 0.5em 0; }
+    .reply-author { font-weight: bold; color: #6b4f1d; }
+    .reply-date { font-size: 0.95em; color: #888; margin-left: 1em; }
+    #reply-text { width: 100%; font-size: 1em; margin-bottom: 0.5em; }
+    #submit-reply { background: #4a7c59; color: #fff; border: none; border-radius: 6px; padding: 0.7em 2em; font-size: 1.1em; cursor: pointer; }
+    #submit-reply:hover { background: #388e3c; }
+    .menu-button { display: block; width: fit-content; margin: 2em auto 0 auto; background-color: #6c757d; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="discussion-container">
+    <div class="discussion-title" id="discussion-title">Loading discussion...</div>
+    <div class="discussion-details" id="discussion-details"></div>
+    <div id="replies-section">
+      <h3>Replies</h3>
+      <div id="replies-list"></div>
+      <textarea id="reply-text" rows="3" placeholder="Write your reply..."></textarea>
+      <button id="submit-reply">Submit Reply</button>
+    </div>
+    <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  </div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    // Get discussion_id from URL query string
+    function getDiscussionId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('discussion_id');
+    }
+
+    const DISCUSSION_ID = getDiscussionId();
+
+    // Load discussion details
+    async function loadDiscussion() {
+      const { data: discussion, error } = await supabase
+        .from('suggestions')
+        .select('title, description, author_id, created_at')
+        .eq('id', DISCUSSION_ID)
+        .single();
+
+      if (error || !discussion) {
+        document.getElementById('discussion-title').textContent = 'Discussion not found.';
+        document.getElementById('discussion-details').textContent = '';
+        return;
+      }
+
+      document.getElementById('discussion-title').textContent = discussion.title;
+      document.getElementById('discussion-details').innerHTML =
+        `<div>${discussion.description || ''}</div>
+         <div style="margin-top:0.5em;color:#888;">
+           Posted by: <span id="author-name">Loading...</span>
+           <span class="reply-date">${new Date(discussion.created_at).toLocaleString()}</span>
+         </div>`;
+
+      // Load author name
+      const { data: author } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', discussion.author_id)
+        .single();
+      document.getElementById('author-name').textContent = author?.full_name || 'Unknown';
+    }
+
+    // Load replies for a discussion
+    async function loadReplies() {
+      const { data: replies } = await supabase
+        .from('discussion_replies')
+        .select('reply_text, created_at, author_id')
+        .eq('discussion_id', DISCUSSION_ID)
+        .order('created_at', { ascending: true });
+
+      const repliesList = document.getElementById('replies-list');
+      if (!replies || replies.length === 0) {
+        repliesList.innerHTML = '<em>No replies yet.</em>';
+        return;
+      }
+
+      // Get all author names in one query
+      const authorIds = [...new Set(replies.map(r => r.author_id))];
+      const { data: authors } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', authorIds);
+
+      const idToName = {};
+      authors?.forEach(a => { idToName[a.id] = a.full_name; });
+
+      repliesList.innerHTML = replies.map(r =>
+        `<div class="reply-card">
+          <span class="reply-author">${idToName[r.author_id] || 'Unknown'}</span>
+          <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
+          <div>${r.reply_text}</div>
+        </div>`
+      ).join('');
+    }
+
+    // Submit a reply
+    document.getElementById('submit-reply').onclick = async () => {
+      const replyText = document.getElementById('reply-text').value.trim();
+      if (!replyText) return;
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) {
+        alert('You must be signed in to reply.');
+        return;
+      }
+      await supabase.from('discussion_replies').insert([{
+        discussion_id: DISCUSSION_ID,
+        author_id: user.user.id,
+        reply_text: replyText
+      }]);
+      document.getElementById('reply-text').value = '';
+      loadReplies();
+    };
+
+    // Initial load
+    loadDiscussion();
+    loadReplies();
+  </script>
+</body>
+</html>

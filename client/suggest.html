@@ -20,6 +20,11 @@
   <h1>💡 Make a Suggestion</h1>
 
   <form id="suggestion-form">
+    <label for="circle-select">Circle</label>
+    <select id="circle-select" name="circle-select" required>
+      <option value="">Loading...</option>
+    </select>
+
     <label for="title">Suggestion Title</label>
     <input type="text" id="title" name="title" placeholder="Short summary or title" required />
 
@@ -54,6 +59,25 @@
       return user;
     }
 
+    async function loadCircles() {
+      currentUser = await getUser();
+      if (!currentUser) return;
+      const select = document.getElementById('circle-select');
+      // Get all circles
+      const { data: circles } = await supabase
+        .from('circles')
+        .select('id, name');
+      let optionsHtml = '<option value="">Everyone (Public)</option>';
+      if (circles && circles.length > 0) {
+        circles.forEach(circle => {
+          optionsHtml += `<option value="${circle.id}">${circle.name}</option>`;
+        });
+      }
+      select.innerHTML = optionsHtml;
+    }
+
+    loadCircles();
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       submitBtn.disabled = true;
@@ -65,27 +89,52 @@
 
       const title = form.title.value.trim();
       const description = form.description.value.trim();
+      const circleId = form['circle-select'].value || null;
 
-      // Insert suggestion with status 'open'
-      const { error } = await supabase
-        .from('suggestions')
-        .insert({
-          title,
-          description,
-          author_id: currentUser.id,
-          status: 'open'
-        });
-
-      if (error) {
-        statusMessage.textContent = `Error: ${error.message}`;
-        statusMessage.style.color = 'red';
-      } else {
-        statusMessage.textContent = '✅ Suggestion submitted!';
-        statusMessage.style.color = 'green';
-        form.reset();
+      // Validation: block users from submitting to circles they are not members of
+      // Only validate membership if a circle is selected
+      if (circleId) {
+        const { data: membership } = await supabase
+          .from('circle_members')
+          .select('id')
+          .eq('circle_id', circleId)
+          .eq('user_id', currentUser.id)
+          .single();
+        if (!membership) {
+          statusMessage.textContent = 'You are not a member of the selected circle.';
+          statusMessage.style.color = 'red';
+          submitBtn.disabled = false;
+          return;
+        }
       }
-      submitBtn.disabled = false;
-    });
+
+     // Insert suggestion with status 'open' and circle_id
+     const { error } = await supabase
+       .from('suggestions')
+       .insert([
+         {
+           title,
+           description,
+           author_id: currentUser.id,
+           status: 'open',
+           circle_id: circleId || null
+         }
+       ]);
+
+     if (error) {
+       statusMessage.textContent = `❌ Error: ${error.message}`;
+       submitBtn.disabled = false;
+       return;
+     }
+     statusMessage.textContent = '✅ Suggestion submitted! Redirecting...';
+     setTimeout(() => {
+       if (circleId) {
+         window.location.href = `discussions.html?circle_id=${circleId}`;
+       } else {
+         window.location.href = 'discussions.html';
+       }
+     }, 1200);
+   });
   </script>
 </body>
 </html>
