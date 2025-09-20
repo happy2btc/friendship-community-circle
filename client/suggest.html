@@ -67,7 +67,7 @@
       const { data: circles } = await supabase
         .from('circles')
         .select('id, name');
-      let optionsHtml = '<option value="">Everyone (Public)</option>';
+  let optionsHtml = '<option value="public">Everyone (Public)</option>';
       if (circles && circles.length > 0) {
         circles.forEach(circle => {
           optionsHtml += `<option value="${circle.id}">${circle.name}</option>`;
@@ -89,11 +89,12 @@
 
       const title = form.title.value.trim();
       const description = form.description.value.trim();
-      const circleId = form['circle-select'].value || null;
+  let circleId = form['circle-select'].value;
+  if (circleId === 'public') circleId = null;
 
       // Validation: block users from submitting to circles they are not members of
-      // Only validate membership if a circle is selected
-      if (circleId) {
+      // Only validate membership if a specific circle is selected (not Everyone/Public)
+      if (circleId && circleId !== "") {
         const { data: membership } = await supabase
           .from('circle_members')
           .select('id')
