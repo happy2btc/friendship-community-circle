@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Group Projects</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      text-align: center;
+      font-size: 1.1em;
+      transition: background-color 0.2s;
+      display: inline-block;
+      margin-bottom: 2rem;
+    }
+    .menu-button:hover {
+      background-color: #8c6f4e;
+    }
+    body {
+      font-family: sans-serif;
+      background: #f7fafc;
+      color: #333;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #2e8b57;
+      margin-bottom: 2rem;
+    }
+    .projects-table {
+      width: 100%;
+      max-width: 900px;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 2px 8px #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .projects-table th, .projects-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    .projects-table th {
+      background: #e6f7f2;
+      color: #2e8b57;
+    }
+    .projects-table tr:last-child td {
+      border-bottom: none;
+    }
+    .status {
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: capitalize;
+    }
+    .status.pending { background: #fff3cd; color: #856404; }
+    .status.started { background: #d1ecf1; color: #0c5460; }
+    .status[status="in process"] { background: #cce5ff; color: #004085; }
+    .status.completed { background: #d4edda; color: #155724; }
+    .add-project-btn {
+      margin: 2rem 0 1rem 0;
+      padding: 10px 24px;
+      background: #2e8b57;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .add-project-btn:hover {
+      background: #4cae4c;
+    }
+    .project-form {
+      margin-bottom: 2rem;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #eee;
+      max-width: 600px;
+      width: 100%;
+      display: none;
+    }
+    .project-form label {
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      color: #2e8b57;
+    }
+    .project-form input, .project-form textarea, .project-form select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      font-size: 1em;
+    }
+    .project-form button {
+      background: #2e8b57;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 24px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .project-form button:hover {
+      background: #4cae4c;
+    }
+    .error {
+      color: #a94442;
+      margin-bottom: 1rem;
+    }
+    .success {
+      color: #2e8b57;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌐 Group Projects</h1>
+  <a href="menu.html" class="menu-button" id="back-to-menu-btn" style="margin-bottom:2rem;">🔙 Return to Menu</a>
+  <div style="margin-bottom:1.5rem;">
+    <label for="circle-filter" style="font-weight:bold;color:#2e8b57;">Filter by Circle:</label>
+    <select id="circle-filter" style="margin-left:1rem;padding:6px 12px;border-radius:6px;border:1px solid #ccc;"></select>
+  </div> 
+  <button class="add-project-btn" id="show-form-btn">➕ Add New Project</button>
+  <form class="project-form" id="project-form">
+    <div class="error" id="form-error"></div>
+    <div class="success" id="form-success"></div>
+  <label for="circle">Circle</label>
+  <select id="circle" name="circle" required></select>
+  <label for="proposer-name">Proposer Name</label>
+  <select id="proposer-name" name="proposer-name" required></select>
+    <label for="name">Project Name</label>
+    <input type="text" id="name" name="name" required />
+    <label for="description">Short Description</label>
+    <textarea id="description" name="description" rows="3" required></textarea>
+    <label for="num-participants">Number of Participants</label>
+    <input type="number" id="num-participants" name="num-participants" min="1" value="1" required />
+    <label for="status">Status</label>
+    <select id="status" name="status" required>
+      <option value="pending">Pending</option>
+      <option value="started">Started</option>
+      <option value="in process">In Process</option>
+      <option value="completed">Completed</option>
+    </select>
+    <button type="submit">Submit Project</button>
+    <button type="button" id="cancel-form-btn" style="margin-left:1rem;background:#ccc;color:#333;">Cancel</button>
+  </form>
+  <table class="projects-table" id="projects-table">
+    <thead>
+      <tr>
+        <th>Circle</th>
+        <th>Project Name</th>
+        <th>Description</th>
+        <th>Proposer</th>
+        <th>Date Entered</th>
+        <th>Participants</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="projects-tbody">
+      <!-- Projects will be loaded here -->
+    </tbody>
+  </table>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+  const showFormBtn = document.getElementById('show-form-btn');
+  const projectForm = document.getElementById('project-form');
+  const cancelFormBtn = document.getElementById('cancel-form-btn');
+  const formError = document.getElementById('form-error');
+  const formSuccess = document.getElementById('form-success');
+  const circleSelect = document.getElementById('circle');
+  const circleFilter = document.getElementById('circle-filter');
+  const projectsTbody = document.getElementById('projects-tbody');
+  let circles = [];
+  let profiles = {};
+  let selectedCircleId = '';
+
+    async function loadCircles() {
+      const { data } = await supabase.from('circles').select('id, name');
+  circles = data || [];
+  // For project form
+  // Dropdown: show names, value is UUID
+  circleSelect.innerHTML = circles.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  // For filter dropdown
+  let filterOptions = '<option value="">All Circles</option>';
+  filterOptions += circles.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  circleFilter.innerHTML = filterOptions;
+    }
+
+    async function loadProfiles() {
+      const { data } = await supabase.from('profiles').select('id, full_name');
+      profiles = {};
+  (data || []).forEach(p => { profiles[p.id] = p.full_name; });
+  // Populate proposer-name dropdown
+  const proposerSelect = document.getElementById('proposer-name');
+  proposerSelect.innerHTML = (data || []).map(p => `<option value="${p.id}">${p.full_name}</option>`).join('');
+    }
+
+    async function loadProjects() {
+      let query = supabase.from('group_projects').select('*').order('entered_at', { ascending: false });
+      if (selectedCircleId) {
+        query = query.eq('circle_id', selectedCircleId);
+      }
+      const { data: projects } = await query;
+      projectsTbody.innerHTML = '';
+      for (const project of projects || []) {
+        const circleName = circles.find(c => c.id === project.circle_id)?.name || 'Unknown';
+        const proposerName = profiles[project.proposer_id] || 'Unknown';
+        const date = project.entered_at ? new Date(project.entered_at).toLocaleDateString() : '';
+        projectsTbody.innerHTML += `
+          <tr>
+            <td>${circleName}</td>
+            <td>${project.name}</td>
+            <td>${project.description || ''}</td>
+            <td>${proposerName}</td>
+            <td>${date}</td>
+            <td>${project.num_participants || 0}</td>
+            <td><span class="status ${project.status}">${project.status}</span></td>
+          </tr>
+        `;
+      }
+    }
+
+    showFormBtn.addEventListener('click', () => {
+      projectForm.style.display = 'block';
+      formError.textContent = '';
+      formSuccess.textContent = '';
+    });
+    cancelFormBtn.addEventListener('click', () => {
+      projectForm.reset();
+      projectForm.style.display = 'none';
+      formError.textContent = '';
+      formSuccess.textContent = '';
+    });
+
+    projectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formError.textContent = '';
+      formSuccess.textContent = '';
+      const circle_id = circleSelect.value; // UUID
+      const proposer_id = document.getElementById('proposer-name').value; // UUID
+      const name = projectForm.name.value.trim();
+      const description = projectForm.description.value.trim();
+      const num_participants = parseInt(projectForm['num-participants'].value, 10) || 1;
+      const status = projectForm.status.value;
+      // Insert project with proposer_id as selected UUID
+      const { error } = await supabase.from('group_projects').insert([
+        {
+          circle_id,
+          proposer_id,
+          name,
+          description,
+          num_participants,
+          status
+        }
+      ]);
+      if (error) {
+        formError.textContent = error.message;
+        return;
+      }
+      formSuccess.textContent = 'Project submitted!';
+      projectForm.reset();
+      projectForm.style.display = 'none';
+      await loadProjects();
+    });
+
+    // Initial load
+    await loadCircles();
+    await loadProfiles();
+    await loadProjects();
+    circleFilter.addEventListener('change', async (e) => {
+      selectedCircleId = circleFilter.value;
+      await loadProjects();
+    });
+  </script>
+</body>
+</html>
