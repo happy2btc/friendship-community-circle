@@ -73,15 +73,7 @@
           created_at: c.created_at
         });
       });
-      // Comments
-      commentsRes.data?.forEach(cm => {
-        allNews.push({
-          type: 'Comment',
-          title: 'New Comment',
-          description: cm.content || '',
-          created_at: cm.created_at
-        });
-      });
+      // Comments removed from news feed
       // Contributions
       contributionsRes.data?.forEach(con => {
         allNews.push({
@@ -162,7 +154,7 @@
             <span class="news-type">${item.type}</span>
             <span class="news-date">${new Date(item.created_at).toLocaleString()}</span>
           </div>
-          <div class="news-title">${item.title}</div>
+          <div class="news-title">${item.type === 'Circle' ? '<span style=\"color:gold;font-size:1.2em;\">&#9733;&#9733;&#9733;</span> ' : ''}${item.title}</div>
           <div>${item.description || ''}</div>
           ${item.link ? `<a href="${item.link}" target="_blank">Explore</a>` : ''}
         </div>
