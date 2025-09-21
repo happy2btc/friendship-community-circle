@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>What's New</title>
+  <style>
+    body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    .container { max-width: 800px; margin: auto; }
+    h1 { font-size: 2em; margin-bottom: 1em; }
+    .news-list { margin-top: 2em; }
+    .news-card { background: #fff; border-radius: 8px; padding: 1em; margin-bottom: 1.5em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .news-title { font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em; }
+    .news-type { color: #4a7c59; font-weight: bold; margin-right: 1em; }
+    .news-date { color: #888; font-size: 0.95em; margin-left: 1em; }
+    .menu-button { display: block; width: fit-content; margin: 2em auto 0 auto; background-color: #4a7c59; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+    .menu-button:hover { background: #388e3c; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>What's New</h1>
+    <div class="news-list" id="news-list"></div>
+  <a href="menu.html" id="back-to-menu" style="position: fixed; top: 0; left: 0; width: 100%; background: #1976d2; color: #fff; z-index: 1000; padding: 16px 0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12); font-weight: bold; border-radius: 0 0 12px 12px; box-sizing: border-box; font-size: 1.15em; letter-spacing: 0.5px;">&larr; Back to Menu</a>
+    <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+  </div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function loadWhatsNew() {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+      // Fetch from all actual tables
+      const [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
+        discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
+        suggestionsRes, whatsNewRes] = await Promise.all([
+        supabase.from('agreements').select('id, created_at, title, description').gte('created_at', fiveDaysAgo),
+        supabase.from('celebrations').select('id, created_at, description').gte('created_at', fiveDaysAgo),
+        supabase.from('circles').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
+        supabase.from('comments').select('id, created_at, content').gte('created_at', fiveDaysAgo),
+        supabase.from('contributions').select('id, created_at, project, challenge, help, collab, skills, urgency, contact').gte('created_at', fiveDaysAgo),
+        supabase.from('discussions').select('id, created_at, title, description').gte('created_at', fiveDaysAgo),
+        supabase.from('group_projects').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
+        supabase.from('member_offerings').select('id, created_at, want, give, passion').gte('created_at', fiveDaysAgo),
+        supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', fiveDaysAgo),
+        supabase.from('suggestions').select('id, created_at, suggestion_text').gte('created_at', fiveDaysAgo),
+        supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', fiveDaysAgo)
+      ]);
+
+      const allNews = [];
+      // Agreements
+      agreementsRes.data?.forEach(ag => {
+        allNews.push({
+          type: 'Agreement',
+          title: ag.title || 'New Agreement',
+          description: ag.description || '',
+          created_at: ag.created_at
+        });
+      });
+      // Celebrations
+      celebrationsRes.data?.forEach(c => {
+        allNews.push({
+          type: 'Celebration',
+          title: 'New Celebration',
+          description: c.description || '',
+          created_at: c.created_at
+        });
+      });
+      // Circles
+      circlesRes.data?.forEach(c => {
+        allNews.push({
+          type: 'Circle',
+          title: c.name || 'New Circle',
+          description: c.description || '',
+          created_at: c.created_at
+        });
+      });
+      // Comments
+      commentsRes.data?.forEach(cm => {
+        allNews.push({
+          type: 'Comment',
+          title: 'New Comment',
+          description: cm.content || '',
+          created_at: cm.created_at
+        });
+      });
+      // Contributions
+      contributionsRes.data?.forEach(con => {
+        allNews.push({
+          type: 'Contribution',
+          title: con.project || 'New Contribution',
+          description: [con.challenge, con.help, con.collab, con.skills, con.urgency, con.contact].filter(Boolean).join(' | '),
+          created_at: con.created_at
+        });
+      });
+      // Discussions
+      discussionsRes.data?.forEach(d => {
+        allNews.push({
+          type: 'Discussion',
+          title: d.title || 'New Discussion',
+          description: d.description || '',
+          created_at: d.created_at
+        });
+      });
+      // Group Projects
+      groupProjectsRes.data?.forEach(gp => {
+        allNews.push({
+          type: 'Group Project',
+          title: gp.name || 'New Group Project',
+          description: gp.description || '',
+          created_at: gp.created_at
+        });
+      });
+      // Member Offerings
+      memberOfferingsRes.data?.forEach(mo => {
+        allNews.push({
+          type: 'Member Offering',
+          title: mo.want || mo.give || 'New Offering',
+          description: mo.passion || '',
+          created_at: mo.created_at
+        });
+      });
+      // Skill Shares
+      skillSharesRes.data?.forEach(ss => {
+        allNews.push({
+          type: 'Skill Share',
+          title: ss.skill_name || 'New Skill Share',
+          description: ss.skill_description || '',
+          created_at: ss.created_at
+        });
+      });
+      // Suggestions
+      suggestionsRes.data?.forEach(sg => {
+        allNews.push({
+          type: 'Suggestion',
+          title: 'New Suggestion',
+          description: sg.suggestion_text || '',
+          created_at: sg.created_at
+        });
+      });
+      // Whats New (manual entries)
+      whatsNewRes.data?.forEach(item => {
+        allNews.push({
+          type: item.type,
+          title: item.title,
+          description: item.description,
+          link: item.link,
+          created_at: item.created_at,
+          created_by: item.created_by
+        });
+      });
+
+      allNews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      const newsList = document.getElementById('news-list');
+      if (allNews.length === 0) {
+        newsList.innerHTML = '<em>No new activities or updates in the last 5 days.</em>';
+        return;
+      }
+
+      newsList.innerHTML = allNews.map(item => `
+        <div class="news-card">
+          <div>
+            <span class="news-type">${item.type}</span>
+            <span class="news-date">${new Date(item.created_at).toLocaleString()}</span>
+          </div>
+          <div class="news-title">${item.title}</div>
+          <div>${item.description || ''}</div>
+          ${item.link ? `<a href="${item.link}" target="_blank">Explore</a>` : ''}
+        </div>
+      `).join('');
+    }
+
+    loadWhatsNew();
+  </script>
+</body>
+</html>
