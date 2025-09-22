@@ -141,18 +141,27 @@
         let currentProfile;
 
         async function loadProfile() {
+            // Get member id from URL, fallback to current user
+            const params = new URLSearchParams(window.location.search);
+            const memberId = params.get('id');
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            if (!user && !memberId) {
                 window.location.href = 'index.html';
                 return;
             }
             currentUser = user;
-            emailEl.value = user.email;
+            // If viewing own profile, show email
+            if (user && (!memberId || memberId === user.id)) {
+                emailEl.value = user.email;
+            } else {
+                emailEl.value = '';
+            }
 
+            const profileId = memberId || (user && user.id);
             const { data, error } = await supabase
                 .from('profiles')
                 .select('full_name, phone, avatar_url, bio, youtube, twitter, substack, website, linkedin, facebook, instagram')
-                .eq('id', user.id)
+                .eq('id', profileId)
                 .single();
 
             if (error) {

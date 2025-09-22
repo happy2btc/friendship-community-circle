@@ -112,6 +112,15 @@
         const li = document.createElement('li');
         li.className = 'profile-item';
 
+        // Make the whole profile item a link to the member's full profile page
+        const profileLink = document.createElement('a');
+        profileLink.href = `profile.html?id=${profile.id}`;
+        profileLink.style.display = 'flex';
+        profileLink.style.alignItems = 'center';
+        profileLink.style.gap = '1.5rem';
+        profileLink.style.textDecoration = 'none';
+        profileLink.style.color = 'inherit';
+
         // Profile image
         const img = document.createElement('img');
         img.className = 'profile-img';
@@ -165,9 +174,9 @@
           }
         });
 
-        li.appendChild(img);
-        li.appendChild(detailsDiv);
-
+        profileLink.appendChild(img);
+        profileLink.appendChild(detailsDiv);
+        li.appendChild(profileLink);
         profilesList.appendChild(li);
       });
     }
