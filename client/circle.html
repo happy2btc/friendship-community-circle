@@ -79,7 +79,8 @@ async function checkCircleAccess() {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData?.user?.id;
   if (!userId) {
-    document.body.innerHTML = '<h2>You must be signed in to view this circle.</h2>';
+    // Redirect to login page with redirect back to this circle
+    window.location.href = `login.html?redirect=circle.html?id=${circleId}`;
     return false;
   }
   const { data: membership } = await supabase
