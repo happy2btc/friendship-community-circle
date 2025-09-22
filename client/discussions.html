@@ -142,8 +142,8 @@
         filter.value = selectedCircleId;
       }
       filter.addEventListener('change', () => {
-        selectedCircleId = filter.value;
-        loadDiscussions();
+  selectedCircleId = filter.value;
+  loadDiscussions(); // Reload discussions when filter changes
       });
     }
 
@@ -241,9 +241,11 @@
         if (!discussion.title) continue;
         const normalizedAuthorId = (discussion.author_id || '').trim().toLowerCase();
         const suggestionId = discussion.id;
+        // Aggregate all comments and replies for this discussion
         const commentsForThisDiscussion = allCommentsSafe
           ? allCommentsSafe.filter(c => c.suggestion_id === suggestionId)
           : [];
+        // Count all comments and replies (not just top-level)
         const totalCommentCount = commentsForThisDiscussion.length;
         const isAuthor = currentUser && ((currentUser.id || '').trim().toLowerCase() === normalizedAuthorId);
         const discussionBlock = document.createElement('details');
@@ -252,16 +254,11 @@
         const summary = document.createElement('summary');
         const authorName = profiles[normalizedAuthorId] || 'A member';
         summary.textContent = `${discussion.title} `;
-        const summaryMeta = document.createElement('span');
-        summaryMeta.className = 'summary-meta';
-        summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments)`;
+  const summaryMeta = document.createElement('span');
+  summaryMeta.className = 'summary-meta';
+  summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments/replies)`;
         summary.appendChild(summaryMeta);
-        // Add link to reply-enabled page
-        const replyLink = document.createElement('a');
-        replyLink.href = `circle-discussion.html?discussion_id=${suggestionId}`;
-        replyLink.textContent = 'View & Reply';
-        replyLink.style.marginLeft = '1em';
-        summary.appendChild(replyLink);
+  // Removed 'View & Reply' link
         const contentDiv = document.createElement('div');
         contentDiv.className = 'discussion-content';
         contentDiv.dataset.suggestionId = suggestionId;
@@ -319,7 +316,7 @@
         const commentsForThisDiscussion = allCommentsSafe
           ? allCommentsSafe.filter(c => c.suggestion_id === suggestionId)
           : [];
-        const totalCommentCount = commentsForThisDiscussion.length;
+  const totalCommentCount = commentsForThisDiscussion.length;
         const discussionBlock = document.createElement('details');
         discussionBlock.className = 'discussion-block';
         discussionBlock.dataset.suggestionId = suggestionId;
@@ -328,7 +325,7 @@
         summary.textContent = `${discussion.title} `;
         const summaryMeta = document.createElement('span');
         summaryMeta.className = 'summary-meta';
-        summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments, sent to voting)`;
+  summaryMeta.textContent = `(by ${authorName}, ${totalCommentCount} comments/replies, sent to voting)`;
         summary.appendChild(summaryMeta);
         const contentDiv = document.createElement('div');
         contentDiv.className = 'discussion-content';
