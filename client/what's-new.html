@@ -58,6 +58,7 @@
       agreementsRes.data?.forEach(ag => {
         allNews.push({
           type: 'Agreement',
+          id: ag.id,
           title: 'New Agreement',
           description: ag.agreement_text || '',
           created_at: ag.created_at
@@ -76,6 +77,7 @@
       circlesRes.data?.forEach(c => {
         allNews.push({
           type: 'Circle',
+          id: c.id,
           title: c.name || 'New Circle',
           description: c.description || '',
           created_at: c.created_at
@@ -86,6 +88,7 @@
       contributionsRes.data?.forEach(con => {
         allNews.push({
           type: 'Contribution',
+          id: con.id,
           title: con.project || 'New Contribution',
           description: [con.challenge, con.help, con.collab, con.skills, con.urgency, con.contact].filter(Boolean).join(' | '),
           created_at: con.created_at
@@ -95,6 +98,7 @@
       discussionsRes.data?.forEach(d => {
         allNews.push({
           type: 'Discussion',
+          id: d.id,
           title: d.title || 'New Discussion',
           description: d.description || '',
           created_at: d.created_at
@@ -104,6 +108,7 @@
       groupProjectsRes.data?.forEach(gp => {
         allNews.push({
           type: 'Group Project',
+          id: gp.id,
           title: gp.name || 'New Group Project',
           description: '',
           created_at: gp.created_at
@@ -113,6 +118,7 @@
       memberOfferingsRes.data?.forEach(mo => {
         allNews.push({
           type: 'Member Offering',
+          id: mo.id,
           title: mo.want || mo.give || 'New Offering',
           description: mo.passion || '',
           created_at: mo.created_at
@@ -122,6 +128,7 @@
       skillSharesRes.data?.forEach(ss => {
         allNews.push({
           type: 'Skill Share',
+          id: ss.id,
           title: ss.skill_name || 'New Skill Share',
           description: ss.skill_description || '',
           created_at: ss.created_at
@@ -132,6 +139,7 @@
       suggestionsRes.data?.forEach(sg => {
         allNews.push({
           type: 'Discussion',
+          id: sg.id,
           title: 'New Discussion',
           description: sg.description || '',
           created_at: sg.created_at
@@ -141,6 +149,7 @@
       whatsNewRes.data?.forEach(item => {
         allNews.push({
           type: item.type,
+          id: item.id,
           title: item.title,
           description: item.description,
           link: item.link,
@@ -160,12 +169,34 @@
       newsList.innerHTML = allNews.map(function(item) {
         let prefix = '';
         let title = item.title;
-        if (item.type === 'Circle') {
+        let autoLink = '';
+        if (item.type === 'Circle' && item.id) {
           prefix = '<span style="color:gold;font-size:1.2em;">&#9733;&#9733;&#9733;</span> <span style="font-size:1.2em;">👏👏</span> ';
+          autoLink = `<a href="circle.html?id=${item.id}">View Circle</a>`;
         }
-        if (item.type === 'Agreement') {
+        if (item.type === 'Agreement' && item.id) {
           title = 'Agreement for Voting';
           prefix = '<span style="font-size:1.2em;">🗳️🗳️🗳️</span> ';
+          autoLink = `<a href="agreements.html?id=${item.id}">View Agreement</a>`;
+        }
+        if (item.type === 'Discussion' && item.id) {
+          autoLink = `<a href="discussions.html?id=${item.id}">View Discussion</a>`;
+        }
+        if (item.type === 'Group Project' && item.id) {
+          autoLink = `<a href="group-project.html?id=${item.id}">View Project</a>`;
+        }
+        if (item.type === 'Contribution' && item.id) {
+          autoLink = `<a href="activities.html?id=${item.id}">View Activity</a>`;
+        }
+        if (item.type === 'Skill Share' && item.id) {
+          autoLink = `<a href="skill-share.html?id=${item.id}">View Skill Share</a>`;
+        }
+        if (item.type === 'Member Offering' && item.id) {
+          autoLink = `<a href="member-offering.html?id=${item.id}">View Offering</a>`;
+        }
+        // If a manual link is present, use it instead
+        if (item.link) {
+          autoLink = `<a href="${item.link}" target="_blank">Explore</a>`;
         }
         return [
           '<div class="news-card">',
@@ -175,7 +206,7 @@
             '</div>',
             '<div class="news-title">', prefix, title, '</div>',
             '<div>', (item.description || ''), '</div>',
-            (item.link ? '<a href="' + item.link + '" target="_blank">Explore</a>' : ''),
+            autoLink,
           '</div>'
         ].join('');
       }).join('');
