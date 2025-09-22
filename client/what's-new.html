@@ -27,31 +27,39 @@
     import { supabase } from '/lib/supabase.js';
 
     async function loadWhatsNew() {
-      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+  // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
+  const fiveDaysAgoDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const fiveDaysAgo = fiveDaysAgoDate.toISOString().split('.')[0] + 'Z';
       // Fetch from all actual tables
       const [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
         discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
         suggestionsRes, whatsNewRes] = await Promise.all([
-        supabase.from('agreements').select('id, created_at, title, description').gte('created_at', fiveDaysAgo),
+        supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', fiveDaysAgo),
         supabase.from('celebrations').select('id, created_at, description').gte('created_at', fiveDaysAgo),
         supabase.from('circles').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
         supabase.from('comments').select('id, created_at, content').gte('created_at', fiveDaysAgo),
         supabase.from('contributions').select('id, created_at, project, challenge, help, collab, skills, urgency, contact').gte('created_at', fiveDaysAgo),
         supabase.from('discussions').select('id, created_at, title, description').gte('created_at', fiveDaysAgo),
-        supabase.from('group_projects').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
+        supabase.from('group_projects').select('id, created_at, name').gte('created_at', fiveDaysAgo),
         supabase.from('member_offerings').select('id, created_at, want, give, passion').gte('created_at', fiveDaysAgo),
         supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', fiveDaysAgo),
-        supabase.from('suggestions').select('id, created_at, suggestion_text').gte('created_at', fiveDaysAgo),
+        supabase.from('suggestions').select('id, created_at, description').gte('created_at', fiveDaysAgo),
         supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', fiveDaysAgo)
       ]);
+
+      // Debug output for agreements and suggestions
+      console.log('Agreements response:', agreementsRes);
+      if (agreementsRes.error) console.error('Agreements error:', agreementsRes.error);
+      console.log('Suggestions response:', suggestionsRes);
+      if (suggestionsRes.error) console.error('Suggestions error:', suggestionsRes.error);
 
       const allNews = [];
       // Agreements
       agreementsRes.data?.forEach(ag => {
         allNews.push({
           type: 'Agreement',
-          title: ag.title || 'New Agreement',
-          description: ag.description || '',
+          title: 'New Agreement',
+          description: ag.agreement_text || '',
           created_at: ag.created_at
         });
       });
@@ -97,7 +105,7 @@
         allNews.push({
           type: 'Group Project',
           title: gp.name || 'New Group Project',
-          description: gp.description || '',
+          description: '',
           created_at: gp.created_at
         });
       });
@@ -124,7 +132,7 @@
         allNews.push({
           type: 'Suggestion',
           title: 'New Suggestion',
-          description: sg.suggestion_text || '',
+          description: sg.description || '',
           created_at: sg.created_at
         });
       });
@@ -162,6 +170,13 @@
     }
 
     loadWhatsNew();
+
+    // Reload news when the page becomes visible (e.g., tab switch, navigation)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        loadWhatsNew();
+      }
+    });
   </script>
 </body>
 </html>
