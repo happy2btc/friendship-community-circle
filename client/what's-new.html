@@ -128,10 +128,11 @@
         });
       });
       // Suggestions
+      // Show suggestions as discussions
       suggestionsRes.data?.forEach(sg => {
         allNews.push({
-          type: 'Suggestion',
-          title: 'New Suggestion',
+          type: 'Discussion',
+          title: 'New Discussion',
           description: sg.description || '',
           created_at: sg.created_at
         });
@@ -156,17 +157,28 @@
         return;
       }
 
-      newsList.innerHTML = allNews.map(item => `
-        <div class="news-card">
-          <div>
-            <span class="news-type">${item.type}</span>
-            <span class="news-date">${new Date(item.created_at).toLocaleString()}</span>
-          </div>
-          <div class="news-title">${item.type === 'Circle' ? '<span style=\"color:gold;font-size:1.2em;\">&#9733;&#9733;&#9733;</span> ' : ''}${item.title}</div>
-          <div>${item.description || ''}</div>
-          ${item.link ? `<a href="${item.link}" target="_blank">Explore</a>` : ''}
-        </div>
-      `).join('');
+      newsList.innerHTML = allNews.map(function(item) {
+        let prefix = '';
+        let title = item.title;
+        if (item.type === 'Circle') {
+          prefix = '<span style="color:gold;font-size:1.2em;">&#9733;&#9733;&#9733;</span> <span style="font-size:1.2em;">👏👏</span> ';
+        }
+        if (item.type === 'Agreement') {
+          title = 'Agreement for Voting';
+          prefix = '<span style="font-size:1.2em;">🗳️🗳️🗳️</span> ';
+        }
+        return [
+          '<div class="news-card">',
+            '<div>',
+              '<span class="news-type">', item.type, '</span>',
+              '<span class="news-date">', new Date(item.created_at).toLocaleString(), '</span>',
+            '</div>',
+            '<div class="news-title">', prefix, title, '</div>',
+            '<div>', (item.description || ''), '</div>',
+            (item.link ? '<a href="' + item.link + '" target="_blank">Explore</a>' : ''),
+          '</div>'
+        ].join('');
+      }).join('');
     }
 
     loadWhatsNew();
