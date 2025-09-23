@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Event</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; color: #333; padding: 2rem; }
+    h1 { text-align: center; color: #4a7c59; }
+    form { background: #fffbe6; padding: 2em; border-radius: 10px; max-width: 600px; margin: 2em auto; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    label { display: block; margin-bottom: 1em; font-weight: bold; }
+    input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; }
+    button { background: #4a7c59; color: #fff; padding: 10px 18px; border-radius: 6px; font-weight: bold; border: none; margin-top: 1em; cursor: pointer; }
+    .status { margin-top: 1em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Create a New Event</h1>
+  <form id="event-form">
+    <label>Title:
+      <input type="text" id="event-title" required>
+    </label>
+    <label>Description:
+      <textarea id="event-description" rows="2"></textarea>
+    </label>
+    <label>Location:
+      <input type="text" id="event-location">
+    </label>
+    <label>Zoom Link:
+      <input type="url" id="event-zoom">
+    </label>
+    <label>Start Time:
+      <input type="datetime-local" id="event-start" required>
+    </label>
+    <label>End Time:
+      <input type="datetime-local" id="event-end">
+    </label>
+    <label>Time Zone:
+      <select id="event-timezone">
+        <option value="UTC">UTC</option>
+        <option value="America/New_York">America/New_York</option>
+        <option value="America/Chicago">America/Chicago</option>
+        <option value="America/Denver">America/Denver</option>
+        <option value="America/Los_Angeles">America/Los_Angeles</option>
+        <option value="Europe/London">Europe/London</option>
+        <option value="Europe/Paris">Europe/Paris</option>
+        <option value="Asia/Tokyo">Asia/Tokyo</option>
+        <option value="Australia/Sydney">Australia/Sydney</option>
+      </select>
+    </label>
+    <label>Repeats:
+      <select id="event-repeat">
+        <option value="none">Does not repeat</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+    </label>
+    <button type="submit">Create Event</button>
+    <div id="event-status" class="status"></div>
+  </form>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    document.getElementById('event-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const statusDiv = document.getElementById('event-status');
+      statusDiv.textContent = '';
+      const title = document.getElementById('event-title').value.trim();
+      const description = document.getElementById('event-description').value.trim();
+      const location = document.getElementById('event-location').value.trim();
+      const zoom_link = document.getElementById('event-zoom').value.trim();
+      const start = document.getElementById('event-start').value;
+      const end = document.getElementById('event-end').value;
+      const timezone = document.getElementById('event-timezone').value;
+      const repeat = document.getElementById('event-repeat').value;
+      if (!title || !start) {
+        statusDiv.textContent = 'Title and start time are required.';
+        statusDiv.style.color = '#a94442';
+        return;
+      }
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      const created_by = user ? user.id : null;
+      const { error } = await supabase.from('events').insert({
+        title,
+        description,
+        location,
+        zoom_link,
+        start_time: start,
+        end_time: end || null,
+        timezone,
+        repeat,
+        created_by
+      });
+      if (error) {
+        statusDiv.textContent = 'Error creating event: ' + error.message;
+        statusDiv.style.color = '#a94442';
+      } else {
+        statusDiv.textContent = 'Event created!';
+        statusDiv.style.color = 'green';
+        document.getElementById('event-form').reset();
+      }
+    });
+  </script>
+</body>
+</html>

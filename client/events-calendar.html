@@ -21,7 +21,8 @@
       <input type="hidden" id="event-id">
       <div style="margin-bottom:1em;"><label>Title:<br><input type="text" id="event-title" required style="width:100%;padding:8px;"></label></div>
       <div style="margin-bottom:1em;"><label>Description:<br><textarea id="event-description" rows="2" style="width:100%;padding:8px;"></textarea></label></div>
-      <div style="margin-bottom:1em;"><label>Location:<br><input type="text" id="event-location" style="width:100%;padding:8px;"></label></div>
+  <div style="margin-bottom:1em;"><label>Location:<br><input type="text" id="event-location" style="width:100%;padding:8px;"></label></div>
+  <div style="margin-bottom:1em;"><label>Zoom Link:<br><input type="url" id="event-zoom" style="width:100%;padding:8px;" placeholder="https://us02web.zoom.us/j/..." ></label></div>
       <div style="margin-bottom:1em;display:flex;gap:1em;"><label>Start Time:<br><input type="datetime-local" id="event-start" required></label><label>End Time:<br><input type="datetime-local" id="event-end"></label></div>
       <div style="margin-bottom:1em;"><label>Time Zone:<br>
         <select id="event-timezone" style="width:100%;padding:8px;">
@@ -58,7 +59,7 @@
     async function fetchEvents() {
       const { data, error } = await supabase
         .from('events')
-        .select('id, title, description, start_time, end_time, location, timezone, repeat');
+  .select('id, title, description, start_time, end_time, location, timezone, repeat, zoom_link');
       if (error) {
         console.error('Error loading events:', error);
         return [];
@@ -66,7 +67,7 @@
       // Expand repeating events
       let events = [];
       (data || []).forEach(ev => {
-        if (ev.repeat && ev.repeat !== 'none') {
+  if (ev.repeat && ev.repeat !== 'none') {
           // Generate up to 12 future events for display
           let start = new Date(ev.start_time);
           let end = ev.end_time ? new Date(ev.end_time) : null;
@@ -92,6 +93,7 @@
               location: ev.location,
               timezone: ev.timezone,
               repeat: ev.repeat,
+              zoom_link: ev.zoom_link,
               originalId: ev.id
             });
           }
@@ -104,7 +106,8 @@
             description: ev.description,
             location: ev.location,
             timezone: ev.timezone,
-            repeat: ev.repeat
+            repeat: ev.repeat,
+            zoom_link: ev.zoom_link
           });
         }
       });
@@ -123,6 +126,7 @@
           let details = `<strong>${info.event.title}</strong><br>`;
           if (info.event.extendedProps.description) details += info.event.extendedProps.description + '<br>';
           if (info.event.extendedProps.location) details += '<b>Location:</b> ' + info.event.extendedProps.location + '<br>';
+          if (info.event.extendedProps.zoom_link) details += `<b>Zoom:</b> <a href='${info.event.extendedProps.zoom_link}' target='_blank'>Join Meeting</a><br>`;
           details += `<b>Start:</b> ${formatDate(info.event.start, info.event.extendedProps.timezone)}<br>`;
           if (info.event.end) details += `<b>End:</b> ${formatDate(info.event.end, info.event.extendedProps.timezone)}<br>`;
           if (info.event.extendedProps.timezone) details += `<b>Time Zone:</b> ${info.event.extendedProps.timezone}<br>`;
@@ -140,6 +144,7 @@
             document.getElementById('event-end').value = info.event.end ? info.event.end.toISOString().slice(0,16) : '';
             document.getElementById('event-timezone').value = info.event.extendedProps.timezone || 'UTC';
             document.getElementById('event-repeat').value = info.event.extendedProps.repeat || 'none';
+            document.getElementById('event-zoom').value = info.event.extendedProps.zoom_link || '';
             window.scrollTo({ top: 0, behavior: 'smooth' });
           };
         }
@@ -190,14 +195,15 @@
       e.preventDefault();
       const statusDiv = document.getElementById('event-status');
       statusDiv.textContent = '';
-      const id = document.getElementById('event-id').value;
-      const title = document.getElementById('event-title').value.trim();
-      const description = document.getElementById('event-description').value.trim();
-      const location = document.getElementById('event-location').value.trim();
-      const start = document.getElementById('event-start').value;
-      const end = document.getElementById('event-end').value;
-      const timezone = document.getElementById('event-timezone').value;
-      const repeat = document.getElementById('event-repeat').value;
+  const id = document.getElementById('event-id').value;
+  const title = document.getElementById('event-title').value.trim();
+  const description = document.getElementById('event-description').value.trim();
+  const location = document.getElementById('event-location').value.trim();
+  const zoom_link = document.getElementById('event-zoom').value.trim();
+  const start = document.getElementById('event-start').value;
+  const end = document.getElementById('event-end').value;
+  const timezone = document.getElementById('event-timezone').value;
+  const repeat = document.getElementById('event-repeat').value;
       if (!title || !start) {
         statusDiv.textContent = 'Title and start time are required.';
         return;
@@ -212,6 +218,7 @@
           title,
           description,
           location,
+          zoom_link,
           start_time: start,
           end_time: end || null,
           timezone,
@@ -223,6 +230,7 @@
           title,
           description,
           location,
+          zoom_link,
           start_time: start,
           end_time: end || null,
           timezone,
