@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Events Calendar</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
+  <style>
+    body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    .container { max-width: 900px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.07); padding: 2em; }
+    h1 { color: #4a7c59; text-align: center; margin-bottom: 1em; }
+    #calendar { margin: 2em auto; }
+    .menu-button { display: block; width: fit-content; margin: 2em auto 0 auto; background-color: #4a7c59; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+    .menu-button:hover { background: #388e3c; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Community Events Calendar</h1>
+    <form id="event-form" style="margin-bottom:2em;background:#f3e7d3;padding:1em 2em;border-radius:8px;max-width:600px;margin:auto;">
+      <h2 style="color:#4a7c59;">Add New Event</h2>
+      <div style="margin-bottom:1em;"><label>Title:<br><input type="text" id="event-title" required style="width:100%;padding:8px;"></label></div>
+      <div style="margin-bottom:1em;"><label>Description:<br><textarea id="event-description" rows="2" style="width:100%;padding:8px;"></textarea></label></div>
+      <div style="margin-bottom:1em;"><label>Location:<br><input type="text" id="event-location" style="width:100%;padding:8px;"></label></div>
+      <div style="margin-bottom:1em;display:flex;gap:1em;"><label>Start Time:<br><input type="datetime-local" id="event-start" required></label><label>End Time:<br><input type="datetime-local" id="event-end"></label></div>
+      <button type="submit" style="background:#4a7c59;color:#fff;padding:10px 18px;border-radius:6px;font-weight:bold;">Add Event</button>
+      <div id="event-status" style="margin-top:1em;color:#a94442;font-weight:bold;"></div>
+    </form>
+    <div id="calendar"></div>
+    <a href="menu.html" class="menu-button">← Back to Menu</a>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function fetchEvents() {
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, title, description, start_time, end_time, location');
+      if (error) {
+        console.error('Error loading events:', error);
+        return [];
+      }
+      return (data || []).map(ev => ({
+        id: ev.id,
+        title: ev.title,
+        start: ev.start_time,
+        end: ev.end_time,
+        description: ev.description,
+        location: ev.location
+      }));
+    }
+
+    let calendar;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      const calendarEl = document.getElementById('calendar');
+      const events = await fetchEvents();
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events,
+        eventClick: function(info) {
+          let details = `<strong>${info.event.title}</strong><br>`;
+          if (info.event.extendedProps.description) details += info.event.extendedProps.description + '<br>';
+          if (info.event.extendedProps.location) details += '<b>Location:</b> ' + info.event.extendedProps.location + '<br>';
+          details += `<b>Start:</b> ${info.event.start.toLocaleString()}<br>`;
+          if (info.event.end) details += `<b>End:</b> ${info.event.end.toLocaleString()}<br>`;
+          alert(details);
+        }
+      });
+      calendar.render();
+    });
+
+    // Event form logic
+    document.getElementById('event-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const statusDiv = document.getElementById('event-status');
+      statusDiv.textContent = '';
+      const title = document.getElementById('event-title').value.trim();
+      const description = document.getElementById('event-description').value.trim();
+      const location = document.getElementById('event-location').value.trim();
+      const start = document.getElementById('event-start').value;
+      const end = document.getElementById('event-end').value;
+      if (!title || !start) {
+        statusDiv.textContent = 'Title and start time are required.';
+        return;
+      }
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      const created_by = user ? user.id : null;
+      const { error } = await supabase.from('events').insert({
+        title,
+        description,
+        location,
+        start_time: start,
+        end_time: end || null,
+        created_by
+      });
+      if (error) {
+        statusDiv.textContent = 'Error adding event: ' + error.message;
+      } else {
+        statusDiv.style.color = 'green';
+        statusDiv.textContent = 'Event added!';
+        // Clear form
+        document.getElementById('event-form').reset();
+        // Refresh calendar events
+        const events = await fetchEvents();
+        calendar.removeAllEvents();
+        calendar.addEventSource(events);
+      }
+    });
+  </script>
+</body>
+</html>
