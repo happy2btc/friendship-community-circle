@@ -66,6 +66,25 @@
         import { supabase } from '/lib/supabase.js';
 
         async function getActivities() {
+            // Declare these at the top to avoid ReferenceError
+            const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
+            const activity = {};
+            const breakdown = {};
+            // Count events created (5 points each)
+            const { data: events } = await supabase
+                .from('events')
+                .select('created_by');
+            const eventsByUser = {};
+            events?.forEach(ev => {
+                if (ev.created_by && ev.created_by !== builderId) {
+                    eventsByUser[ev.created_by] = (eventsByUser[ev.created_by] || 0) + 1;
+                }
+            });
+            Object.entries(eventsByUser).forEach(([userId, count]) => {
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0 };
+                breakdown[userId].events_created = count;
+                activity[userId] = (activity[userId] || 0) + (count * 5);
+            });
             // Restore missing queries for legacy activities
             const { data: votes } = await supabase
                 .from('agreement_votes')
@@ -108,10 +127,7 @@
                 const { data: groupProjects } = await supabase
                     .from('group_projects')
                     .select('proposer_id');
-            // Tally activity per user
-            const activity = {};
-            const breakdown = {};
-            const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
+            // Tally activity per user (already declared above)
 
             // Existing activities
             votes?.forEach(v => {
@@ -278,6 +294,7 @@
                             Projects & Struggles: ${m.breakdown.projects || 0}<br>
                             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                             Circles Created: ${m.breakdown.circles_created || 0}<br>
+                            Events Created: ${m.breakdown.events_created || 0}<br>
                             Members Added: ${m.breakdown.members_added || 0}<br>
                             Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                            Projects Proposed: ${m.breakdown.projects_proposed || 0}<br>
