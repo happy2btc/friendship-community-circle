@@ -53,6 +53,7 @@
     <a href="menu.html" class="menu-button">← Back to Menu</a>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
@@ -200,10 +201,14 @@
   const description = document.getElementById('event-description').value.trim();
   const location = document.getElementById('event-location').value.trim();
   const zoom_link = document.getElementById('event-zoom').value.trim();
-  const start = document.getElementById('event-start').value;
-  const end = document.getElementById('event-end').value;
+  const startLocal = document.getElementById('event-start').value;
+  const endLocal = document.getElementById('event-end').value;
   const timezone = document.getElementById('event-timezone').value;
   const repeat = document.getElementById('event-repeat').value;
+  // Use luxon to convert local datetime to UTC based on selected timezone
+  const DateTime = window.luxon.DateTime;
+  let start = startLocal ? DateTime.fromISO(startLocal, { zone: timezone }).toUTC().toISO() : null;
+  let end = endLocal ? DateTime.fromISO(endLocal, { zone: timezone }).toUTC().toISO() : null;
       if (!title || !start) {
         statusDiv.textContent = 'Title and start time are required.';
         return;
