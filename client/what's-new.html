@@ -24,16 +24,17 @@
     <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
   </div>
   <script type="module">
+
     import { supabase } from '/lib/supabase.js';
 
     async function loadWhatsNew() {
-  // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
-  const fiveDaysAgoDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-  const fiveDaysAgo = fiveDaysAgoDate.toISOString().split('.')[0] + 'Z';
-      // Fetch from all actual tables
+      // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
+      const fiveDaysAgoDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      const fiveDaysAgo = fiveDaysAgoDate.toISOString().split('.')[0] + 'Z';
+      // Fetch from all actual tables, including events
       const [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
         discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
-        suggestionsRes, whatsNewRes] = await Promise.all([
+        suggestionsRes, eventsRes, whatsNewRes] = await Promise.all([
         supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', fiveDaysAgo),
         supabase.from('celebrations').select('id, created_at, description').gte('created_at', fiveDaysAgo),
         supabase.from('circles').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
@@ -44,16 +45,32 @@
         supabase.from('member_offerings').select('id, created_at, want, give, passion').gte('created_at', fiveDaysAgo),
         supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', fiveDaysAgo),
         supabase.from('suggestions').select('id, created_at, description').gte('created_at', fiveDaysAgo),
+        supabase.from('events').select('id, title, description, start_time, end_time, location, zoom_link, timezone, created_at').gte('created_at', fiveDaysAgo),
         supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', fiveDaysAgo)
       ]);
 
-      // Debug output for agreements and suggestions
-      console.log('Agreements response:', agreementsRes);
-      if (agreementsRes.error) console.error('Agreements error:', agreementsRes.error);
-      console.log('Suggestions response:', suggestionsRes);
-      if (suggestionsRes.error) console.error('Suggestions error:', suggestionsRes.error);
+  // Debug output for agreements and suggestions
+  console.log('Agreements response:', agreementsRes);
+  if (agreementsRes.error) console.error('Agreements error:', agreementsRes.error);
+  console.log('Suggestions response:', suggestionsRes);
+  if (suggestionsRes.error) console.error('Suggestions error:', suggestionsRes.error);
+  if (eventsRes.error) console.error('Events error:', eventsRes.error);
 
-      const allNews = [];
+  const allNews = [];
+      // Events (calendar)
+      eventsRes.data?.forEach(ev => {
+        allNews.push({
+          type: 'Event',
+          id: ev.id,
+          title: ev.title || 'New Event',
+          description: (ev.description ? ev.description + '<br>' : '') +
+            (ev.start_time ? `<b>Start:</b> ${new Date(ev.start_time).toLocaleString()}<br>` : '') +
+            (ev.end_time ? `<b>End:</b> ${new Date(ev.end_time).toLocaleString()}<br>` : '') +
+            (ev.location ? `<b>Location:</b> ${ev.location}<br>` : '') +
+            (ev.zoom_link ? `<b>Zoom:</b> <a href='${ev.zoom_link}' target='_blank'>Join Meeting</a><br>` : ''),
+          created_at: ev.created_at
+        });
+      });
       // Agreements
       agreementsRes.data?.forEach(ag => {
         allNews.push({
@@ -170,6 +187,10 @@
         let prefix = '';
         let title = item.title;
         let autoLink = '';
+        if (item.type === 'Event' && item.id) {
+          prefix = '<span style="font-size:1.2em;">📅</span> ';
+          autoLink = `<a href="events-calendar.html">View Calendar</a>`;
+        }
         if (item.type === 'Circle' && item.id) {
           prefix = '<span style="color:gold;font-size:1.2em;">&#9733;&#9733;&#9733;</span> <span style="font-size:1.2em;">👏👏</span> ';
           autoLink = `<a href="circle.html?id=${item.id}">View Circle</a>`;
@@ -191,7 +212,7 @@
         if (item.type === 'Skill Share' && item.id) {
           autoLink = `<a href="skill-share.html?id=${item.id}">View Skill Share</a>`;
         }
-        if (item.type === 'Member Offering' && item.id) {
+         if (item.type === 'Member Offering' && item.id) {
           autoLink = `<a href="member-offering.html?id=${item.id}">View Offering</a>`;
         }
         // If a manual link is present, use it instead
