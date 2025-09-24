@@ -66,6 +66,22 @@
         import { supabase } from '/lib/supabase.js';
 
         async function getActivities() {
+            // Count events attended (5 points each, from activities table)
+            const { data: attendedActs } = await supabase
+                .from('activities')
+                .select('user_id, event_attended')
+                .eq('type', 'event_attended');
+            const attendedByUser = {};
+            attendedActs?.forEach(row => {
+                if (row.user_id && row.user_id !== builderId) {
+                    attendedByUser[row.user_id] = (attendedByUser[row.user_id] || 0) + (row.event_attended ? 1 : 0);
+                }
+            });
+            Object.entries(attendedByUser).forEach(([userId, count]) => {
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0, events_attended: 0, projects_proposed: 0 };
+                breakdown[userId].events_attended = count;
+                activity[userId] = (activity[userId] || 0) + (count * 5);
+            });
             // Declare these at the top to avoid ReferenceError
             const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
             const activity = {};
@@ -295,6 +311,7 @@
                             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                             Circles Created: ${m.breakdown.circles_created || 0}<br>
                             Events Created: ${m.breakdown.events_created || 0}<br>
+                            Events Attended: ${m.breakdown.events_attended || 0}<br>
                             Members Added: ${m.breakdown.members_added || 0}<br>
                             Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                            Projects Proposed: ${m.breakdown.projects_proposed || 0}<br>
