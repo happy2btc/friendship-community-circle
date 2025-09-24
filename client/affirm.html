@@ -50,12 +50,11 @@
             affirmButton.disabled = true;
             statusEl.textContent = 'Recording your affirmation...';
 
-            // We'll save the current date as the affirmation text
+            // We'll save the current date as both affirmation_text and affirmation_date
             const affirmationValue = new Date().toISOString();
-
             const { error } = await supabase
                 .from('profiles')
-                .update({ affirmation_text: affirmationValue })
+                .update({ affirmation_text: affirmationValue, affirmation_date: affirmationValue })
                 .eq('id', currentUser.id);
 
             if (error) {
@@ -63,8 +62,8 @@
                 statusEl.style.color = 'red';
                 affirmButton.disabled = false;
             } else {
-                // Success! Redirect to the main menu.
-                window.location.href = 'menu.html';
+                // Success! Redirect to the welcome page.
+                window.location.href = 'welcome.html';
             }
         });
 
