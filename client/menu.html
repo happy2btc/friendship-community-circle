@@ -113,6 +113,7 @@
     <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
     <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
     <a href="circle-list.html" class="menu-button">🌐 Manage Circles</a>
+    
     <a href="community-chat.html" class="menu-button">💬 Community Chat</a>
     <a href="group-projects.html" class="menu-button" id="group-projects-btn">🛠️ Group Projects</a>
     <a href="skill-shares.html" class="menu-button" id="skill-shares-btn">🎬 Skill Shares</a>
@@ -121,8 +122,8 @@
     <button id="logout-button" class="logout-button">Log Out</button>
     <a href="events-calendar.html" class="menu-button">📅 Events Calendar</a>
     <div style="display:flex;gap:20px;margin-top:24px;max-width:800px;width:100%;">
-        <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="flex:1;text-align:center;">🧙 Coven Community Network</a>
-        <a href="http://localhost:5174/friendship-community-circle/circle.html?id=5516d022-5354-409d-9fcc-cc151df649b3" class="menu-button" style="flex:1;text-align:center;">💸 Universal Basic Income Circle</a>
+    <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="flex:1;text-align:center;">🧙 Coven Community Network</a>
+    <a href="http://localhost:5174/friendship-community-circle/circle.html?id=5516d022-5354-409d-9fcc-cc151df649b3" class="menu-button" style="flex:1;text-align:center;">💸 Universal Basic Income Circle</a>
     </div>
 </div>
     </div>
@@ -141,7 +142,7 @@ async function showMostActiveMember() {
         supabase.from('member_offerings').select('user_id, want, give, passion'),
         supabase.from('contributions').select('user_id, project, challenge, help, collab, skills, urgency, contact'),
         supabase.from('profiles').select('id, full_name, avatar_url, personal_story, bio, youtube, twitter, substack, facebook, instagram, linkedin, website'),
-    supabase.from('circles').select('id, name, created_by'),
+        supabase.from('circles').select('id, name, created_by'),
         supabase.from('circle_members').select('added_by'),
         supabase.from('celebrations').select('user_id')
     ]);
@@ -396,7 +397,7 @@ logoutButton.addEventListener('click', async () => {
     if (error) {
         console.error('Error logging out:', error);
     } else {
-        window.location.href = window.location.origin + '/index.html';
+    window.location.href = 'index.html';
     }
 });
 
