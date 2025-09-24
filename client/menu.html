@@ -113,11 +113,11 @@
     <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
     <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
     <a href="circle-list.html" class="menu-button">🌐 Manage Circles</a>
-    
-    <a href="community-chat.html" class="menu-button">💬 Community Chat</a>
+    <a href="event-details.html" class="menu-button">� Event Details & Attendance</a>
     <a href="group-projects.html" class="menu-button" id="group-projects-btn">🛠️ Group Projects</a>
     <a href="skill-shares.html" class="menu-button" id="skill-shares-btn">🎬 Skill Shares</a>
     <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
+    <a href="community-chat.html" class="menu-button">💬 Community Chat</a>
     <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements</a>
     <button id="logout-button" class="logout-button">Log Out</button>
     <a href="events-calendar.html" class="menu-button">📅 Events Calendar</a>
@@ -135,7 +135,7 @@ import { supabase } from '/lib/supabase.js';
 // Most Active Member
 async function showMostActiveMember() {
     // Fetch all activities
-    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes] = await Promise.all([
+    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, eventsRes] = await Promise.all([
         supabase.from('agreement_votes').select('voter_id, created_at'),
         supabase.from('suggestions').select('author_id, created_at'),
         supabase.from('comments').select('author_id, created_at'),
@@ -144,8 +144,11 @@ async function showMostActiveMember() {
         supabase.from('profiles').select('id, full_name, avatar_url, personal_story, bio, youtube, twitter, substack, facebook, instagram, linkedin, website'),
         supabase.from('circles').select('id, name, created_by'),
         supabase.from('circle_members').select('added_by'),
-        supabase.from('celebrations').select('user_id')
+        supabase.from('celebrations').select('user_id'),
+        supabase.from('events').select('id, created_by'),
     ]);
+    // eventsRes is already available from destructuring above
+        let attendanceRes = await supabase.from('event_attendance').select('event_id, user_id');
     const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
     const breakdown = {};
     function initBreakdown(id) {
@@ -161,7 +164,9 @@ async function showMostActiveMember() {
                 profile: 0,
                 circles_created: 0,
                 members_added: 0,
-                celebrations_posted: 0
+                celebrations_posted: 0,
+                events_created: 0,
+                events_attended: 0
             };
         }
     }
@@ -261,6 +266,22 @@ async function showMostActiveMember() {
             breakdown[userId].celebrations_posted += 1;
         }
     });
+    // Events created
+    eventsRes.data?.forEach(e => {
+        const creatorId = e.created_by;
+        if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
+            initBreakdown(creatorId);
+            breakdown[creatorId].events_created += 1;
+        }
+    });
+    // Events attended
+    attendanceRes.data?.forEach(a => {
+        const userId = a.user_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+            initBreakdown(userId);
+            breakdown[userId].events_attended += 1;
+        }
+    });
     // Get profiles for display
     const idToProfile = {};
     if (Array.isArray(profilesFullRes.data)) {
@@ -272,10 +293,22 @@ async function showMostActiveMember() {
     }
     // Build member activity list
     const userIds = Object.keys(breakdown).filter(id => id && id !== 'null');
+    const container = document.getElementById('most-active-member');
+    container.innerHTML = '';
     if (userIds.length === 0) {
-        document.getElementById('most-active-member').innerHTML = "<em>No other member has been active.</em>";
+        container.innerHTML = "<em>No other member has been active.</em>";
         return;
     }
+    // Optionally show debug info if needed:
+    // const debugBox = document.createElement('pre');
+    // debugBox.style.background = '#f8f8f8';
+    // debugBox.style.fontSize = '0.8em';
+    // debugBox.style.maxHeight = '200px';
+    // debugBox.style.overflow = 'auto';
+    // debugBox.style.margin = '1em 0';
+    // debugBox.textContent = 'DEBUG: userIds=' + JSON.stringify(userIds, null, 2) + '\n' +
+    //     'breakdown=' + JSON.stringify(breakdown, null, 2);
+    // container.appendChild(debugBox);
     // Calculate total for each user
     const members = userIds.map(id => {
         const b = breakdown[id];
@@ -288,6 +321,9 @@ async function showMostActiveMember() {
             (b.offers || 0) * 1 +
             (b.passion || 0) * 1 +
             (b.projects || 0) * 1 +
+            (b.projects_proposed || 0) * 5 +
+            (b.events_created || 0) * 5 +
+            (b.events_attended || 0) * 5 +
             (b.profile || 0) * 5 +
             (b.circles_created || 0) * 10 +
             (b.members_added || 0) * 2 +
@@ -301,7 +337,6 @@ async function showMostActiveMember() {
     });
     members.sort((a, b) => b.total - a.total);
     const m = members[0];
-    const container = document.getElementById('most-active-member');
     container.innerHTML = `
         <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
         <h3>${m.profile.full_name}</h3>
@@ -314,6 +349,8 @@ async function showMostActiveMember() {
             Offers: ${m.breakdown.offers || 0}<br>
             Passion: ${m.breakdown.passion || 0}<br>
             Projects & Struggles: ${m.breakdown.projects || 0}<br>
+            Events Created: ${m.breakdown.events_created || 0}<br>
+            Events Attended: ${m.breakdown.events_attended || 0}<br>
             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
             Circles Created: ${m.breakdown.circles_created || 0}<br>
             Members Added: ${m.breakdown.members_added || 0}<br>
