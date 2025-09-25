@@ -81,6 +81,9 @@
     <label for="passion">🔥 What is your passion?</label>
     <textarea id="passion" name="passion" rows="3"></textarea>
 
+    <label for="offer-image">🖼️ Offer Image (optional)</label>
+    <input type="file" id="offer-image" accept="image/*" />
+
     <label>
       <input type="checkbox" id="visible" checked />
       Make this visible to others in the Circle
@@ -152,15 +155,32 @@
         return;
       }
 
+      let image_url = null;
+      const imageInput = document.getElementById('offer-image');
+      if (imageInput.files.length > 0) {
+        const file = imageInput.files[0];
+        const filePath = `offers/${user.id}_${Date.now()}_${file.name}`;
+        const { data, error: uploadError } = await supabase.storage
+          .from('offer-images')
+          .upload(filePath, file);
+        if (uploadError) {
+          confirmationDiv.textContent = 'Error uploading image: ' + uploadError.message;
+          confirmationDiv.style.color = '#a94442';
+          submitButton.disabled = false;
+          return;
+        }
+        image_url = supabase.storage.from('offer-images').getPublicUrl(filePath).data.publicUrl;
+      }
+
       const offeringData = {
-        user_id: user.id, // The new primary key
+        user_id: user.id,
         want: document.getElementById("want").value,
         give: document.getElementById("give").value,
         passion: document.getElementById("passion").value,
-        visible: document.getElementById("visible").checked
+        visible: document.getElementById("visible").checked,
+        image_url
       };
 
-      // Upsert the data. Supabase will use the primary key (user_id) for the conflict check.
       const { error } = await supabase.from('member_offerings').upsert(offeringData);
 
       if (error) {
@@ -170,6 +190,7 @@
       } else {
         confirmationDiv.textContent = "✅ Your offering has been updated!";
         confirmationDiv.style.color = 'green';
+        form.reset();
       }
       submitButton.disabled = false;
     });
