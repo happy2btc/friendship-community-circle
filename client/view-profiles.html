@@ -33,6 +33,19 @@
       background: #eee;
       flex-shrink: 0;
     }
+    .avatar-placeholder {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #ddd;
+      border: 2px dashed #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 1.5em;
+      flex-shrink: 0;
+    }
     .profile-details {
       flex: 1;
     }
@@ -108,11 +121,16 @@
       }
 
       profilesList.innerHTML = '';
-      profiles.forEach(profile => {
+
+      // Separate profiles with and without avatar images
+      const withAvatar = profiles.filter(p => p.avatar_url && p.avatar_url.trim() !== '');
+      const withoutAvatar = profiles.filter(p => !p.avatar_url || p.avatar_url.trim() === '');
+
+      // Render profiles with avatar images first
+      withAvatar.forEach(profile => {
         const li = document.createElement('li');
         li.className = 'profile-item';
 
-        // Make the whole profile item a link to the member's full profile page
         const profileLink = document.createElement('a');
         profileLink.href = `profile.html?id=${profile.id}`;
         profileLink.style.display = 'flex';
@@ -121,19 +139,12 @@
         profileLink.style.textDecoration = 'none';
         profileLink.style.color = 'inherit';
 
-        // Profile image
         const img = document.createElement('img');
         img.className = 'profile-img';
         const avatarSrc = getAvatarUrl(profile.avatar_url);
-        if (avatarSrc) {
-          img.src = avatarSrc;
-          img.alt = `${profile.full_name}'s profile picture`;
-        } else {
-          img.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.full_name || 'User');
-          img.alt = 'Default avatar';
-        }
+        img.src = avatarSrc;
+        img.alt = `${profile.full_name}'s profile picture`;
 
-        // Details
         const detailsDiv = document.createElement('div');
         detailsDiv.className = 'profile-details';
 
@@ -148,7 +159,6 @@
         detailsDiv.appendChild(nameDiv);
         detailsDiv.appendChild(bioDiv);
 
-        // Social links
         const socialFields = [
           { key: 'youtube', label: 'YouTube' },
           { key: 'twitter', label: 'Twitter/X' },
@@ -179,6 +189,80 @@
         li.appendChild(profileLink);
         profilesList.appendChild(li);
       });
+
+      // Separator and heading for profiles without avatar images
+      if (withoutAvatar.length > 0) {
+        const hr = document.createElement('hr');
+        profilesList.appendChild(hr);
+
+        const heading = document.createElement('h3');
+        heading.textContent = 'Profiles without avatar images:';
+        heading.style.textAlign = 'center';
+        heading.style.color = '#4a7c59';
+        profilesList.appendChild(heading);
+
+        withoutAvatar.forEach(profile => {
+          const li = document.createElement('li');
+          li.className = 'profile-item';
+
+          const profileLink = document.createElement('a');
+          profileLink.href = `profile.html?id=${profile.id}`;
+          profileLink.style.display = 'flex';
+          profileLink.style.alignItems = 'center';
+          profileLink.style.gap = '1.5rem';
+          profileLink.style.textDecoration = 'none';
+          profileLink.style.color = 'inherit';
+
+          // Placeholder avatar
+          const placeholder = document.createElement('div');
+          placeholder.className = 'avatar-placeholder';
+          placeholder.textContent = '👤';
+
+          const detailsDiv = document.createElement('div');
+          detailsDiv.className = 'profile-details';
+
+          const nameDiv = document.createElement('div');
+          nameDiv.className = 'profile-name';
+          nameDiv.textContent = profile.full_name || 'No Name';
+
+          const bioDiv = document.createElement('div');
+          bioDiv.className = 'profile-bio';
+          bioDiv.textContent = profile.bio || '';
+
+          detailsDiv.appendChild(nameDiv);
+          detailsDiv.appendChild(bioDiv);
+
+          const socialFields = [
+            { key: 'youtube', label: 'YouTube' },
+            { key: 'twitter', label: 'Twitter/X' },
+            { key: 'substack', label: 'Substack' },
+            { key: 'website', label: 'Website' },
+            { key: 'linkedin', label: 'LinkedIn' },
+            { key: 'facebook', label: 'Facebook' },
+            { key: 'instagram', label: 'Instagram' }
+          ];
+          socialFields.forEach(field => {
+            const value = profile[field.key];
+            if (value && value.trim() !== '') {
+              const link = document.createElement('a');
+              link.href = value.trim();
+              link.textContent = field.label;
+              link.target = '_blank';
+              link.style.color = '#2196f3';
+              link.style.textDecoration = 'underline';
+              link.style.display = 'inline-block';
+              link.style.marginRight = '12px';
+              link.style.marginTop = '4px';
+              detailsDiv.appendChild(link);
+            }
+          });
+
+          profileLink.appendChild(placeholder);
+          profileLink.appendChild(detailsDiv);
+          li.appendChild(profileLink);
+          profilesList.appendChild(li);
+        });
+      }
     }
 
     loadProfiles();

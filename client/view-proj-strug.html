@@ -73,11 +73,6 @@
         
         content += `<div class="spacer"></div>`;
 
-    if (scroll.email) {
-      const mailtoLink = `mailto:${scroll.email}?subject=Response to your Community Project & Struggle`;
-      content += `<a href="${mailtoLink}" class="respond-button">Respond to ${scroll.full_name || 'Member'}</a>`;
-    }
-
         card.innerHTML = content;
         container.appendChild(card);
       }
