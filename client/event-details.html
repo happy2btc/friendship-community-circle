@@ -87,7 +87,10 @@
 
     async function loadAttendance(eventId) {
       if (!eventId) return;
-      const { data: attendance, error } = await supabase.from('event_attendance').select('user_id, attended_at').eq('event_id', eventId);
+      const { data: attendance, error } = await supabase
+        .from('event_attendance')
+        .select('user_id, attended_at')
+        .eq('event_id', eventId);
       if (error) {
         attendanceList.innerHTML = '<li>Error loading attendance.</li>';
         return;
@@ -96,9 +99,20 @@
         attendanceList.innerHTML = '<li>No one has attended yet.</li>';
         return;
       }
+      // Get profiles for all attending users
+      const userIds = attendance.map(a => a.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
+      // Map user_id to full_name
+      const idToName = {};
+      profiles?.forEach(p => { idToName[p.id] = p.full_name; });
+      // Display attendance with names
       attendanceList.innerHTML = '';
       for (const record of attendance) {
-        attendanceList.innerHTML += `<li>User: ${record.user_id} <span style="color:#888;">(${record.attended_at ? new Date(record.attended_at).toLocaleString() : ''})</span></li>`;
+        const name = idToName[record.user_id] || record.user_id;
+        attendanceList.innerHTML += `<li>${name} <span style="color:#888;">(${record.attended_at ? new Date(record.attended_at).toLocaleString() : ''})</span></li>`;
       }
     }
 
