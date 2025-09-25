@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    .menu-top-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background:#6b4f1d;
+      color:#fff;
+      padding:12px 20px;
+      border-radius:6px;
+      text-decoration:none;
+      font-weight:bold;
+      z-index:1000;
+      box-shadow: 0 2px 8px #eee;
+    }
+    .menu-top-btn:hover {
+      background:#8c6f4e;
+    }
+  </style>
+  <meta charset="UTF-8">
+  <title>Event Details & Attendance</title>
+  <link rel="icon" href="data:," />
+  <link rel="shortcut icon" href="data:," />
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; color: #222; }
+    h1 { text-align: center; color: #2e8b57; }
+    #event-details { max-width: 600px; margin: 2em auto; background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 2px 8px #eee; }
+    #attendance-list { margin-top: 2em; }
+    #attendance-list li { margin-bottom: 0.5em; }
+    .attend-btn { background: #4a7c59; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .attend-btn:disabled { background: #ccc; }
+  </style>
+</head>
+<body>
+  <a href="menu.html" class="menu-top-btn">← Back to Menu</a>
+  <h1>Event Details & Attendance</h1>
+  <div style="text-align:center;margin-bottom:2em;">
+    <label for="event-select"><strong>Select Event:</strong></label>
+    <select id="event-select" style="padding:8px 12px;border-radius:6px;font-size:1em;"></select>
+  </div>
+  <div id="event-details"></div>
+  <h2 style="text-align:center;">Attendance</h2>
+  <ul id="attendance-list"></ul>
+  <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
+  <div id="status"></div>
+  <a href="events.html" class="attend-btn" style="display:block;width:fit-content;margin:2em auto 0 auto;">← Back to Events</a>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    const eventSelect = document.getElementById('event-select');
+    const eventDetailsDiv = document.getElementById('event-details');
+    const attendanceList = document.getElementById('attendance-list');
+    const attendBtn = document.getElementById('attend-btn');
+    const statusDiv = document.getElementById('status');
+    let currentEventId = null;
+
+    async function loadEventList() {
+      const { data: events, error } = await supabase.from('events').select('id, title').order('start_time', { ascending: true });
+      if (error || !events || events.length === 0) {
+        eventSelect.innerHTML = '<option value="">No events found</option>';
+        eventDetailsDiv.textContent = 'No event selected.';
+        attendBtn.style.display = 'none';
+        return;
+      }
+      eventSelect.innerHTML = events.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+      currentEventId = events[0].id;
+      await loadEvent(currentEventId);
+      await loadAttendance(currentEventId);
+    }
+
+    async function loadEvent(eventId) {
+      if (!eventId) {
+        eventDetailsDiv.textContent = 'No event selected.';
+        attendBtn.style.display = 'none';
+        return;
+      }
+      const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
+      if (error || !event) {
+        eventDetailsDiv.textContent = 'Event not found.';
+        attendBtn.style.display = 'none';
+        return;
+      }
+      eventDetailsDiv.innerHTML = `<h2>${event.title}</h2><div><strong>Date:</strong> ${event.start_time ? new Date(event.start_time).toLocaleString() : ''}</div><div><strong>Description:</strong> ${event.description || ''}</div>`;
+      attendBtn.style.display = '';
+    }
+
+    async function loadAttendance(eventId) {
+      if (!eventId) return;
+      const { data: attendance, error } = await supabase.from('event_attendance').select('user_id, attended_at').eq('event_id', eventId);
+      if (error) {
+        attendanceList.innerHTML = '<li>Error loading attendance.</li>';
+        return;
+      }
+      if (!attendance || attendance.length === 0) {
+        attendanceList.innerHTML = '<li>No one has attended yet.</li>';
+        return;
+      }
+      attendanceList.innerHTML = '';
+      for (const record of attendance) {
+        attendanceList.innerHTML += `<li>User: ${record.user_id} <span style="color:#888;">(${record.attended_at ? new Date(record.attended_at).toLocaleString() : ''})</span></li>`;
+      }
+    }
+
+    eventSelect.addEventListener('change', async (e) => {
+      currentEventId = e.target.value;
+      await loadEvent(currentEventId);
+      await loadAttendance(currentEventId);
+    });
+
+    attendBtn.addEventListener('click', async () => {
+      attendBtn.disabled = true;
+      statusDiv.textContent = '';
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        statusDiv.textContent = 'You must be logged in to mark attendance.';
+        attendBtn.disabled = false;
+        return;
+      }
+      const { error } = await supabase.from('event_attendance').insert({ event_id: currentEventId, user_id: user.id, attended_at: new Date().toISOString() });
+      if (error) {
+        statusDiv.textContent = 'Error marking attendance: ' + error.message;
+        attendBtn.disabled = false;
+      } else {
+        statusDiv.textContent = 'Attendance marked!';
+        await loadAttendance(currentEventId);
+      }
+      attendBtn.disabled = false;
+    });
+
+    // Initial load
+    loadEventList();
+  </script>
+</body>
+</html>
