@@ -340,7 +340,7 @@ async function showMostActiveMember() {
     container.innerHTML = `
         <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
         <h3>${m.profile.full_name}</h3>
-        <div class="activity-breakdown">
+        <div class="activity-breakdown" >
             <strong>All-Time Activities:</strong><br>
             Votes: ${m.breakdown.votes || 0}<br>
             Suggestions: ${m.breakdown.suggestions || 0}<br>
@@ -415,11 +415,11 @@ async function showNewestMember() {
                 }
             }
         }
+
         const memberCard = document.createElement('div');
         memberCard.className = 'member-card';
         memberCard.style.marginBottom = '1em';
         memberCard.innerHTML = `
-            <img src="${profile.avatar_url || 'default-avatar.png'}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
             <strong>${profile.full_name || 'Unnamed Member'}</strong>
             <div style="color:#888;">Joined: ${profile.affirmation_date ? new Date(profile.affirmation_date).toLocaleDateString() : '—'}</div>
             <div style="color:#555;">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
@@ -441,6 +441,7 @@ logoutButton.addEventListener('click', async () => {
 // Initial loads
 showMostActiveMember();
 showNewestMember();
+
 </script>
 </body>
 </html>
