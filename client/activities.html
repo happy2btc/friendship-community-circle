@@ -70,15 +70,15 @@
             const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
             const activity = {};
             const breakdown = {};
-            // Count events attended (5 points each, from activities table)
+            // Count events attended (5 points each, from event_attendance table)
             const { data: attendedActs } = await supabase
-                .from('activities')
-                .select('user_id, event_attended')
-                .eq('type', 'event_attended');
+                .from('event_attendance')
+                .select('user_id');
+            console.log('DEBUG: attendedActs from event_attendance', attendedActs);
             const attendedByUser = {};
             attendedActs?.forEach(row => {
                 if (row.user_id && row.user_id !== builderId) {
-                    attendedByUser[row.user_id] = (attendedByUser[row.user_id] || 0) + (row.event_attended ? 1 : 0);
+                    attendedByUser[row.user_id] = (attendedByUser[row.user_id] || 0) + 1;
                 }
             });
             Object.entries(attendedByUser).forEach(([userId, count]) => {
