@@ -83,7 +83,7 @@
     </style>
 </head>
 <body>
-    <h1>🌸 Welcome to the Community</h1>
+        <h1>🌸 Welcome to the Community</h1>
 
         <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
             <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
@@ -128,7 +128,9 @@
 </div>
     </div>
 
-    <script type="module">
+        <script>
+        </script>
+        <script type="module">
 // Optional: If you want to filter projects by circle, you can add a dropdown and redirect logic here.
 import { supabase } from '/lib/supabase.js';
 
@@ -419,7 +421,12 @@ async function showNewestMember() {
         const memberCard = document.createElement('div');
         memberCard.className = 'member-card';
         memberCard.style.marginBottom = '1em';
+        // Use avatar_url or default
+        const avatarUrl = profile.avatar_url && profile.avatar_url.trim() !== ''
+            ? profile.avatar_url
+            : 'public/default-avatar.png';
         memberCard.innerHTML = `
+            <img src="${avatarUrl}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:0.5em;">
             <strong>${profile.full_name || 'Unnamed Member'}</strong>
             <div style="color:#888;">Joined: ${profile.affirmation_date ? new Date(profile.affirmation_date).toLocaleDateString() : '—'}</div>
             <div style="color:#555;">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
