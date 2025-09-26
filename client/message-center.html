@@ -11,17 +11,56 @@
     .message.me { text-align: right; color: #2e8b57; }
     .message.them { text-align: left; color: #6b4f1d; }
     .chat-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
-    .send-btn { background: #2e8b57; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .send-btn {
+      background: #2e8b57;
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 14px;
+      font-size: 1.1em;
+      box-shadow: 0 2px 6px rgba(46,139,87,0.12);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .send-btn:hover {
+      background: #6b4f1d;
+      box-shadow: 0 4px 12px rgba(107,79,29,0.18);
+    }
+    .nav-btn {
+      display: block;
+      width: 100%;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 0;
+      margin-bottom: 18px;
+      margin-top: 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .nav-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
   </style>
 </head>
 <body>
   <div class="chat-container">
   <h2>💬 Message Center</h2>
+  <a href="inbox.html" class="nav-btn">🔙 Back to Inbox</a>
   <div id="member-info" style="margin-bottom:1em;"></div>
   <div id="messages" class="messages"></div>
   <input id="chat-input" class="chat-input" type="text" placeholder="Type your message...">
   <button id="send-btn" class="send-btn">Send</button>
-  <a href="view-proj-strug.html" style="display:block;margin-top:2em;">🔙 Back to Projects & Struggles</a>
+  <a href="view-proj-strug.html" class="nav-btn" style="margin-top:2em;">🔙 Back to Projects & Struggles</a>
   </div>
   <script type="module">
     // Fetch and display member info and projects/struggles

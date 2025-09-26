@@ -175,11 +175,12 @@
           // --- SIGN UP LOGIC ---
           const name = formData.get('name');
           const phone = formData.get('phone');
+          const invitedBy = formData.get('invited-by');
 
           let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email,
             password: password,
-            options: { data: { full_name: name, phone: phone } }
+            options: { data: { full_name: name, phone: phone, invited_by: invitedBy } }
           });
 
           if (signUpError) throw signUpError;
