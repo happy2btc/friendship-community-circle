@@ -58,6 +58,11 @@
         if (scroll.contact) content += `<p><strong>📬 Preferred Contact:</strong> ${scroll.contact}</p>`;
         
         content += `<div class="spacer"></div>`;
+        // Add message button if profile_id exists
+        if (scroll.profile_id) {
+          const memberName = scroll.full_name || 'this member';
+          content += `<a href="message-center.html?to=${encodeURIComponent(scroll.profile_id)}" class="respond-button" style="display:inline-block;margin:8px 0 16px 0;padding:8px 16px;background:#2e8b57;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;">💬 Message ${memberName}</a>`;
+        }
 
         card.innerHTML = content;
         container.appendChild(card);

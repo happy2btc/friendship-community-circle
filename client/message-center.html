@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>💬 Message Center</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .chat-container { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
+    .messages { min-height: 200px; margin-bottom: 1rem; }
+    .message { margin-bottom: 1em; }
+    .message.me { text-align: right; color: #2e8b57; }
+    .message.them { text-align: left; color: #6b4f1d; }
+    .chat-input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+    .send-btn { background: #2e8b57; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+  <h2>💬 Message Center</h2>
+  <div id="member-info" style="margin-bottom:1em;"></div>
+  <div id="messages" class="messages"></div>
+  <input id="chat-input" class="chat-input" type="text" placeholder="Type your message...">
+  <button id="send-btn" class="send-btn">Send</button>
+  <a href="view-proj-strug.html" style="display:block;margin-top:2em;">🔙 Back to Projects & Struggles</a>
+  </div>
+  <script type="module">
+    // Fetch and display member info and projects/struggles
+    async function showMemberInfo() {
+      if (!to || !isValidUUID(to)) return;
+      // Fetch member profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, bio')
+        .eq('id', to)
+        .single();
+      // Fetch member's projects/struggles (assuming table: member_projects or similar)
+      const { data: struggles } = await supabase
+        .from('member_struggles')
+        .select('project, struggle')
+        .eq('profile_id', to);
+      let html = '';
+      if (profile) {
+        html += `<strong>${profile.full_name || 'Unnamed Member'}</strong><br>`;
+        if (profile.bio) html += `<div style="color:#888;">${profile.bio}</div>`;
+      }
+      if (struggles && struggles.length > 0) {
+        html += '<ul style="margin:0.5em 0 0 0;padding:0;list-style:none;">';
+        for (const s of struggles) {
+          html += `<li><span style="color:#2e8b57;font-weight:bold;">Project:</span> ${s.project || ''}<br><span style="color:#6b4f1d;">Struggle:</span> ${s.struggle || ''}</li>`;
+        }
+        html += '</ul>';
+      }
+      document.getElementById('member-info').innerHTML = html;
+    }
+
+    import { supabase } from '/lib/supabase.js';
+
+    // Get recipient from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const to = urlParams.get('to');
+
+    // Validate 'to' parameter (must be a valid UUID)
+    function isValidUUID(uuid) {
+      return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+    }
+
+    if (!to || !isValidUUID(to)) {
+      document.getElementById('messages').innerHTML = '<p style="color:red;">No valid member selected. Please use the "Message this member" button from the projects page.</p>';
+      document.getElementById('chat-input').disabled = true;
+      document.getElementById('send-btn').disabled = true;
+      document.getElementById('member-info').innerHTML = '';
+    } else {
+      // Get current user (assumes you have auth set up)
+      let currentUserId = null;
+      supabase.auth.getUser().then(({ data }) => {
+        currentUserId = data?.user?.id;
+        loadMessages();
+        showMemberInfo();
+      });
+
+      async function loadMessages() {
+        if (!currentUserId || !to) return;
+        const { data: messages, error } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`from.eq.${currentUserId},from.eq.${to}`)
+          .or(`to.eq.${currentUserId},to.eq.${to}`)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          document.getElementById('messages').innerHTML = `<p style="color:red;">Error loading messages: ${error.message}</p>`;
+          return;
+        }
+
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = '';
+        for (const msg of messages) {
+          const div = document.createElement('div');
+          div.className = 'message ' + (msg.from === currentUserId ? 'me' : 'them');
+          div.textContent = msg.body;
+          messagesDiv.appendChild(div);
+        }
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      document.getElementById('send-btn').onclick = async () => {
+        const input = document.getElementById('chat-input');
+        const body = input.value.trim();
+        if (!body || !currentUserId || !to) return;
+        const { error } = await supabase.from('messages').insert([
+          { from: currentUserId, to, body }
+        ]);
+        if (!error) {
+          input.value = '';
+          loadMessages();
+        }
+      };
+    }
+  </script>
+</body>
+</html>

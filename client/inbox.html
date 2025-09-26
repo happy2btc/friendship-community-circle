@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📬 Message Center / Inbox</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .inbox-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
+    .message-list { margin-bottom: 2rem; }
+    .message-item { border-bottom: 1px solid #eee; padding: 1em 0; }
+    .message-item.unread { background: #e6f7f2; font-weight: bold; }
+    .sender { color: #2e8b57; font-weight: bold; }
+    .message-body { margin: 0.5em 0; }
+    .message-date { color: #888; font-size: 0.9em; }
+    .open-chat-btn { background: #2e8b57; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="inbox-container">
+    <h2>📬 Message Center / Inbox</h2>
+    <div id="message-list" class="message-list"></div>
+    <a href="menu.html" style="display:block;margin-top:2em;">🔙 Back to Menu</a>
+  </div>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    let currentUserId = null;
+    supabase.auth.getUser().then(async ({ data }) => {
+      currentUserId = data?.user?.id;
+      if (!currentUserId) {
+        document.getElementById('message-list').innerHTML = '<p style="color:red;">Please log in to view your messages.</p>';
+        return;
+      }
+      // Fetch messages sent to the current user
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('id, from, body, created_at, is_read')
+        .eq('to', currentUserId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        document.getElementById('message-list').innerHTML = `<p style="color:red;">Error loading messages: ${error.message}</p>`;
+        return;
+      }
+      if (!messages || messages.length === 0) {
+        document.getElementById('message-list').innerHTML = '<p>No messages yet.</p>';
+        return;
+      }
+      let html = '';
+      for (const msg of messages) {
+        html += `<div class="message-item${msg.is_read === false ? ' unread' : ''}">
+          <span class="sender">From: ${msg.from}</span>
+          <div class="message-body">${msg.body}</div>
+          <div class="message-date">${new Date(msg.created_at).toLocaleString()}</div>
+          <a href="message-center.html?to=${msg.from}" class="open-chat-btn">Open Chat</a>
+        </div>`;
+      }
+      document.getElementById('message-list').innerHTML = html;
+    });
+  </script>
+</body>
+</html>
