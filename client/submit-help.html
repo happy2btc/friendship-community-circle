@@ -23,10 +23,20 @@
     .back-menu-btn:hover {
       background: #4a7c59;
     }
-    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
     .form-container { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
-    label { display: block; margin-top: 1em; font-weight: bold; }
-    input, textarea, select { width: 100%; padding: 10px; margin-top: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; box-sizing: border-box; }
+    form label, form select, form input, form textarea, form button {
+      display: block;
+      width: 100%;
+      margin-top: 1em;
+      box-sizing: border-box;
+    }
+    form input, form select, form textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      margin-top: 8px;
+    }
     button {
       background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
       color: #fff;
@@ -59,23 +69,23 @@
       <label for="helper">Who gave help?</label>
       <select id="helper" name="helper" required></select>
 
-      <label for="recipient">Who received help?</label>
-      <select id="recipient" name="recipient" required></select>
+  <label for="recipient">Who received help?</label>
+  <select id="recipient" name="recipient" required></select>
 
-      <label for="hours">How many hours?</label>
-      <input type="number" id="hours" name="hours" min="0.25" step="0.25" required>
+  <label for="hours">How many hours?</label>
+  <input type="number" id="hours" name="hours" min="0.25" step="0.25" required>
 
-      <label for="details">Details (optional)</label>
-      <textarea id="details" name="details" rows="3"></textarea>
+  <label for="details">Details (optional)</label>
+  <textarea id="details" name="details" rows="3"></textarea>
 
-      <button type="submit">Submit & Award Tokens</button>
-      <div id="form-status" class="form-status"></div>
+  <button type="submit">Submit & Award Tokens</button>
+  <div id="form-status" class="form-status"></div>
     </form>
   </div>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
-    // Populate member dropdowns
+    // Populate member dropdowns for helper and recipient
     async function populateMembers() {
       const { data: profiles, error } = await supabase.from('profiles').select('id, full_name');
       if (error) return;
@@ -115,9 +125,9 @@
       } else {
         formStatus.textContent = `Success! ${tokens} tokens awarded for ${hours} hours of help.`;
         formStatus.style.color = '#2e8b57';
-        document.getElementById('help-form').reset();
+            document.getElementById('help-form').reset();
       }
-    };
+        };
   </script>
 </body>
 </html>

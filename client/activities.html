@@ -73,17 +73,24 @@
             // Count help given (5 points per hour)
             const { data: helpGiven } = await supabase
                 .from('help_given')
-                .select('helper_id, hours');
+                .select('helper_id, hours')
+                .order('created_at', { ascending: false });
             const helpByUser = {};
+            const helpByUserRecent = {};
             helpGiven?.forEach(row => {
                 if (row.helper_id && row.hours && row.helper_id !== builderId) {
-                    helpByUser[row.helper_id] = (helpByUser[row.helper_id] || 0) + row.hours;
+                    helpByUser[row.helper_id] = (helpByUser[row.helper_id] || 0) + Number(row.hours);
+                    helpByUserRecent[row.helper_id] = helpByUserRecent[row.helper_id] || [];
+                    if (helpByUserRecent[row.helper_id].length < 2) {
+                        helpByUserRecent[row.helper_id].push(Number(row.hours));
+                    }
                 }
             });
             Object.entries(helpByUser).forEach(([userId, hours]) => {
-                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, help_hours: 0, help_points: 0 };
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, help_hours: 0, help_points: 0, help_hours_recent: 0 };
                 breakdown[userId].help_hours = hours;
                 breakdown[userId].help_points = hours * 5;
+                breakdown[userId].help_hours_recent = (helpByUserRecent[userId] || []).reduce((a, b) => a + b, 0);
                 activity[userId] = (activity[userId] || 0) + (hours * 5);
             });
             // Count events attended (5 points each, from event_attendance table)
@@ -324,7 +331,7 @@
                                 Offers: ${m.breakdown.offers || 0}<br>
                                 Passion: ${m.breakdown.passion || 0}<br>
                                 Projects & Struggles: ${m.breakdown.projects || 0}<br>
-                                Help Given: ${m.breakdown.help_hours || 0} hours (${m.breakdown.help_points || 0} pts)<br>
+                                Help Given: ${m.breakdown.help_hours_recent || 0}<br>
                                 Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                                 Circles Created: ${m.breakdown.circles_created || 0}<br>
                                 Events Created: ${m.breakdown.events_created || 0}<br>
@@ -354,7 +361,7 @@
                             Offers: ${m.breakdown.offers || 0}<br>
                             Passion: ${m.breakdown.passion || 0}<br>
                             Projects & Struggles: ${m.breakdown.projects || 0}<br>
-                            Help Given: ${m.breakdown.help_hours || 0} hours (${m.breakdown.help_points || 0} pts)<br>
+                            Help Given: ${m.breakdown.help_hours_recent || 0}<br>
                             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                             Circles Created: ${m.breakdown.circles_created || 0}<br>
                             Events Created: ${m.breakdown.events_created || 0}<br>
