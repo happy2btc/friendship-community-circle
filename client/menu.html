@@ -115,6 +115,8 @@
     <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
     <a href="circle-list.html" class="menu-button">🌐 Manage Circles</a>
     <a href="event-details.html" class="menu-button">� Event Details & Attendance</a>
+    <a href="help-given.html" class="menu-button">🤝 Help Given</a>
+    <a href="submit-help.html" class="menu-button">📝 Submit Help Given</a>
     <a href="inbox.html" class="menu-button">📬 Inbox</a>
     <a href="group-projects.html" class="menu-button" id="group-projects-btn">🛠️ Group Projects</a>
     <a href="skill-shares.html" class="menu-button" id="skill-shares-btn">🎬 Skill Shares</a>
@@ -354,6 +356,7 @@ async function showMostActiveMember() {
             Offers: ${m.breakdown.offers || 0}<br>
             Passion: ${m.breakdown.passion || 0}<br>
             Projects & Struggles: ${m.breakdown.projects || 0}<br>
+            <span style="color:#2e8b57;font-weight:bold;">Help Given: ${m.breakdown.help_hours || 0} hours (${m.breakdown.help_points || 0} pts)</span><br>
             Events Created: ${m.breakdown.events_created || 0}<br>
             Events Attended: ${m.breakdown.events_attended || 0}<br>
             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
