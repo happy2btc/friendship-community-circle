@@ -142,7 +142,7 @@ import { supabase } from '/lib/supabase.js';
 // Most Active Member
 async function showMostActiveMember() {
     // Fetch all activities
-    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, eventsRes] = await Promise.all([
+    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, eventsRes, helpGivenRes] = await Promise.all([
         supabase.from('agreement_votes').select('voter_id, created_at'),
         supabase.from('suggestions').select('author_id, created_at'),
         supabase.from('comments').select('author_id, created_at'),
@@ -153,9 +153,9 @@ async function showMostActiveMember() {
         supabase.from('circle_members').select('added_by'),
         supabase.from('celebrations').select('user_id'),
         supabase.from('events').select('id, created_by'),
+        supabase.from('help_given').select('helper_id, hours')
     ]);
-    // eventsRes is already available from destructuring above
-        let attendanceRes = await supabase.from('event_attendance').select('event_id, user_id');
+    let attendanceRes = await supabase.from('event_attendance').select('event_id, user_id');
     const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
     const breakdown = {};
     function initBreakdown(id) {
@@ -173,9 +173,21 @@ async function showMostActiveMember() {
                 members_added: 0,
                 celebrations_posted: 0,
                 events_created: 0,
-                events_attended: 0
+                events_attended: 0,
+                help_hours: 0,
+                help_points: 0
             };
         }
+    }
+    // Help Given: tally hours and points per helper
+    if (helpGivenRes.data) {
+        helpGivenRes.data.forEach(row => {
+            if (row.helper_id && row.hours && row.helper_id !== builderId) {
+                initBreakdown(row.helper_id);
+                breakdown[row.helper_id].help_hours = (breakdown[row.helper_id].help_hours || 0) + row.hours;
+                breakdown[row.helper_id].help_points = (breakdown[row.helper_id].help_points || 0) + (row.hours * 5);
+            }
+        });
     }
     // Votes
     votesRes.data?.forEach(v => {
@@ -334,7 +346,8 @@ async function showMostActiveMember() {
             (b.profile || 0) * 5 +
             (b.circles_created || 0) * 10 +
             (b.members_added || 0) * 2 +
-            (b.celebrations_posted || 0) * 5;
+            (b.celebrations_posted || 0) * 5 +
+            (b.help_points || 0);
         return {
             id,
             profile,
