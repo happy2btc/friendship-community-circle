@@ -81,9 +81,8 @@
                 if (row.helper_id && row.hours && row.helper_id !== builderId) {
                     helpByUser[row.helper_id] = (helpByUser[row.helper_id] || 0) + Number(row.hours);
                     helpByUserRecent[row.helper_id] = helpByUserRecent[row.helper_id] || [];
-                    if (helpByUserRecent[row.helper_id].length < 2) {
-                        helpByUserRecent[row.helper_id].push(Number(row.hours));
-                    }
+                    // To correctly sum all help given, remove the limit on pushing to helpByUserRecent
+                    helpByUserRecent[row.helper_id].push(Number(row.hours));
                 }
             });
             Object.entries(helpByUser).forEach(([userId, hours]) => {
