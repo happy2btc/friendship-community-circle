@@ -182,7 +182,7 @@ async function showMostActiveMember() {
         helpGivenRes.data.forEach(row => {
             if (row.helper_id && row.hours && row.helper_id !== builderId) {
                 initBreakdown(row.helper_id);
-                breakdown[row.helper_id].help_hours = (breakdown[row.helper_id].help_hours || 0) + row.hours;
+                breakdown[row.helper_id].help_hours = (Number(breakdown[row.helper_id].help_hours) || 0) + Number(row.hours);
                 breakdown[row.helper_id].help_points = (breakdown[row.helper_id].help_points || 0) + (row.hours * 5);
             }
         });
