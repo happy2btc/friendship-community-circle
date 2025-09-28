@@ -81,8 +81,9 @@
     <label for="passion">🔥 What is your passion?</label>
     <textarea id="passion" name="passion" rows="3"></textarea>
 
-    <label for="offer-image">🖼️ Offer Image (optional)</label>
-    <input type="file" id="offer-image" accept="image/*" />
+    <label for="offer-images">🖼️ Offer Images (optional)</label>
+    <input type="file" id="offer-images" accept="image/*" multiple />
+    <div id="image-thumbnails" style="margin-top:10px;"></div>
 
     <label>
       <input type="checkbox" id="visible" checked />
@@ -155,35 +156,15 @@
         return;
       }
 
-      let image_url = null;
-      const imageInput = document.getElementById('offer-image');
-      if (imageInput.files.length > 0) {
-        const file = imageInput.files[0];
-        const filePath = `offers/${user.id}_${Date.now()}_${file.name}`;
-        const { data, error: uploadError } = await supabase.storage
-          .from('offer-images')
-          .upload(filePath, file);
-        if (uploadError) {
-          confirmationDiv.textContent = 'Error uploading image: ' + uploadError.message;
-          confirmationDiv.style.color = '#a94442';
-          submitButton.disabled = false;
-          return;
-        }
-        image_url = supabase.storage.from('offer-images').getPublicUrl(filePath).data.publicUrl;
-      }
-
       const offeringData = {
         user_id: user.id,
         want: document.getElementById("want").value,
         give: document.getElementById("give").value,
         passion: document.getElementById("passion").value,
         visible: document.getElementById("visible").checked,
-        image_url
       };
-
-      const { error } = await supabase.from('member_offerings').upsert(offeringData);
-
-      if (error) {
+      const { error: offeringError } = await supabase.from('member_offerings').upsert(offeringData);
+      if (offeringError) {
         console.error("Submission failed:", error);
         confirmationDiv.textContent = `⚠️ Something went wrong: ${error.message}`;
         confirmationDiv.style.color = 'red';
@@ -191,9 +172,53 @@
         confirmationDiv.textContent = "✅ Your offering has been updated!";
         confirmationDiv.style.color = 'green';
         form.reset();
+        // Now handle image uploads after the main offering is saved.
+        await handleImageUploads(user.id);
       }
       submitButton.disabled = false;
     });
+
+    // --- Multiple Image Upload for Offers ---
+    async function handleImageUploads(userId) {
+        const imagesInput = document.getElementById('offer-images');
+        const thumbnailsDiv = document.getElementById('image-thumbnails');
+        const files = Array.from(imagesInput.files);
+        if (files.length === 0) return; // No files to upload
+
+        thumbnailsDiv.innerHTML = 'Uploading images...';
+        
+        // First, clear existing images for this user's offer to prevent duplicates
+        const { data: existingImages, error: fetchErr } = await supabase.from('offer_images').select('image_url').eq('user_id', userId);
+        if (existingImages && existingImages.length > 0) {
+            const pathsToRemove = existingImages.map(img => img.image_url);
+            await supabase.storage.from('offer-images').remove(pathsToRemove);
+            await supabase.from('offer_images').delete().eq('user_id', userId);
+        }
+        
+        thumbnailsDiv.innerHTML = ''; // Clear for new thumbnails
+        let uploadErrors = [];
+
+        for (const file of files) {
+            const filePath = `offers/${userId}/${Date.now()}_${file.name}`;
+            const { error: uploadError } = await supabase.storage.from('offer-images').upload(filePath, file);
+            if (uploadError) {
+                uploadErrors.push(`Error uploading ${file.name}: ${uploadError.message}`);
+                continue;
+            }
+
+            const { error: dbError } = await supabase.from('offer_images').insert({ user_id: userId, image_url: filePath });
+            if (dbError) {
+                uploadErrors.push(`Error saving ${file.name} to database: ${dbError.message}`);
+                continue;
+            }
+        }
+        if (uploadErrors.length) {
+            confirmationDiv.innerHTML += `<br><span style="color:red;">Image upload issues: ${uploadErrors.join(', ')}</span>`;
+        } else {
+            confirmationDiv.textContent += " Images uploaded successfully!";
+            thumbnailsDiv.innerHTML = ''; // Clear thumbnails after successful upload
+        }
+    }
 
     // Load the user's data as soon as the page is ready
     document.addEventListener('DOMContentLoaded', loadUserData);

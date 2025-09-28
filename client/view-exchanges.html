@@ -67,6 +67,23 @@
         card.className = 'offering-card';
 
         let content = `<h3>${offering.full_name || 'A Circle Member'}</h3>`;
+
+        // --- Fetch and display gallery images for this offering ---
+        const { data: images } = await supabase.from('offer_images').select('image_url').eq('user_id', offering.user_id);
+        if (images && images.length > 0) {
+            const signedUrls = await Promise.all(images.map(async (img) => {
+                const { data: signedUrlData } = await supabase.storage.from('offer-images').createSignedUrl(img.image_url, 3600);
+                return signedUrlData?.signedUrl;
+            }));
+            
+            const validUrls = signedUrls.filter(Boolean);
+            if (validUrls.length > 0) {
+                content += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1rem;">`;
+                content += validUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width:80px; height:80px; object-fit:cover; border-radius:6px;"></a>`).join('');
+                content += `</div>`;
+            }
+        }
+
         if (offering.want) content += `<p><strong>🌱 Seeks:</strong> ${offering.want}</p>`;
         if (offering.give) content += `<p><strong>🌾 Offers:</strong> ${offering.give}</p>`;
         if (offering.passion) content += `<p><strong>🔥 Passionate About:</strong> ${offering.passion}</p>`;
