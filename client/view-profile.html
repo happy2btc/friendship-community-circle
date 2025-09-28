@@ -46,11 +46,19 @@
       const { data: images, error: imgError } = await supabase
         .from('profile_images')
         .select('image_url')
-        .eq('user_id', profileId);
+        .eq('user_id', profileId)
+        .limit(100); // Fetch up to 100 images
+
       let galleryHtml = '';
       if (images && images.length) {
-        galleryHtml = `<h3 style="margin-top:2em;color:#4a7c59;">Gallery</h3><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;">` +
-          images.map(img => `<img src="${img.image_url}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #eee;">`).join('') + '</div>';
+        const signedUrls = await Promise.all(images.map(async img => {
+            const { data: signedUrlData } = await supabase.storage.from('profile-pictures').createSignedUrl(img.image_url, 3600);
+            if (signedUrlData?.signedUrl) {
+                return `<a href="${signedUrlData.signedUrl}" target="_blank"><img src="${signedUrlData.signedUrl}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #eee;"></a>`;
+            }
+            return '';
+        }));
+        galleryHtml = `<h3 style="margin-top:2em;color:#4a7c59;">Gallery</h3><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;">${signedUrls.join('')}</div>`;
       }
       container.innerHTML = `
         <img class="profile-img" src="${avatarSrc || 'https://via.placeholder.com/120'}" alt="Profile Picture">

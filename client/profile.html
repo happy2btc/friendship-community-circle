@@ -35,6 +35,49 @@
         .avatar-upload:hover .overlay { opacity: 1; }
         #avatar-input { display: none; }
     </style>
+    <style>
+        /* Gallery Icon Styles */
+        .gallery-image-container {
+            position: relative;
+            display: inline-block;
+            margin: 12px;
+        }
+        .gallery-image-container .icon-overlay {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+        }
+        .gallery-icon-btn {
+            background-color: white;
+            border: none; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; 
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .gallery-icon-btn:hover { 
+            background-color: #2e8b57; /* Standard button green */
+        }
+        .icon-trash {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: center;
+        }
+        .icon-trash:hover {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
+        }
+        .icon-expand {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: center;
+        }
+        .icon-expand:hover {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7'%3E%3C/path%3E%3C/svg%3E");
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -114,67 +157,86 @@
         </form>
                 <button type="button" id="view-gallery-btn" style="margin:20px 0 0 0;">View All Pictures</button>
                 <div id="gallery-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fff; overflow:auto; z-index:9999;">
-                    <button onclick="document.getElementById('gallery-modal').style.display='none'" style="position:absolute;top:20px;right:30px;font-size:1.5em;">✖</button>
-                    <div id="gallery-images" style="margin-top:60px; text-align:center;"></div>
+                    <button onclick="document.getElementById('gallery-modal').style.display='none'" style="position:absolute; top:20px; left:50%; transform:translateX(-50%); width:33%; background:#6c757d; color:#fff; padding:10px 18px; border-radius:6px; font-weight:bold; border:none; cursor:pointer; font-size: 1em; text-align:center;">Return to Profile</button>
+                    <div id="gallery-images" style="margin-top:80px; text-align:center;"></div>
                 </div>
                 <a href="menu.html" class="menu-button">← Back to Menu</a>
         <a href="menu.html" class="menu-button" style="position:fixed;top:0;left:0;width:100%;background:#1976d2;color:#fff;z-index:1000;padding:16px 0;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-weight:bold;border-radius:0 0 12px 12px;box-sizing:border-box;font-size:1.15em;letter-spacing:0.5px;">← Back to Menu</a>
-    </div>
-        <script type="module">
+    </div><script type="module">
+        import { supabase } from '/lib/supabase.js';
         // --- Multiple Image Upload & Gallery ---
     // ...existing code...
         const imagesInput = document.getElementById('profile-images');
         const thumbnailsDiv = document.getElementById('image-thumbnails');
         imagesInput?.addEventListener('change', async (e) => {
+    thumbnailsDiv.innerHTML = ''; // Clear previous thumbnails
     const files = Array.from(e.target.files);
     const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
+        alert('Please log in to upload images.');
+        window.location.href = 'login.html';
+        return;
+    }
     const userId = userData.user.id;
     let uploadErrors = [];
     for (const file of files) {
         const filePath = `${userId}/${Date.now()}_${file.name}`;
-        // Upload image to Supabase Storage
-        const { data, error } = await supabase.storage
-            .from('profile-pictures')
-            .upload(filePath, file, { upsert: true });
+        let uploadResult;
+        try {
+            uploadResult = await supabase.storage
+                .from('profile-pictures')
+                .upload(filePath, file, { upsert: true });
+        } catch (err) {
+            console.error('Upload threw error:', err);
+            uploadErrors.push(`Exception uploading ${file.name}: ${err.message || err}`);
+            continue;
+        }
+        const { data, error } = uploadResult;
         if (error) {
+            console.error('Supabase upload error:', error, uploadResult);
             uploadErrors.push(`Error uploading ${file.name}: ${error.message}`);
             continue;
         }
-        // Get the public URL for the uploaded image
-        const { publicUrl } = supabase.storage.from('profile-pictures').getPublicUrl(filePath);
-        // Insert the image URL into profile_images table
+        // Store the file path in the DB, not a public URL
+        console.log('Debug upload:', { userId, filePath, fileName: file.name });
+        if (!userId || !filePath) {
+            uploadErrors.push(`❌ Missing required fields for <b>${file.name}</b>: <code>user_id</code> or <code>file_path</code>. userId: <code>${userId}</code>, filePath: <code>${filePath}</code>`);
+            continue;
+        }
         const { error: dbError } = await supabase.from('profile_images').insert([
-            { user_id: userId, image_url: publicUrl }
+            { user_id: userId, image_url: filePath }
         ]);
         if (dbError) {
+            if (dbError.message && dbError.message.includes('foreign key constraint')) {
+                uploadErrors.push(`Foreign key error for ${file.name}: Your user ID does not match any profile. Please contact support.`);
+                continue;
+            }
+            if (dbError.message && dbError.message.includes('row-level security policy')) {
+                uploadErrors.push(`RLS policy error for ${file.name}: You are not allowed to insert this image. Make sure you are logged in and your user ID matches your profile.`);
+                continue;
+            }
             uploadErrors.push(`Error saving image info for ${file.name}: ${dbError.message}`);
             continue;
         }
-        // Show thumbnail
+        // Show thumbnail using signed URL
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage.from('profile-pictures').createSignedUrl(filePath, 3600);
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+            uploadErrors.push(`Error creating signed URL for ${file.name}: ${signedUrlError?.message || 'No signed URL returned.'}`);
+            continue;
+        }
         const img = document.createElement('img');
-        img.src = publicUrl;
+        img.src = signedUrlData.signedUrl;
         img.style.width = '80px';
         img.style.margin = '8px';
         thumbnailsDiv.appendChild(img);
     }
     if (uploadErrors.length) {
         thumbnailsDiv.innerHTML += `<div style="color:red;margin-top:10px;">${uploadErrors.join('<br>')}</div>`;
+    } else {
+        await loadGalleryImages(); // Refresh the main gallery view
     }
         });
 
-        document.getElementById('view-gallery-btn')?.addEventListener('click', async () => {
-            const { data: userData } = await supabase.auth.getUser();
-            const userId = userData.user.id;
-            const { data: images, error } = await supabase
-                .from('profile_images')
-                .select('image_url')
-                .eq('user_id', userId);
-            const galleryDiv = document.getElementById('gallery-images');
-            galleryDiv.innerHTML = images && images.length
-                ? images.map(img => `<img src="${img.image_url}" style="width:180px;margin:12px;border-radius:8px;">`).join('')
-                : '<p>No pictures uploaded yet.</p>';
-            document.getElementById('gallery-modal').style.display = 'block';
-        });
     const linkedinEl = document.getElementById('linkedin');
     const linkedinLinkDiv = document.getElementById('linkedin-link');
     const websiteEl = document.getElementById('website');
@@ -189,7 +251,6 @@
     const twitterLinkDiv = document.getElementById('twitter-link');
     const youtubeEl = document.getElementById('youtube');
     const youtubeLinkDiv = document.getElementById('youtube-link');
-        import { supabase } from '/lib/supabase.js';
 
         const profileForm = document.getElementById('profile-form');
         const updateButton = document.getElementById('update-button');
@@ -203,6 +264,78 @@
 
         let currentUser;
         let currentProfile;
+
+        // --- Open Gallery Modal ---
+        document.getElementById('view-gallery-btn')?.addEventListener('click', async () => {
+            await loadGalleryImages();
+            document.getElementById('gallery-modal').style.display = 'block';
+        });
+
+        // --- Load gallery images on page load ---
+        async function loadGalleryImages() {
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData?.user) {
+                console.log('[Gallery Debug] No user found, aborting gallery load.');
+                return;
+            }
+            const userId = userData.user.id;
+            const { data: images, error } = await supabase
+                .from('profile_images')
+                .select('image_url, uploaded_at')
+                .limit(100) // Fetch up to 100 images
+                .eq('user_id', userId);
+            const galleryDiv = document.getElementById('gallery-images');
+            if (!galleryDiv) {
+                console.log('[Gallery Debug] #gallery-images element not found in DOM.');
+                return;
+            }
+            console.log('[Gallery Debug] Retrieved images from DB:', images, 'Count:', images?.length || 0);
+            if (images && images.length) {
+                const signedUrls = await Promise.all(images.map(async img => {
+                    const { data: signedUrlData, error: signedUrlError } = await supabase.storage.from('profile-pictures').createSignedUrl(img.image_url, 3600);
+                    if (signedUrlError || !signedUrlData?.signedUrl) {
+                        console.log('[Gallery Debug] Error creating signed URL for', img.image_url, signedUrlError);
+                        return `<div style='color:red;'>Error loading image: ${signedUrlError?.message || 'No signed URL.'}</div>`;
+                    }
+                    const timestamp = new Date(img.uploaded_at).toLocaleString();
+                    
+                    return `<div class="gallery-image-container">
+                        <img src="${signedUrlData.signedUrl}" style="width:180px;border-radius:8px;">
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <div class="icon-overlay" style="position:absolute; top:8px; right:8px;">
+                                <button class="gallery-icon-btn icon-trash" title='Delete' onclick="deleteGalleryImage('${img.image_url}')"></button>
+                                <button class="gallery-icon-btn icon-expand" title='Expand' onclick="window.open('${signedUrlData.signedUrl}','_blank')"></button>
+                            </div>
+                            <div style="font-size:0.85em; color:#555; margin-top:4px;">${timestamp}</div>
+                        </div></div>`;
+                }));
+                console.log('[Gallery Debug] Generated signed URLs, count:', signedUrls.length);
+                galleryDiv.innerHTML = signedUrls.join('');
+                console.log('[Gallery Debug] Rendered gallery HTML to #gallery-images.');
+            } else {
+                galleryDiv.innerHTML = '<p>No pictures uploaded yet.</p>';
+                console.log('[Gallery Debug] No images found for user, showing empty message.');
+            }
+        }
+
+        // Delete image function
+        window.deleteGalleryImage = async function(filePath) {
+            if (!confirm('Delete this image? This cannot be undone.')) return;
+            // Remove from storage
+            const { error: storageError } = await supabase.storage.from('profile-pictures').remove([filePath]);
+            if (storageError) {
+                alert('Error deleting from storage: ' + storageError.message);
+                return;
+            }
+            // Remove from DB
+            const { error: dbError } = await supabase.from('profile_images').delete().eq('image_url', filePath);
+            if (dbError) {
+                alert('Error deleting from database: ' + dbError.message);
+                return;
+            }
+            // Refresh gallery
+            loadGalleryImages();
+        }
 
         async function loadProfile() {
             // Always use the same logic as view-profile.html
