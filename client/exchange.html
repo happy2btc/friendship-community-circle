@@ -209,6 +209,12 @@
         
         // First, clear existing images for this user's offer to prevent duplicates
         const { data: existingImages, error: fetchErr } = await supabase.from('offer_images').select('image_url').eq('user_id', userId);
+        // Only delete old images if new ones are being uploaded AND there are old ones to remove.
+        if (files.length > 0 && existingImages && existingImages.length > 0) {
+            const pathsToRemove = existingImages.map(img => img.image_url);
+            await supabase.storage.from('offer-images').remove(pathsToRemove);
+            await supabase.from('offer_images').delete().eq('user_id', userId);
+        }
         if (existingImages && existingImages.length > 0) {
             const pathsToRemove = existingImages.map(img => img.image_url);
             await supabase.storage.from('offer-images').remove(pathsToRemove);
