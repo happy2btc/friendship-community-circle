@@ -356,28 +356,29 @@ async function showMostActiveMember() {
     members.sort((a, b) => b.total - a.total);
     const m = members[0];
     container.innerHTML = `
-        <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
-        <h3>${m.profile.full_name}</h3>
-        <div class="activity-breakdown" >
-            <strong>All-Time Activities:</strong><br>
-            Votes: ${m.breakdown.votes || 0}<br>
-            Suggestions: ${m.breakdown.suggestions || 0}<br>
-            Comments: ${m.breakdown.comments || 0}<br>
-            Wants: ${m.breakdown.wants || 0}<br>
-            Offers: ${m.breakdown.offers || 0}<br>
-            Passion: ${m.breakdown.passion || 0}<br>
-            Projects & Struggles: ${m.breakdown.projects || 0}<br>
-            <span style="color:#2e8b57;font-weight:bold;">Help Given: ${m.breakdown.help_hours || 0} hours (${m.breakdown.help_points || 0} pts)</span><br>
-            Events Created: ${m.breakdown.events_created || 0}<br>
-            Events Attended: ${m.breakdown.events_attended || 0}<br>
-            Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
-            Circles Created: ${m.breakdown.circles_created || 0}<br>
-            Members Added: ${m.breakdown.members_added || 0}<br>
-            Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
-            <strong>Total:</strong> ${m.total}
-        </div>
-        <div class="personal-story">${m.profile.personal_story || ''}</div>
-    `;
+        <a href="view-profile.html?id=${m.id}" style="text-decoration: none; color: inherit; display: block;">
+            <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
+            <h3>${m.profile.full_name}</h3>
+            <div class="activity-breakdown" >
+                <strong>All-Time Activities:</strong><br>
+                Votes: ${m.breakdown.votes || 0}<br>
+                Suggestions: ${m.breakdown.suggestions || 0}<br>
+                Comments: ${m.breakdown.comments || 0}<br>
+                Wants: ${m.breakdown.wants || 0}<br>
+                Offers: ${m.breakdown.offers || 0}<br>
+                Passion: ${m.breakdown.passion || 0}<br>
+                Projects & Struggles: ${m.breakdown.projects || 0}<br>
+                <span style="color:#2e8b57;font-weight:bold;">Help Given: ${m.breakdown.help_hours || 0} hours (${m.breakdown.help_points || 0} pts)</span><br>
+                Events Created: ${m.breakdown.events_created || 0}<br>
+                Events Attended: ${m.breakdown.events_attended || 0}<br>
+                Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
+                Circles Created: ${m.breakdown.circles_created || 0}<br>
+                Members Added: ${m.breakdown.members_added || 0}<br>
+                Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
+                <strong>Total:</strong> ${m.total}
+            </div>
+            <div class="personal-story">${m.profile.personal_story || ''}</div>
+        </a>`;
 }
 
 // Newest Member
@@ -435,9 +436,13 @@ async function showNewestMember() {
             }
         }
 
-        const memberCard = document.createElement('div');
+        const memberCard = document.createElement('a');
+        memberCard.href = `view-profile.html?id=${profile.id}`;
         memberCard.className = 'member-card';
         memberCard.style.marginBottom = '1em';
+        memberCard.style.textDecoration = 'none';
+        memberCard.style.color = 'inherit';
+        memberCard.style.display = 'block';
         // Use avatar_url or default
         const avatarUrl = profile.avatar_url && profile.avatar_url.trim() !== ''
             ? profile.avatar_url
