@@ -42,10 +42,21 @@
       if (avatarSrc && !avatarSrc.startsWith('http')) {
         avatarSrc = `https://guykaykkefwabnuhqcyv.supabase.co/storage/v1/object/public/avatars/${avatarSrc}`;
       }
+      // Fetch gallery images for this user
+      const { data: images, error: imgError } = await supabase
+        .from('profile_images')
+        .select('image_url')
+        .eq('user_id', profileId);
+      let galleryHtml = '';
+      if (images && images.length) {
+        galleryHtml = `<h3 style="margin-top:2em;color:#4a7c59;">Gallery</h3><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;">` +
+          images.map(img => `<img src="${img.image_url}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #eee;">`).join('') + '</div>';
+      }
       container.innerHTML = `
         <img class="profile-img" src="${avatarSrc || 'https://via.placeholder.com/120'}" alt="Profile Picture">
         <div class="profile-name">${data.full_name || 'No Name'}</div>
         <div class="profile-bio">${data.bio || ''}</div>
+        ${galleryHtml}
       `;
     }
     loadProfile();

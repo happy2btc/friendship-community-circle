@@ -42,6 +42,11 @@
         <hr>
         <form id="profile-form">
             <div class="form-group">
+                <label for="profile-images">Upload Pictures</label>
+                <input type="file" id="profile-images" multiple accept="image/*">
+                <div id="image-thumbnails" style="margin-top:10px;"></div>
+            </div>
+            <div class="form-group">
                 <label for="avatar-input">Profile Picture</label>
                 <label for="avatar-input" class="avatar-upload">
                     <img id="avatar-image" src="" alt="Your Avatar">
@@ -107,10 +112,69 @@
             <button type="submit" id="update-button">Update Profile</button>
             <p id="status"></p>
         </form>
-        <a href="menu.html" class="menu-button">← Back to Menu</a>
+                <button type="button" id="view-gallery-btn" style="margin:20px 0 0 0;">View All Pictures</button>
+                <div id="gallery-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fff; overflow:auto; z-index:9999;">
+                    <button onclick="document.getElementById('gallery-modal').style.display='none'" style="position:absolute;top:20px;right:30px;font-size:1.5em;">✖</button>
+                    <div id="gallery-images" style="margin-top:60px; text-align:center;"></div>
+                </div>
+                <a href="menu.html" class="menu-button">← Back to Menu</a>
         <a href="menu.html" class="menu-button" style="position:fixed;top:0;left:0;width:100%;background:#1976d2;color:#fff;z-index:1000;padding:16px 0;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-weight:bold;border-radius:0 0 12px 12px;box-sizing:border-box;font-size:1.15em;letter-spacing:0.5px;">← Back to Menu</a>
     </div>
-    <script type="module">
+        <script type="module">
+        // --- Multiple Image Upload & Gallery ---
+    // ...existing code...
+        const imagesInput = document.getElementById('profile-images');
+        const thumbnailsDiv = document.getElementById('image-thumbnails');
+        imagesInput?.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user.id;
+    let uploadErrors = [];
+    for (const file of files) {
+        const filePath = `${userId}/${Date.now()}_${file.name}`;
+        // Upload image to Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('profile-pictures')
+            .upload(filePath, file, { upsert: true });
+        if (error) {
+            uploadErrors.push(`Error uploading ${file.name}: ${error.message}`);
+            continue;
+        }
+        // Get the public URL for the uploaded image
+        const { publicUrl } = supabase.storage.from('profile-pictures').getPublicUrl(filePath);
+        // Insert the image URL into profile_images table
+        const { error: dbError } = await supabase.from('profile_images').insert([
+            { user_id: userId, image_url: publicUrl }
+        ]);
+        if (dbError) {
+            uploadErrors.push(`Error saving image info for ${file.name}: ${dbError.message}`);
+            continue;
+        }
+        // Show thumbnail
+        const img = document.createElement('img');
+        img.src = publicUrl;
+        img.style.width = '80px';
+        img.style.margin = '8px';
+        thumbnailsDiv.appendChild(img);
+    }
+    if (uploadErrors.length) {
+        thumbnailsDiv.innerHTML += `<div style="color:red;margin-top:10px;">${uploadErrors.join('<br>')}</div>`;
+    }
+        });
+
+        document.getElementById('view-gallery-btn')?.addEventListener('click', async () => {
+            const { data: userData } = await supabase.auth.getUser();
+            const userId = userData.user.id;
+            const { data: images, error } = await supabase
+                .from('profile_images')
+                .select('image_url')
+                .eq('user_id', userId);
+            const galleryDiv = document.getElementById('gallery-images');
+            galleryDiv.innerHTML = images && images.length
+                ? images.map(img => `<img src="${img.image_url}" style="width:180px;margin:12px;border-radius:8px;">`).join('')
+                : '<p>No pictures uploaded yet.</p>';
+            document.getElementById('gallery-modal').style.display = 'block';
+        });
     const linkedinEl = document.getElementById('linkedin');
     const linkedinLinkDiv = document.getElementById('linkedin-link');
     const websiteEl = document.getElementById('website');
@@ -141,7 +205,7 @@
         let currentProfile;
 
         async function loadProfile() {
-            // Get member id from URL, fallback to current user
+            // Always use the same logic as view-profile.html
             const params = new URLSearchParams(window.location.search);
             const memberId = params.get('id');
             const { data: { user } } = await supabase.auth.getUser();
@@ -150,14 +214,6 @@
                 return;
             }
             currentUser = user;
-            // If viewing own profile, show email and edit form
-            const isOwnProfile = user && (!memberId || memberId === user.id);
-            if (isOwnProfile) {
-                emailEl.value = user.email;
-            } else {
-                emailEl.value = '';
-            }
-
             const profileId = memberId || (user && user.id);
             const { data, error } = await supabase
                 .from('profiles')
@@ -173,42 +229,33 @@
 
             if (data) {
                 currentProfile = data;
-                if (isOwnProfile) {
-                    fullNameEl.value = data.full_name || '';
-                    phoneEl.value = data.phone || '';
-                    bioEl.value = data.bio || '';
-                    youtubeEl.value = data.youtube || '';
-                    twitterEl.value = data.twitter || '';
-                    substackEl.value = data.substack || '';
-                    websiteEl.value = data.website || '';
-                    linkedinEl.value = data.linkedin || '';
-                    facebookEl.value = data.facebook || '';
-                    instagramEl.value = data.instagram || '';
-                    // ...existing code for showing social links and avatar...
-                    const imageUrl = data.avatar_url;
-                    if (imageUrl && imageUrl.trim() !== '') {
-                        if (imageUrl.startsWith('http')) {
-                            avatarImage.src = imageUrl + '?t=' + new Date().getTime();
-                        } else {
-                            const { data: publicUrlData } = supabase
-                                .storage
-                                .from('avatars')
-                                .getPublicUrl(imageUrl);
-                            avatarImage.src = publicUrlData.publicUrl + '?t=' + new Date().getTime();
-                        }
+                fullNameEl.value = data.full_name || '';
+                phoneEl.value = data.phone || '';
+                bioEl.value = data.bio || '';
+                youtubeEl.value = data.youtube || '';
+                twitterEl.value = data.twitter || '';
+                substackEl.value = data.substack || '';
+                websiteEl.value = data.website || '';
+                linkedinEl.value = data.linkedin || '';
+                facebookEl.value = data.facebook || '';
+                instagramEl.value = data.instagram || '';
+                // Show avatar
+                const imageUrl = data.avatar_url;
+                if (imageUrl && imageUrl.trim() !== '') {
+                    if (imageUrl.startsWith('http')) {
+                        avatarImage.src = imageUrl + '?t=' + new Date().getTime();
                     } else {
-                        avatarImage.src = 'https://via.placeholder.com/150';
+                        const { data: publicUrlData } = supabase
+                            .storage
+                            .from('avatars')
+                            .getPublicUrl(imageUrl);
+                        avatarImage.src = publicUrlData.publicUrl + '?t=' + new Date().getTime();
                     }
                 } else {
-                    // If viewing someone else's profile, show static info only
-                    document.querySelector('.container').innerHTML = `
-                        <h1>👤 Profile</h1>
-                        <img id="avatar-image" src="${data.avatar_url && data.avatar_url.trim() !== '' ? (data.avatar_url.startsWith('http') ? data.avatar_url : `https://guykaykkefwabnuhqcyv.supabase.co/storage/v1/object/public/avatars/${data.avatar_url}`) : 'https://via.placeholder.com/150'}" alt="Avatar" style="width:120px;height:120px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
-                        <h2 style="color:#4a7c59;">${data.full_name || 'No Name'}</h2>
-                        <div style="font-size:1.1em;color:#555;margin-bottom:1em;">${data.bio || ''}</div>
-                        <a href="view-profiles.html" class="menu-button">⬅️ Back to All Profiles</a>
-                    `;
+                    avatarImage.src = 'https://via.placeholder.com/150';
                 }
+                // Show email if own profile
+                emailEl.value = (user && profileId === user.id) ? user.email : '';
             }
         }
 
