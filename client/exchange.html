@@ -178,6 +178,26 @@
       submitButton.disabled = false;
     });
 
+    // --- Show local image previews on file selection ---
+    const imagesInput = document.getElementById('offer-images');
+    const thumbnailsDiv = document.getElementById('image-thumbnails');
+    imagesInput?.addEventListener('change', (e) => {
+        thumbnailsDiv.innerHTML = ''; // Clear previous previews
+        const files = Array.from(e.target.files);
+
+        for (const file of files) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.width = '80px';
+                img.style.margin = '8px';
+                thumbnailsDiv.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
     // --- Multiple Image Upload for Offers ---
     async function handleImageUploads(userId) {
         const imagesInput = document.getElementById('offer-images');
