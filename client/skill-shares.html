@@ -101,7 +101,6 @@
         skill_name,
         skill_description,
         presenter_id: user.id,
-        presenter_name: user.user_metadata?.full_name || '',
         video_url
       }]);
       if (error) {
@@ -116,7 +115,7 @@
     async function loadSkills() {
       const { data: skills } = await supabase
         .from('skill_shares')
-        .select('id, skill_name, skill_description, presenter_id, presenter_name, video_url, created_at')
+        .select('id, skill_name, skill_description, presenter_id, video_url, created_at')
         .order('created_at', { ascending: false });
       const skillList = document.getElementById('skill-list');
       if (!skills || skills.length === 0) {
@@ -124,7 +123,7 @@
         return;
       }
       skillList.innerHTML = await Promise.all(skills.map(async skill => {
-        const presenter = skill.presenter_name || await getPresenterName(skill.presenter_id);
+        const presenter = await getPresenterName(skill.presenter_id);
         return `
           <div class="skill-card">
             <div class="skill-title">${skill.skill_name}</div>
