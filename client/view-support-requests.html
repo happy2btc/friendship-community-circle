@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Community Support Requests</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; }
+    h1 { text-align: center; color: #6b4f1d; }
+    .requests-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: auto; }
+    .request-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    .request-card h3 { margin-top: 0; color: #3b2f2f; }
+    .request-card p { margin: 0.5rem 0; }
+    .request-card strong { color: #8c6f4e; }
+    .support-button { background-color: #2e8b57; color: white; text-decoration: none; padding: 12px 18px; border-radius: 6px; display: inline-block; margin-top: 1rem; font-weight: bold; text-align: center; }
+    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+  </style>
+</head>
+<body>
+  <h1>💸 Community Support Requests</h1>
+  <div id="requests-container">
+    <p>Loading requests...</p>
+  </div>
+  <a href="menu.html" class="menu-button">🔙 Return to Menu</a>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const container = document.getElementById('requests-container');
+
+    async function loadRequests() {
+      // Fetch all active support requests
+      const { data: requests, error } = await supabase
+        .from('support_requests')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        container.innerHTML = `<p style="color: red;">Error loading requests: ${error.message}</p>`;
+        return;
+      }
+
+      if (!requests || requests.length === 0) {
+        container.innerHTML = '<p>There are no active support requests at this time.</p>';
+        return;
+      }
+
+      // Get all profile IDs to fetch names in one go
+      const userIds = [...new Set(requests.map(r => r.member_in_need_id))];
+      const { data: profilesData } = await supabase.from('profiles').select('id, full_name').in('id', userIds);
+      const profilesMap = new Map(profilesData.map(p => [p.id, p.full_name]));
+
+      container.innerHTML = ''; // Clear loading message
+
+      for (const request of requests) {
+        const card = document.createElement('div');
+        card.className = 'request-card';
+        
+        const memberName = profilesMap.get(request.member_in_need_id) || 'A Circle Member';
+
+        let content = `<h3>${request.mission_title}</h3>`;
+        content += `<p><strong>For:</strong> ${memberName}</p>`;
+        
+        if (request.mission_description) {
+          content += `<p><strong>Mission:</strong> ${request.mission_description}</p>`;
+        }
+        if (request.funding_goal) {
+          content += `<p><strong>Goal:</strong> $${request.funding_goal.toLocaleString()}</p>`;
+        }
+        if (request.funds_usage_details) {
+          content += `<p><strong>Use of Funds:</strong> ${request.funds_usage_details}</p>`;
+        }
+
+        // Add a "Contribute" button if a payment link is provided
+        if (request.payment_link) {
+          content += `<a href="${request.payment_link}" target="_blank" rel="noopener noreferrer" class="support-button">Contribute to this Mission</a>`;
+        } else {
+          content += `<p style="margin-top:1rem;font-style:italic;">Contact the member directly to contribute.</p>`;
+        }
+
+        card.innerHTML = content;
+        container.appendChild(card);
+      }
+    }
+
+    loadRequests();
+  </script>
+</body>
+</html>
