@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Request Financial Support</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .form-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
+    form label, form select, form input, form textarea, form button {
+      display: block;
+      width: 100%;
+      margin-top: 1em;
+      box-sizing: border-box;
+    }
+    form input, form select, form textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      margin-top: 8px;
+    }
+    button {
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 0;
+      margin-top: 2em;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .form-status { margin-top: 1em; text-align: center; font-weight: bold; min-height: 1.5em; }
+    .menu-button { display: block; margin: 30px auto 0 auto; background-color: #6b4f1d; color: #fff; padding: 12px 24px; border-radius: 8px; text-align: center; font-weight: bold; text-decoration: none; font-size: 1.1em; width: fit-content; }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>💸 Request Financial Support for a Member</h2>
+    <form id="support-form">
+      <label for="member-in-need">Which member needs support?</label>
+      <select id="member-in-need" name="member_in_need_id" required></select>
+
+      <label for="mission-title">Mission/Project Title</label>
+      <input type="text" id="mission-title" name="mission_title" required>
+
+      <label for="mission-description">Description of the Mission</label>
+      <textarea id="mission-description" name="mission_description" rows="4"></textarea>
+
+      <label for="funding-goal">Funding Goal ($)</label>
+      <input type="number" id="funding-goal" name="funding_goal" min="0" step="1">
+
+      <label for="funds-usage">How will the funds be used?</label>
+      <textarea id="funds-usage" name="funds_usage_details" rows="3"></textarea>
+
+      <label for="payment-link">Payment Link (e.g., GoFundMe, PayPal.me)</label>
+      <input type="url" id="payment-link" name="payment_link" placeholder="https://">
+
+      <button type="submit">Submit Request</button>
+      <div id="form-status" class="form-status"></div>
+    </form>
+  </div>
+  <a href="menu.html" class="menu-button">🔙 Back to Menu</a>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function populateMembers() {
+      const { data: profiles, error } = await supabase.from('profiles').select('id, full_name').order('full_name');
+      if (error) return;
+      const memberSelect = document.getElementById('member-in-need');
+      profiles.forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.id;
+        option.textContent = profile.full_name;
+        memberSelect.appendChild(option);
+      });
+    }
+    populateMembers();
+
+    document.getElementById('support-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const formStatus = document.getElementById('form-status');
+      formStatus.textContent = 'Submitting...';
+      formStatus.style.color = '#333';
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        formStatus.textContent = 'Error: You must be logged in to submit a request.';
+        formStatus.style.color = 'red';
+        return;
+      }
+
+      const formData = new FormData(e.target);
+      const requestData = {
+        requestor_id: user.id,
+        member_in_need_id: formData.get('member_in_need_id'),
+        mission_title: formData.get('mission_title'),
+        mission_description: formData.get('mission_description'),
+        funding_goal: formData.get('funding_goal') ? parseFloat(formData.get('funding_goal')) : null,
+        funds_usage_details: formData.get('funds_usage_details'),
+        payment_link: formData.get('payment_link'),
+      };
+
+      const { error } = await supabase.from('support_requests').insert([requestData]);
+
+      if (error) {
+        formStatus.textContent = 'Error: ' + error.message;
+        formStatus.style.color = 'red';
+      } else {
+        formStatus.textContent = 'Success! Your support request has been posted.';
+        formStatus.style.color = '#2e8b57';
+        e.target.reset();
+      }
+    };
+  </script>
+</body>
+</html>
