@@ -47,29 +47,15 @@
     async function loadOfferings() {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Step 1: Fetch all visible offerings
-      const { data: offerings, error } = await supabase
-        .from('member_offerings')
-        .select('*')
-        .eq('visible', true)
-        .order('created_at', { ascending: false });
+      // Step 1: Fetch all offerings and their related data in one go
+      const { data: offerings, error } = await supabase.rpc('get_offerings_with_images');
 
       if (error) {
         container.innerHTML = `<p style="color: red;">Error loading offerings: ${error.message}</p>`;
         return;
       }
 
-      if (offerings.length === 0) {
-        container.innerHTML = '<p>There are no visible offerings at this time.</p>';
-        return;
-      }
-
-      // Step 2: Fetch all necessary profiles in a single query
-      const userIds = [...new Set(offerings.map(o => o.user_id))];
-      const { data: profilesData } = await supabase.from('profiles').select('id, full_name, email').in('id', userIds);
-      const profilesMap = new Map(profilesData.map(p => [p.id, p]));
-
-      if (offerings.length === 0) {
+      if (!offerings || offerings.length === 0) {
         container.innerHTML = '<p>There are no visible offerings at this time.</p>';
         return;
       }
@@ -79,15 +65,16 @@
       for (const offering of offerings) {
         const card = document.createElement('div');
         card.className = 'offering-card';
-        // Step 3: Manually "join" the data using the map
-        const profile = profilesMap.get(offering.user_id);
-        let content = `<h3>${profile?.full_name || 'A Circle Member'}</h3>`;
+        
+        let content = `<h3>${offering.full_name || 'A Circle Member'}</h3>`;
 
-        // --- Fetch and display gallery images for this offering ---
-        const { data: images } = await supabase.from('offer_images').select('image_url').eq('user_id', offering.user_id);
+        // --- Display gallery images using the pre-fetched JSON array ---
+        const images = offering.images; // This is now a JSON array of image paths
         if (images && images.length > 0) {
-            const signedUrls = await Promise.all(images.map(async (img) => {
-                const { data: signedUrlData } = await supabase.storage.from('offer-images').createSignedUrl(img.image_url, 3600);
+            // We still create signed URLs on the client, but we avoid the extra DB query
+            const signedUrls = await Promise.all(images.map(async (imagePath) => {
+                if (!imagePath) return null;
+                const { data: signedUrlData } = await supabase.storage.from('offer-images').createSignedUrl(imagePath, 3600);
                 return signedUrlData?.signedUrl;
             }));
             
@@ -108,12 +95,12 @@
           content += `<div class="self-note">This is your offering.</div>`;
         } else {
           // Add chat and email buttons for other members
-          const memberName = profile?.full_name || 'this member';
+          const memberName = offering.full_name || 'this member';
           if (offering.user_id) {
             content += `<a href="message-center.html?to=${encodeURIComponent(offering.user_id)}" class="respond-button" style="display:inline-block;margin:8px 8px 0 0;padding:8px 16px;background:#2e8b57;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;">💬 Chat with ${memberName}</a>`;
           }
-          if (profile?.email) {
-            const mailtoLink = `mailto:${profile.email}?subject=Response to your Circle of Exchange offering`;
+          if (offering.email) {
+            const mailtoLink = `mailto:${offering.email}?subject=Response to your Circle of Exchange offering`;
             content += `<a href="${mailtoLink}" class="respond-button" style="display:inline-block;margin:8px 0 0 0;padding:8px 16px;background:#4a7c59;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;">✉️ Email ${memberName}</a>`;
           }
         }

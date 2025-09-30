@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;">
   <title>🌐 Circle of Exchange</title>
   <style>
     body {
@@ -150,6 +151,10 @@
 
       const { data: { user } } = await supabase.auth.getUser();
 
+      // DEBUGGING: Log user object and user ID
+      console.log("User object:", user);
+      console.log("User ID for upload:", user ? user.id : 'User is null');
+
       if (!user) {
         confirmationDiv.textContent = "⚠️ Cannot submit: You are not logged in.";
         confirmationDiv.style.color = 'red';
@@ -169,11 +174,11 @@
         confirmationDiv.textContent = `⚠️ Something went wrong: ${error.message}`;
         confirmationDiv.style.color = 'red';
       } else {
-        confirmationDiv.textContent = "✅ Your offering has been updated!";
-        confirmationDiv.style.color = 'green';
-        form.reset();
-        // Now handle image uploads after the main offering is saved.
         await handleImageUploads(user.id);
+        // On complete success, show a final message and reload the page
+        // to ensure a clean state and show the latest data.
+        confirmationDiv.textContent = "✅ Your offering has been updated! Reloading...";
+        setTimeout(() => window.location.reload(), 1500);
       }
       submitButton.disabled = false;
     });
@@ -205,15 +210,18 @@
         const files = Array.from(imagesInput.files);
         if (files.length === 0) return; // No files to upload
 
-        thumbnailsDiv.innerHTML = 'Uploading images...';
-        
-        // First, clear existing images for this user's offer to prevent duplicates
-        const { data: existingImages, error: fetchErr } = await supabase.from('offer_images').select('image_url').eq('user_id', userId);
-        // Only delete old images if new ones are being uploaded.
+        thumbnailsDiv.innerHTML = 'Processing images...';
+
+        // --- Clear existing images ONLY if new files are selected ---
+        const { data: existingImages, error: fetchErr } = await supabase.from('offer_images').select('id, image_url').eq('user_id', userId);
+
         if (existingImages && existingImages.length > 0) {
             const pathsToRemove = existingImages.map(img => img.image_url);
+            const idsToRemove = existingImages.map(img => img.id);
+
+            // Perform deletion from storage and database
             await supabase.storage.from('offer-images').remove(pathsToRemove);
-            await supabase.from('offer_images').delete().eq('user_id', userId);
+            await supabase.from('offer_images').delete().in('id', idsToRemove);
         }
         
         thumbnailsDiv.innerHTML = ''; // Clear for new thumbnails
@@ -236,7 +244,9 @@
         if (uploadErrors.length) {
             confirmationDiv.innerHTML += `<br><span style="color:red;">Image upload issues: ${uploadErrors.join(', ')}</span>`;
         } else {
-            confirmationDiv.textContent += " Images uploaded successfully!";
+            // This message will be briefly visible before the page reloads.
+            confirmationDiv.textContent = "✅ Offering and images saved successfully!";
+            confirmationDiv.style.color = 'green';
             thumbnailsDiv.innerHTML = ''; // Clear thumbnails after successful upload
         }
     }
