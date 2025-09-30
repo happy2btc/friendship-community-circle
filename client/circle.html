@@ -61,8 +61,7 @@
   <div class="tabs-container" style="margin:2em 0;">
     <div class="tabs" style="display:flex;gap:1em;justify-content:center;">
   <button class="tab-btn" data-tab="chat">Chat</button>
-  <button class="tab-btn" data-tab="discussions">Discussions</button>
-  <button class="tab-btn" data-tab="agreements">Agreements</button>
+  <button class="tab-btn" data-tab="blog">Blog</button>
   <button class="tab-btn" data-tab="members">Members</button>
       <!-- Future tabs: <button class="tab-btn" data-tab="activities">Activities</button> <button class="tab-btn" data-tab="projects">Projects</button> <button class="tab-btn" data-tab="resources">Resources</button> <button class="tab-btn" data-tab="links">Links</button> -->
     </div>
@@ -109,29 +108,6 @@ async function loadCircle() {
   }
   document.getElementById('circle-name').textContent = circle.name;
   document.getElementById('circle-description').textContent = circle.description || '';
-
-  // Agreements
-  const { data: agreements } = await supabase
-    .from('agreements')
-    .select('id, agreement_text, status, created_at')
-    .eq('circle_id', circleId)
-    .order('created_at', { ascending: false });
-  const agreementsSection = document.getElementById('agreements-section');
-  agreementsSection.innerHTML = '<h2>Agreements</h2>';
-  if (!agreements || agreements.length === 0) {
-    agreementsSection.innerHTML += '<p>No agreements yet for this circle.</p>';
-  } else {
-    agreements.forEach(agreement => {
-      const card = document.createElement('div');
-      card.className = 'agreement-card';
-      card.innerHTML = `
-        <strong>${agreement.agreement_text}</strong><br>
-        <span>Status: ${agreement.status}</span><br>
-        <span>Created: ${new Date(agreement.created_at).toLocaleString()}</span>
-      `;
-      agreementsSection.appendChild(card);
-    });
-  }
 
   // Activities
   const { data: activities } = await supabase
@@ -260,12 +236,9 @@ async function loadCircle() {
 
       function renderTab(tab) {
   const tabContent = document.getElementById('tab-content');
-        if (tab === 'discussions') {
-          tabContent.innerHTML = '<h2>Discussions</h2><div id="discussions-section">Loading discussions...</div>';
-          renderDiscussions(circleId);
-        } else if (tab === 'agreements') {
-          tabContent.innerHTML = '<h2>Agreements</h2><div id="agreements-section"></div>';
-          renderAgreements(circleId);
+        if (tab === 'blog') {
+          tabContent.innerHTML = `<h2>Blog</h2><div id="blog-section">Loading posts...</div><a href="create-blog-post.html?circle_id=${circleId}" class="menu-button">Create New Post</a>`;
+          renderBlog(circleId);
         } else if (tab === 'members') {
           tabContent.innerHTML = '<h2>Members</h2><div id="members-section"></div>';
           renderMembers(circleId);
@@ -278,59 +251,11 @@ async function loadCircle() {
             </form>`;
           setupChat(circleId);
         }
-      // Render Discussions tab (placeholder, shows 'no discussions' message)
-      async function renderDiscussions(circleId) {
-        const discussionsSection = document.getElementById('discussions-section');
-        discussionsSection.innerHTML = '<p>Loading discussions...</p>';
-        // Only show suggestions for this circle with status 'open'
-        const { data: discussions, error } = await supabase
-          .from('suggestions')
-          .select('*')
-          .eq('circle_id', circleId)
-          .eq('status', 'open');
-        if (error) {
-          discussionsSection.innerHTML = `<p>Error loading discussions: ${error.message}</p>`;
-          return;
-        }
-        if (!discussions || discussions.length === 0) {
-          discussionsSection.innerHTML = '<p>No discussions yet for this circle.</p>';
-          return;
-        }
-        discussionsSection.innerHTML = '';
-        discussions.forEach(discussion => {
-          const card = document.createElement('div');
-          card.className = 'agreement-card';
-          card.innerHTML = `
-            <strong>${discussion.title}</strong><br>
-            <span>${discussion.description || ''}</span><br>
-            <span>Created: ${new Date(discussion.created_at).toLocaleString()}</span>
-          `;
-          discussionsSection.appendChild(card);
-        });
-      }
-      // Render Agreements tab
-      async function renderAgreements(circleId) {
-        const agreementsSection = document.getElementById('agreements-section');
-        agreementsSection.innerHTML = '';
-        const { data: agreements } = await supabase
-          .from('agreements')
-          .select('id, agreement_text, status, created_at')
-          .eq('circle_id', circleId)
-          .order('created_at', { ascending: false });
-        if (!agreements || agreements.length === 0) {
-          agreementsSection.innerHTML += '<p>No agreements yet for this circle.</p>';
-        } else {
-          agreements.forEach(agreement => {
-            const card = document.createElement('div');
-            card.className = 'agreement-card';
-            card.innerHTML = `
-              <strong>${agreement.agreement_text}</strong><br>
-              <span>Status: ${agreement.status}</span><br>
-              <span>Created: ${new Date(agreement.created_at).toLocaleString()}</span>
-            `;
-            agreementsSection.appendChild(card);
-          });
-        }
+      // Render Blog tab
+      async function renderBlog(circleId) {
+        const blogSection = document.getElementById('blog-section');
+        blogSection.innerHTML = '<p>No blog posts yet for this circle.</p>';
+        // In the future, we will fetch and display blog posts here.
       }
       // Render Members tab
       async function renderMembers(circleId) {

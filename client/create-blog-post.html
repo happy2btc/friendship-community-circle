@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Blog Post</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: 8px; }
+    h1 { color: #6b4f1d; }
+    input, textarea, button { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 1rem; box-sizing: border-box; }
+    textarea { height: 200px; }
+    button { background: #2e8b57; color: #fff; font-weight: bold; cursor: pointer; }
+    #status { margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>New Blog Post</h1>
+    <form id="blog-form">
+      <label for="title">Title</label>
+      <input type="text" id="title" required>
+
+      <label for="content">Content</label>
+      <textarea id="content" required></textarea>
+
+      <label for="image">Image (optional)</label>
+      <input type="file" id="image" accept="image/*">
+
+      <button type="submit">Submit Post</button>
+    </form>
+    <div id="status"></div>
+    <a href="" id="back-to-circle" class="menu-button" style="display: none; margin-top: 1rem;">Back to Circle</a>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    console.log("Page URL:", window.location.href);
+    const params = new URLSearchParams(window.location.search);
+    const circleId = params.get('circle_id');
+    console.log("Parsed circle_id:", circleId);
+
+    const form = document.getElementById('blog-form');
+    const statusDiv = document.getElementById('status');
+    const backLink = document.getElementById('back-to-circle');
+
+    if (circleId) {
+      backLink.href = `circle.html?id=${circleId}`;
+      backLink.style.display = 'inline-block';
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const submitButton = form.querySelector('button');
+      submitButton.disabled = true;
+      statusDiv.textContent = 'Submitting...';
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        statusDiv.textContent = 'You must be logged in to create a post.';
+        submitButton.disabled = false;
+        return;
+      }
+
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+      const imageFile = document.getElementById('image').files[0];
+      let imageUrl = null;
+
+      try {
+        // 1. Handle image upload
+        if (imageFile) {
+          const filePath = `blog/${circleId}/${user.id}/${Date.now()}_${imageFile.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('blog-images')
+            .upload(filePath, imageFile);
+
+          if (uploadError) {
+            throw new Error(`Image upload failed: ${uploadError.message}`);
+          }
+          imageUrl = filePath;
+        }
+
+        // 2. Insert blog post into the database
+        const { error: dbError } = await supabase.from('blog_posts').insert({
+          circle_id: circleId,
+          user_id: user.id,
+          title: title,
+          content: content,
+          image_url: imageUrl
+        });
+
+        if (dbError) {
+          throw new Error(`Database insert failed: ${dbError.message}`);
+        }
+
+        statusDiv.textContent = 'Post created successfully!';
+        statusDiv.style.color = 'green';
+        form.reset();
+        setTimeout(() => {
+          if (circleId) window.location.href = `circle.html?id=${circleId}`;
+        }, 1500);
+
+      } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        statusDiv.style.color = 'red';
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
