@@ -46,6 +46,10 @@
     <ul id="attendance-list"></ul>
     <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
     <div id="status"></div>
+    <h3>Import Attendance Log</h3>
+    <textarea id="attendance-log" placeholder="Paste Zoom attendance log here (CSV format: Name,Email,Join Time,Leave Time,Duration)..." rows="10" style="width:100%;"></textarea>
+    <button id="parse-log-btn" class="attend-btn" style="margin-top:1em;">Parse and Import Log</button>
+    <div id="log-preview" style="margin-top:1em;"></div>
     <a href="events.html" class="attend-btn" style="display:block;width:fit-content;margin:2em auto 0 auto;">← Back to Events</a>
     <script type="module">
       import { supabase } from '/lib/supabase.js';
@@ -178,6 +182,54 @@
           attendBtn.disabled = false;
         }
       });
+  
+      document.getElementById('parse-log-btn').addEventListener('click', async () => {
+        const logText = document.getElementById('attendance-log').value.trim();
+        if (!logText) {
+          alert('Please paste the attendance log.');
+          return;
+        }
+        const lines = logText.split('\n');
+        if (lines.length < 2) {
+          alert('Invalid log format. Expected CSV with header.');
+          return;
+        }
+        const header = lines[0].split(',');
+        const dataLines = lines.slice(1);
+        const previewDiv = document.getElementById('log-preview');
+        previewDiv.innerHTML = '<h4>Parsed Log:</h4><table border="1" style="width:100%;"><tr><th>Name</th><th>Email</th><th>Join Time</th><th>Action</th></tr>';
+        for (const line of dataLines) {
+          const cols = line.split(',');
+          if (cols.length < 3) continue;
+          const name = cols[0].trim();
+          const email = cols[1].trim();
+          const joinTime = cols[2].trim();
+          // Find user by email
+          const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('email', email).single();
+          const userId = profile?.id;
+          const displayName = profile?.full_name || name;
+          const action = userId ? `<button onclick="markAttendedFromLog('${userId}', '${joinTime}')">Mark Attended</button>` : 'User not found';
+          previewDiv.innerHTML += `<tr><td>${displayName}</td><td>${email}</td><td>${joinTime}</td><td>${action}</td></tr>`;
+        }
+        previewDiv.innerHTML += '</table>';
+      });
+  
+      window.markAttendedFromLog = async (userId, joinTime) => {
+        // Parse joinTime to ISO
+        const parsedDate = new Date(joinTime);
+        if (isNaN(parsedDate)) {
+          alert('Invalid date format: ' + joinTime);
+          return;
+        }
+        const attendedAt = parsedDate.toISOString();
+        const { error } = await supabase.from('event_attendance').insert({ event_id: currentEventId, user_id: userId, attended_at: attendedAt });
+        if (error) {
+          alert('Error marking attendance: ' + error.message);
+        } else {
+          alert('Attendance marked!');
+          loadAttendance(currentEventId);
+        }
+      };
   
       refreshBtn.addEventListener('click', () => {
         loadEventList();
