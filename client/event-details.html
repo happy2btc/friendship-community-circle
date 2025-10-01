@@ -57,7 +57,33 @@
       const refreshBtn = document.getElementById('refresh-btn');
       let currentEventId = null;
       let currentEvents = [];
-  
+
+      async function loadAttendance(eventId) {
+        if (!eventId) return;
+        const { data: attendance, error } = await supabase
+          .from('event_attendance')
+          .select('user_id, attended_at, profiles(full_name)')
+          .eq('event_id', eventId)
+          .order('attended_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading attendance:', error);
+          attendanceList.innerHTML = '<li>Error loading attendance.</li>';
+          return;
+        }
+
+        if (!attendance || attendance.length === 0) {
+          attendanceList.innerHTML = '<li>No one has marked attendance yet.</li>';
+          return;
+        }
+
+        attendanceList.innerHTML = attendance.map(a => {
+          const date = new Date(a.attended_at).toLocaleString();
+          const name = a.profiles?.full_name || 'Unknown User';
+          return `<li><strong>${name}</strong> attended on ${date}</li>`;
+        }).join('');
+      }
+
       async function loadEventList() {
         const { data: events, error } = await supabase
           .from('events')
