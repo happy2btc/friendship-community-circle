@@ -15,12 +15,12 @@ EXECUTE FUNCTION award_points_for_event();
 
 -- Award 5 points to attendee when attendance is recorded
 CREATE OR REPLACE FUNCTION award_points_for_attendance()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
-  UPDATE profiles SET points = COALESCE(points, 0) + 5 WHERE id = NEW.user_id;
+  UPDATE profiles SET points = COALESCE(points, 0) + 5, events_attended = COALESCE(events_attended, 0) + 1 WHERE id = NEW.user_id;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_award_points_for_attendance
 AFTER INSERT ON event_attendance

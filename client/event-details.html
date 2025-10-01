@@ -36,114 +36,128 @@
 <body>
   <a href="menu.html" class="menu-top-btn">← Back to Menu</a>
   <h1>Event Details & Attendance</h1>
-  <div style="text-align:center;margin-bottom:2em;">
-    <label for="event-select"><strong>Select Event:</strong></label>
-    <select id="event-select" style="padding:8px 12px;border-radius:6px;font-size:1em;"></select>
-  </div>
-  <div id="event-details"></div>
-  <h2 style="text-align:center;">Attendance</h2>
-  <ul id="attendance-list"></ul>
-  <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
-  <div id="status"></div>
-  <a href="events.html" class="attend-btn" style="display:block;width:fit-content;margin:2em auto 0 auto;">← Back to Events</a>
-  <script type="module">
-    import { supabase } from '/lib/supabase.js';
-    const eventSelect = document.getElementById('event-select');
-    const eventDetailsDiv = document.getElementById('event-details');
-    const attendanceList = document.getElementById('attendance-list');
-    const attendBtn = document.getElementById('attend-btn');
-    const statusDiv = document.getElementById('status');
-    let currentEventId = null;
+      <div style="text-align:center;margin-bottom:2em;">
+        <label for="event-select"><strong>Select Event:</strong></label>
+        <select id="event-select" style="padding:8px 12px;border-radius:6px;font-size:1em;"></select>
+        <button id="refresh-btn" style="padding:8px 12px;border-radius:6px;font-size:1em;margin-left:1em;">Refresh</button>
+      </div>
+    <div id="event-details"></div>
+    <h2 style="text-align:center;">Attendance</h2>
+    <ul id="attendance-list"></ul>
+    <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
+    <div id="status"></div>
+    <a href="events.html" class="attend-btn" style="display:block;width:fit-content;margin:2em auto 0 auto;">← Back to Events</a>
+    <script type="module">
+      import { supabase } from '/lib/supabase.js';
+      const eventSelect = document.getElementById('event-select');
+      const eventDetailsDiv = document.getElementById('event-details');
+      const attendanceList = document.getElementById('attendance-list');
+      const attendBtn = document.getElementById('attend-btn');
+      const statusDiv = document.getElementById('status');
+      const refreshBtn = document.getElementById('refresh-btn');
+      let currentEventId = null;
+      let currentEvents = [];
+  
+      async function loadEventList() {
+        const { data: events, error } = await supabase
+          .from('events')
+          .select('id, title, start_time, repeat')
+          .order('start_time', { ascending: true });
 
-    async function loadEventList() {
-      const { data: events, error } = await supabase.from('events').select('id, title').order('start_time', { ascending: true });
-      if (error || !events || events.length === 0) {
-        eventSelect.innerHTML = '<option value="">No events found</option>';
-        eventDetailsDiv.textContent = 'No event selected.';
-        attendBtn.style.display = 'none';
-        return;
-      }
-      eventSelect.innerHTML = events.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
-      currentEventId = events[0].id;
-      await loadEvent(currentEventId);
-      await loadAttendance(currentEventId);
-    }
+        if (error || !events || events.length === 0) {
+          eventSelect.innerHTML = '<option value="">No events found</option>';
+          eventDetailsDiv.textContent = 'No event selected.';
+          attendBtn.style.display = 'none';
+          return;
+        }
 
-    async function loadEvent(eventId) {
-      if (!eventId) {
-        eventDetailsDiv.textContent = 'No event selected.';
-        attendBtn.style.display = 'none';
-        return;
-      }
-      const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
-      if (error || !event) {
-        eventDetailsDiv.textContent = 'Event not found.';
-        attendBtn.style.display = 'none';
-        return;
-      }
-      eventDetailsDiv.innerHTML = `<h2>${event.title}</h2><div><strong>Date:</strong> ${event.start_time ? new Date(event.start_time).toLocaleString() : ''}</div><div><strong>Description:</strong> ${event.description || ''}</div>`;
-      attendBtn.style.display = '';
-    }
+        const startDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        const endDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);
 
-    async function loadAttendance(eventId) {
-      if (!eventId) return;
-      const { data: attendance, error } = await supabase
-        .from('event_attendance')
-        .select('user_id, attended_at')
-        .eq('event_id', eventId);
-      if (error) {
-        attendanceList.innerHTML = '<li>Error loading attendance.</li>';
-        return;
-      }
-      if (!attendance || attendance.length === 0) {
-        attendanceList.innerHTML = '<li>No one has attended yet.</li>';
-        return;
-      }
-      // Get profiles for all attending users
-      const userIds = attendance.map(a => a.user_id);
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', userIds);
-      // Map user_id to full_name
-      const idToName = {};
-      profiles?.forEach(p => { idToName[p.id] = p.full_name; });
-      // Display attendance with names
-      attendanceList.innerHTML = '';
-      for (const record of attendance) {
-        const name = idToName[record.user_id] || record.user_id;
-        attendanceList.innerHTML += `<li>${name} <span style="color:#888;">(${record.attended_at ? new Date(record.attended_at).toLocaleString() : ''})</span></li>`;
-      }
-    }
+        currentEvents = events.map(e => {
+          const eventDate = new Date(e.start_time);
 
-    eventSelect.addEventListener('change', async (e) => {
-      currentEventId = e.target.value;
-      await loadEvent(currentEventId);
-      await loadAttendance(currentEventId);
-    });
+          if (e.repeat === 'weekly') {
+            // For weekly repeating events, calculate the next occurrence
+            const nextOccurrence = new Date(eventDate);
+            while (nextOccurrence < startDate) {
+              nextOccurrence.setDate(nextOccurrence.getDate() + 7);
+            }
+            if (nextOccurrence >= startDate && nextOccurrence <= endDate) {
+              e.nextOccurrence = nextOccurrence;
+              return e;
+            }
+          } else {
+            // For non-repeating events, just check if the event date is within the window
+            if (eventDate >= startDate && eventDate <= endDate) {
+              e.nextOccurrence = eventDate;
+              return e;
+            }
+          }
+        }).filter(Boolean);
 
-    attendBtn.addEventListener('click', async () => {
-      attendBtn.disabled = true;
-      statusDiv.textContent = '';
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        statusDiv.textContent = 'You must be logged in to mark attendance.';
-        attendBtn.disabled = false;
-        return;
-      }
-      const { error } = await supabase.from('event_attendance').insert({ event_id: currentEventId, user_id: user.id, attended_at: new Date().toISOString() });
-      if (error) {
-        statusDiv.textContent = 'Error marking attendance: ' + error.message;
-        attendBtn.disabled = false;
-      } else {
-        statusDiv.textContent = 'Attendance marked!';
+        if (currentEvents.length === 0) {
+          eventSelect.innerHTML = '<option value="">No events found in the next 7 days</option>';
+          eventDetailsDiv.textContent = 'No event selected.';
+          attendBtn.style.display = 'none';
+          return;
+        }
+
+        eventSelect.innerHTML = currentEvents.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+        currentEventId = currentEvents[0].id;
+        await loadEvent(currentEventId, currentEvents[0].nextOccurrence);
         await loadAttendance(currentEventId);
       }
-      attendBtn.disabled = false;
-    });
 
-    // Initial load
-    loadEventList();
-  </script>
-</body>
+      async function loadEvent(eventId, nextOccurrence) {
+        if (!eventId) {
+          eventDetailsDiv.textContent = 'No event selected.';
+          attendBtn.style.display = 'none';
+          return;
+        }
+        const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
+        if (error || !event) {
+          eventDetailsDiv.textContent = 'Event not found.';
+          attendBtn.style.display = 'none';
+          return;
+        }
+        eventDetailsDiv.innerHTML = `<h2>${event.title}</h2><div><strong>Date:</strong> ${nextOccurrence ? nextOccurrence.toDateString() : ''}</div><div><strong>Description:</strong> ${event.description || ''}</div>`;
+        attendBtn.style.display = '';
+      }
+
+      eventSelect.addEventListener('change', async (e) => {
+        currentEventId = e.target.value;
+        const selectedEvent = currentEvents.find(event => event.id == currentEventId);
+        await loadEvent(currentEventId, selectedEvent.nextOccurrence);
+        await loadAttendance(currentEventId);
+        statusDiv.textContent = '';
+      });
+
+      attendBtn.addEventListener('click', async () => {
+        attendBtn.disabled = true;
+        statusDiv.textContent = '';
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          statusDiv.textContent = 'You must be logged in to mark attendance.';
+          attendBtn.disabled = false;
+          return;
+        }
+        const { error } = await supabase.from('event_attendance').insert({ event_id: currentEventId, user_id: user.id, attended_at: new Date().toISOString() });
+        if (error) {
+          statusDiv.textContent = 'Error marking attendance: ' + error.message;
+          attendBtn.disabled = false;
+        } else {
+          statusDiv.textContent = 'Attendance marked!';
+          await loadAttendance(currentEventId);
+          attendBtn.disabled = false;
+        }
+      });
+  
+      refreshBtn.addEventListener('click', () => {
+        loadEventList();
+      });
+  
+      // Initial load
+      loadEventList();
+    </script></body>
 </html>
