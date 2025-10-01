@@ -254,8 +254,54 @@ async function loadCircle() {
       // Render Blog tab
       async function renderBlog(circleId) {
         const blogSection = document.getElementById('blog-section');
-        blogSection.innerHTML = '<p>No blog posts yet for this circle.</p>';
-        // In the future, we will fetch and display blog posts here.
+        const { data: posts, error } = await supabase
+          .from('blog_posts')
+          .select(`
+            *,
+            profiles (
+              full_name,
+              avatar_url
+            )
+          `)
+          .eq('circle_id', circleId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          blogSection.innerHTML = '<p>Error loading blog posts.</p>';
+          console.error('Error fetching blog posts:', error);
+          return;
+        }
+
+        if (!posts || posts.length === 0) {
+          blogSection.innerHTML = '<p>No blog posts yet for this circle.</p>';
+          return;
+        }
+
+        let postsHtml = '';
+        for (const post of posts) {
+          const profile = post.profiles;
+          const postDate = new Date(post.created_at).toLocaleString();
+          
+          // Get public URL for the image
+          let imageUrl = null;
+          if (post.image_url) {
+            const { data } = supabase.storage.from('blog-images').getPublicUrl(post.image_url);
+            imageUrl = data.publicUrl;
+          }
+
+          postsHtml += `
+            <div class="agreement-card">
+              <h3>${post.title}</h3>
+              <p>
+                <img src="${profile.avatar_url || 'public/default-avatar.png'}" alt="author" style="width:30px;height:30px;border-radius:50%;vertical-align:middle;">
+                <strong>${profile.full_name}</strong> on ${postDate}
+              </p>
+              ${imageUrl ? `<img src="${imageUrl}" alt="${post.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:1rem;">` : ''}
+              <div>${post.content}</div>
+            </div>
+          `;
+        }
+        blogSection.innerHTML = postsHtml;
       }
       // Render Members tab
       async function renderMembers(circleId) {
