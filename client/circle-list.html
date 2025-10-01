@@ -65,10 +65,10 @@
           actions.appendChild(leaveBtn);
 
           const switchBtn = document.createElement('button');
-          switchBtn.textContent = 'Switch to Circle';
+          switchBtn.textContent = 'Enter Circle';
           switchBtn.onclick = () => {
             localStorage.setItem('active_circle_id', circle.id);
-            alert('Switched to ' + circle.name);
+            alert('Entered ' + circle.name);
             // Optionally redirect to the circle's page
             window.location.href = `circle.html?id=${circle.id}`;
           };
