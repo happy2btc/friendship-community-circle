@@ -26,6 +26,15 @@
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
+    // Set last read time when viewing chat
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (userId) {
+        localStorage.setItem(`lastReadCommunityChat_${userId}`, new Date().toISOString());
+      }
+    })();
+
     // Submit a new message
     document.getElementById('chat-form').onsubmit = async (e) => {
       e.preventDefault();
@@ -79,7 +88,7 @@
               <img src="${avatar}" width="24" height="24" style="vertical-align:middle;border-radius:50%;">
               <strong>${username}:</strong>
               <span>${msg.message}</span>
-              <small style="color:#888;">${new Date(msg.created_at).toLocaleTimeString()}</small>
+              <small style="color:#888;">${new Date(msg.created_at).toLocaleString()}</small>
             </div>
           `;
         }

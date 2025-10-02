@@ -123,7 +123,7 @@
     <a href="group-projects.html" class="menu-button" id="group-projects-btn">🛠️ Group Projects</a>
     <a href="skill-shares.html" class="menu-button" id="skill-shares-btn">🎬 Skill Shares</a>
     <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
-    <a href="community-chat.html" class="menu-button">💬 Community Chat</a>
+    <a href="community-chat.html" class="menu-button" id="community-chat-btn">💬 Community Chat</a>
     <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements</a>
     <button id="logout-button" class="logout-button">Log Out</button>
     <a href="events-calendar.html" class="menu-button">📅 Events Calendar</a>
@@ -469,9 +469,31 @@ logoutButton.addEventListener('click', async () => {
     }
 });
 
+// Check for unread community chat messages
+async function checkUnreadChat() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return;
+  const lastRead = localStorage.getItem(`lastReadCommunityChat_${userId}`);
+  if (!lastRead) {
+    // If never read, show indicator
+    document.getElementById('community-chat-btn').innerHTML += ' <span style="color:red; font-weight:bold;">!</span>';
+    return;
+  }
+  const { data: latestMsg } = await supabase
+    .from('community_messages')
+    .select('created_at')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (latestMsg && latestMsg[0] && new Date(latestMsg[0].created_at) > new Date(lastRead)) {
+    document.getElementById('community-chat-btn').innerHTML += ' <span style="color:red; font-weight:bold;">!</span>';
+  }
+}
+
 // Initial loads
 showMostActiveMember();
 showNewestMember();
+checkUnreadChat();
 
 </script>
 </body>
