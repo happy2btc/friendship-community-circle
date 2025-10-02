@@ -100,7 +100,7 @@
     <div class="menu-container">
     <a href="welcome.html" class="menu-button" style="background:#ffe082;color:#6b4f1d;font-weight:bold;">👋 In Case You Missed It</a>
     <a href="what's-new.html" class="menu-button">🆕 What's New</a>
-    <a href="profile.html" class="menu-button">👤 My Profile</a>
+    <a href="profile.html" class="menu-button" id="profile-btn">👤 My Profile</a>
     <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
     <a href="new-members.html" class="menu-button">🆕 New Members</a>
     <a href="activities.html" class="menu-button">🏆 Member Activities</a>
@@ -490,7 +490,7 @@ async function checkUnreadChat() {
   const lastRead = localStorage.getItem(`lastReadCommunityChat_${userId}`);
   if (!lastRead) {
     // If never read, show indicator
-    document.getElementById('community-chat-btn').innerHTML += ' <span style="color:red; font-weight:bold;">!</span>';
+    document.getElementById('community-chat-btn').innerHTML += ' <span style="background:red; color:white; padding:2px 6px; border-radius:4px; font-size:0.9em; font-weight:bold; position:relative; top:-2px;">new</span>';
     return;
   }
   const { data: latestMsg } = await supabase
@@ -499,7 +499,22 @@ async function checkUnreadChat() {
     .order('created_at', { ascending: false })
     .limit(1);
   if (latestMsg && latestMsg[0] && new Date(latestMsg[0].created_at) > new Date(lastRead)) {
-    document.getElementById('community-chat-btn').innerHTML += ' <span style="color:red; font-weight:bold;">!</span>';
+    document.getElementById('community-chat-btn').innerHTML += ' <span style="background:red; color:white; padding:2px 6px; border-radius:4px; font-size:0.9em; font-weight:bold; position:relative; top:-2px;">new</span>';
+  }
+}
+
+// Check if profile is incomplete
+async function checkProfileIncomplete() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('bio, personal_story, youtube, twitter, substack, facebook, instagram, linkedin, website')
+    .eq('id', userId)
+    .single();
+  if (!profile || !profile.bio || profile.bio.trim() === '') {
+    document.getElementById('profile-btn').innerHTML += ' <span style="background:red; color:white; padding:2px 6px; border-radius:4px; font-size:0.9em; font-weight:bold; position:relative; top:-2px;">new</span>';
   }
 }
 
@@ -507,6 +522,7 @@ async function checkUnreadChat() {
 showMostActiveMember();
 showNewestMember();
 checkUnreadChat();
+checkProfileIncomplete();
 
 </script>
 </body>
