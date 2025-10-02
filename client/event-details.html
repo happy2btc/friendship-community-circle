@@ -47,7 +47,8 @@
     <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
     <div id="status"></div>
     <h3>Import Attendance Log</h3>
-    <textarea id="attendance-log" placeholder="Paste Zoom attendance log here (CSV format: Name,Email,Join Time,Leave Time,Duration)..." rows="10" style="width:100%;"></textarea>
+    <textarea id="attendance-log" placeholder="Paste Zoom attendance log here (CSV format: Name,Email,Join Time,Leave Time,Duration)..." rows="10" style="width:100%;">Topic,Type,ID,Host name,Host email,Start time,End time,Participants,Duration (minutes),Total participant minutes,Department,Group,Source,Unique viewers,Max concurrent views,Creation time,Name (original name),Email,Join time,Leave time,Duration (minutes),Guest,Recording disclaimer response,In waiting room
+Friends of the Happy Company Weekly Meeting,Meeting,848 0383 5985,Happy2bTC,happy2btct@gmail.com,"10/01/2025 03:45:49 PM","10/01/2025 04:44:53 PM",1,60,58,,,Zoom,-,-,"11/23/2024 12:13:35 PM",Happy2bTC (Host),happy2btct@gmail.com,"10/01/2025 03:45:49 PM","10/01/2025 04:42:53 PM",58,No,,No</textarea>
     <button id="parse-log-btn" class="attend-btn" style="margin-top:1em;">Parse and Import Log</button>
     <div id="log-preview" style="margin-top:1em;"></div>
     <a href="events.html" class="attend-btn" style="display:block;width:fit-content;margin:2em auto 0 auto;">← Back to Events</a>
@@ -196,14 +197,22 @@
         }
         const header = lines[0].split(',');
         const dataLines = lines.slice(1);
+        // Find column indices
+        const nameIndex = header.findIndex(h => h.trim().toLowerCase() === 'name (original name)');
+        const emailIndex = header.findIndex(h => h.trim().toLowerCase() === 'email');
+        const joinTimeIndex = header.findIndex(h => h.trim().toLowerCase() === 'join time');
+        if (nameIndex === -1 || emailIndex === -1 || joinTimeIndex === -1) {
+          alert('CSV must contain "Name (original name)", "Email", and "Join time" columns.');
+          return;
+        }
         const previewDiv = document.getElementById('log-preview');
         previewDiv.innerHTML = '<h4>Parsed Log:</h4><table border="1" style="width:100%;"><tr><th>Name</th><th>Email</th><th>Join Time</th><th>Action</th></tr>';
         for (const line of dataLines) {
           const cols = line.split(',');
-          if (cols.length < 3) continue;
-          const name = cols[0].trim();
-          const email = cols[1].trim();
-          const joinTime = cols[2].trim();
+          if (cols.length <= Math.max(nameIndex, emailIndex, joinTimeIndex)) continue;
+          const name = cols[nameIndex].trim();
+          const email = cols[emailIndex].trim();
+          const joinTime = cols[joinTimeIndex].trim();
           // Find user by email
           const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('email', email).single();
           const userId = profile?.id;

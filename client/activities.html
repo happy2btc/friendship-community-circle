@@ -86,7 +86,7 @@
                 }
             });
             Object.entries(helpByUser).forEach(([userId, hours]) => {
-                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, help_hours: 0, help_points: 0, help_hours_recent: 0 };
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, help_hours: 0, help_points: 0, help_hours_recent: 0, support_responses: 0 };
                 breakdown[userId].help_hours = hours;
                 breakdown[userId].help_points = hours * 5;
                 breakdown[userId].help_hours_recent = (helpByUserRecent[userId] || []).reduce((a, b) => a + b, 0);
@@ -104,7 +104,7 @@
                 }
             });
             Object.entries(attendedByUser).forEach(([userId, count]) => {
-                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0, events_attended: 0, projects_proposed: 0 };
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0, events_attended: 0, projects_proposed: 0, support_responses: 0 };
                 breakdown[userId].events_attended = count;
                 activity[userId] = (activity[userId] || 0) + (count * 5);
             });
@@ -119,8 +119,23 @@
                 }
             });
             Object.entries(eventsByUser).forEach(([userId, count]) => {
-                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0 };
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0, support_responses: 0 };
                 breakdown[userId].events_created = count;
+                activity[userId] = (activity[userId] || 0) + (count * 5);
+            });
+            // Count support responses (5 points each)
+            const { data: supportResponses } = await supabase
+                .from('support_responses')
+                .select('responder_id');
+            const responsesByUser = {};
+            supportResponses?.forEach(sr => {
+                if (sr.responder_id && sr.responder_id !== builderId) {
+                    responsesByUser[sr.responder_id] = (responsesByUser[sr.responder_id] || 0) + 1;
+                }
+            });
+            Object.entries(responsesByUser).forEach(([userId, count]) => {
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, events_created: 0, events_attended: 0, projects_proposed: 0, support_responses: 0 };
+                breakdown[userId].support_responses = count;
                 activity[userId] = (activity[userId] || 0) + (count * 5);
             });
             // Restore missing queries for legacy activities
@@ -171,21 +186,21 @@
             votes?.forEach(v => {
                 if (v.voter_id !== builderId) {
                     activity[v.voter_id] = (activity[v.voter_id] || 0) + 1;
-                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[v.voter_id] = breakdown[v.voter_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[v.voter_id].votes += 1;
                 }
             });
             suggestions?.forEach(s => {
                 if (s.author_id !== builderId) {
                     activity[s.author_id] = (activity[s.author_id] || 0) + 1;
-                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[s.author_id] = breakdown[s.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[s.author_id].suggestions += 1;
                 }
             });
             comments?.forEach(c => {
                 if (c.author_id !== builderId) {
                     activity[c.author_id] = (activity[c.author_id] || 0) + 1;
-                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[c.author_id] = breakdown[c.author_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[c.author_id].comments += 1;
                 }
             });
@@ -198,7 +213,7 @@
                     }
                 });
                 Object.entries(proposalsByUser).forEach(([userId, count]) => {
-                    breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[userId].projects_proposed = count;
                     activity[userId] = (activity[userId] || 0) + (count * 5);
                 });
@@ -207,7 +222,7 @@
             offerings?.forEach(o => {
                 if (o.user_id !== builderId) {
                     let points = 0;
-                    breakdown[o.user_id] = breakdown[o.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[o.user_id] = breakdown[o.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     if (o.want && o.want.trim() !== "") { breakdown[o.user_id].wants += 1; points += 1; }
                     if (o.give && o.give.trim() !== "") { breakdown[o.user_id].offers += 1; points += 1; }
                     if (o.passion && o.passion.trim() !== "") { breakdown[o.user_id].passion += 1; points += 1; }
@@ -224,7 +239,7 @@
                 }
             });
             Object.entries(contribByUser).forEach(([userId, contribs]) => {
-                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                 let fieldsFilled = 0;
                 contribs.forEach(con => {
                     ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
@@ -246,7 +261,7 @@
                     if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
                     if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
                     if (filled >= 2) {
-                        breakdown[p.id] = breakdown[p.id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                        breakdown[p.id] = breakdown[p.id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                         breakdown[p.id].profile = 1;
                         activity[p.id] = (activity[p.id] || 0) + 5;
                     }
@@ -257,7 +272,7 @@
             circles?.forEach(c => {
                 if (c.created_by && c.created_by !== builderId) {
                     activity[c.created_by] = (activity[c.created_by] || 0) + 10;
-                    breakdown[c.created_by] = breakdown[c.created_by] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[c.created_by] = breakdown[c.created_by] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[c.created_by].circles_created = (breakdown[c.created_by].circles_created || 0) + 1;
                 }
             });
@@ -266,7 +281,7 @@
             membersData?.forEach(m => {
                 if (m.added_by && m.added_by !== builderId) {
                     activity[m.added_by] = (activity[m.added_by] || 0) + 2;
-                    breakdown[m.added_by] = breakdown[m.added_by] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[m.added_by] = breakdown[m.added_by] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[m.added_by].members_added = (breakdown[m.added_by].members_added || 0) + 1;
                 }
             });
@@ -275,7 +290,7 @@
             celebrations?.forEach(c => {
                 if (c.user_id && c.user_id !== builderId) {
                     activity[c.user_id] = (activity[c.user_id] || 0) + 5;
-                    breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0 };
+                    breakdown[c.user_id] = breakdown[c.user_id] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, support_responses: 0 };
                     breakdown[c.user_id].celebrations_posted = (breakdown[c.user_id].celebrations_posted || 0) + 1;
                 }
             });
@@ -315,7 +330,6 @@
                 return;
             }
 
-            // Most Active Member section
                 container.innerHTML += members.map(m => `
                     <div class="member-card">
                         <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
@@ -338,6 +352,7 @@
                                 Members Added: ${m.breakdown.members_added || 0}<br>
                                 Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                                 Projects Proposed: ${m.breakdown.projects_proposed || 0}<br>
+                                Support Responses: ${m.breakdown.support_responses || 0}<br>
                                 <strong>Total:</strong> ${m.total}
                             </div>
                             <div class="personal-story">${m.profile.personal_story || ''}</div>
