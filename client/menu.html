@@ -119,7 +119,7 @@
     <a href="submit-help.html" class="menu-button">📝 Submit Help Given</a>
     <a href="inbox.html" class="menu-button">📬 Inbox</a>
     <a href="request-support.html" class="menu-button" style="background:#c0a062;color:#fff;">💸 Request Support</a>
-    <a href="view-support-requests.html" class="menu-button" style="background:#c0a062;color:#fff;">🤲 View Support Requests</a>
+    <a href="view-support-requests.html" class="menu-button" id="view-support-btn" style="background:#c0a062;color:#fff;">🤲 View Support Requests</a>
     <a href="group-projects.html" class="menu-button" id="group-projects-btn">🛠️ Group Projects</a>
     <a href="skill-shares.html" class="menu-button" id="skill-shares-btn">🎬 Skill Shares</a>
     <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
@@ -518,11 +518,33 @@ async function checkProfileIncomplete() {
   }
 }
 
+// Check for unread support requests
+async function checkUnreadSupportRequests() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return;
+  const lastRead = localStorage.getItem(`lastReadSupportRequests_${userId}`);
+  if (!lastRead) {
+    // If never read, show indicator
+    document.getElementById('view-support-btn').innerHTML += ' <span style="background:red; color:white; padding:2px 6px; border-radius:4px; font-size:0.9em; font-weight:bold; position:relative; top:-2px;">new</span>';
+    return;
+  }
+  const { data: latestRequest } = await supabase
+    .from('support_requests')
+    .select('created_at')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (latestRequest && latestRequest[0] && new Date(latestRequest[0].created_at) > new Date(lastRead)) {
+    document.getElementById('view-support-btn').innerHTML += ' <span style="background:red; color:white; padding:2px 6px; border-radius:4px; font-size:0.9em; font-weight:bold; position:relative; top:-2px;">new</span>';
+  }
+}
+
 // Initial loads
 showMostActiveMember();
 showNewestMember();
 checkUnreadChat();
 checkProfileIncomplete();
+checkUnreadSupportRequests();
 
 </script>
 </body>

@@ -25,6 +25,15 @@
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
+    // Set last read time when viewing support requests
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (userId) {
+        localStorage.setItem(`lastReadSupportRequests_${userId}`, new Date().toISOString());
+      }
+    })();
+
     const container = document.getElementById('requests-container');
 
     async function loadRequests() {
