@@ -52,7 +52,7 @@
       // Fetch from all actual tables, including events
       const [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
         discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
-        suggestionsRes, eventsRes, whatsNewRes] = await Promise.all([
+        suggestionsRes, eventsRes, whatsNewRes, supportRequestsRes] = await Promise.all([
         supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', fiveDaysAgo),
         supabase.from('celebrations').select('id, created_at, description').gte('created_at', fiveDaysAgo),
         supabase.from('circles').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
@@ -64,7 +64,8 @@
         supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', fiveDaysAgo),
         supabase.from('suggestions').select('id, created_at, description').gte('created_at', fiveDaysAgo),
         supabase.from('events').select('id, title, description, start_time, end_time, location, zoom_link, timezone, created_at').gte('created_at', fiveDaysAgo),
-        supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', fiveDaysAgo)
+        supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', fiveDaysAgo),
+        supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', fiveDaysAgo)
       ]);
 
   // Debug output for agreements and suggestions
@@ -73,6 +74,8 @@
   console.log('Suggestions response:', suggestionsRes);
   if (suggestionsRes.error) console.error('Suggestions error:', suggestionsRes.error);
   if (eventsRes.error) console.error('Events error:', eventsRes.error);
+  console.log('Support Requests response:', supportRequestsRes);
+  if (supportRequestsRes.error) console.error('Support Requests error:', supportRequestsRes.error);
 
   const allNews = [];
       // Events (calendar)
@@ -192,6 +195,16 @@
           created_by: item.created_by
         });
       });
+      // Support Requests
+      supportRequestsRes.data?.forEach(sr => {
+        allNews.push({
+          type: 'Support Request',
+          id: sr.id,
+          title: sr.mission_title || 'New Support Request',
+          description: sr.mission_description || '',
+          created_at: sr.created_at
+        });
+      });
 
       allNews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -230,8 +243,11 @@
         if (item.type === 'Skill Share' && item.id) {
           autoLink = `<a href="skill-share.html?id=${item.id}">View Skill Share</a>`;
         }
-         if (item.type === 'Member Offering' && item.id) {
+        if (item.type === 'Member Offering' && item.id) {
           autoLink = `<a href="member-offering.html?id=${item.id}">View Offering</a>`;
+        }
+        if (item.type === 'Support Request' && item.id) {
+          autoLink = `<a href="view-support-request.html?id=${item.id}">View Support Request</a>`;
         }
         // If a manual link is present, use it instead
         if (item.link) {
