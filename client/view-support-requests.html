@@ -90,10 +90,6 @@
           content += `<a href="${request.payment_link_2}" target="_blank" rel="noopener noreferrer" class="support-button">Contribute via Alternative Link</a>`;
           hasPayment = true;
         }
-        if (request.venmo_username) {
-          content += `<a href="https://venmo.com/${request.venmo_username}" target="_blank" rel="noopener noreferrer" class="support-button">Contribute via Venmo</a>`;
-          hasPayment = true;
-        }
         if (!hasPayment) {
           content += `<p style="margin-top:1rem;font-style:italic;">Contact the member directly to contribute.</p>`;
         }
