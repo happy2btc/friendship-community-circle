@@ -62,6 +62,12 @@
       <label for="payment-link">Payment Link (e.g., GoFundMe, PayPal.me)</label>
       <input type="url" id="payment-link" name="payment_link" placeholder="https://">
 
+      <label for="payment-link-2">Alternative Payment Link (optional, e.g., Venmo, Cash App)</label>
+      <input type="url" id="payment-link-2" name="payment_link_2" placeholder="https://">
+
+      <label for="venmo-username">Venmo Username (optional)</label>
+      <input type="text" id="venmo-username" name="venmo_username" placeholder="e.g., your-venmo-handle">
+
       <button type="submit">Submit Request</button>
       <div id="form-status" class="form-status"></div>
     </form>
@@ -106,6 +112,8 @@
         funding_goal: formData.get('funding_goal') ? parseFloat(formData.get('funding_goal')) : null,
         funds_usage_details: formData.get('funds_usage_details'),
         payment_link: formData.get('payment_link'),
+        payment_link_2: formData.get('payment_link_2'),
+        venmo_username: formData.get('venmo_username'),
       };
 
       const { error } = await supabase.from('support_requests').insert([requestData]);
