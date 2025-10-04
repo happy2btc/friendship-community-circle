@@ -46,11 +46,12 @@
     <ul id="attendance-list"></ul>
     <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
     <div id="status"></div>
-    <h3>Import Attendance Log</h3>
-    <textarea id="attendance-log" placeholder="Paste Zoom attendance log here (CSV format: Name,Email,Join Time,Leave Time,Duration)..." rows="10" style="width:100%;">Topic,Type,ID,Host name,Host email,Start time,End time,Participants,Duration (minutes),Total participant minutes,Department,Group,Source,Unique viewers,Max concurrent views,Creation time,Name (original name),Email,Join time,Leave time,Duration (minutes),Guest,Recording disclaimer response,In waiting room
-Friends of the Happy Company Weekly Meeting,Meeting,848 0383 5985,Happy2bTC,happy2btct@gmail.com,"10/01/2025 03:45:49 PM","10/01/2025 04:44:53 PM",1,60,58,,,Zoom,-,-,"11/23/2024 12:13:35 PM",Happy2bTC (Host),happy2btct@gmail.com,"10/01/2025 03:45:49 PM","10/01/2025 04:42:53 PM",58,No,,No</textarea>
+    <div id="import-section" style="display:none;">
+    <h3>Import Attendance Log for Selected Event</h3>
+    <textarea id="attendance-log" placeholder="Paste Zoom attendance log here (CSV format)..." rows="10" style="width:100%;"></textarea>
     <button id="parse-log-btn" class="attend-btn" style="margin-top:1em;">Parse and Import Log</button>
     <div id="log-preview" style="margin-top:1em;"></div>
+    </div>
     <a href="events.html" class="attend-btn" style="display:block;width:fit-content;margin:2em auto 0 auto;">← Back to Events</a>
     <script type="module">
       import { supabase } from '/lib/supabase.js';
@@ -131,6 +132,7 @@ Friends of the Happy Company Weekly Meeting,Meeting,848 0383 5985,Happy2bTC,happ
           eventSelect.innerHTML = '<option value="">No events found in the next 7 days</option>';
           eventDetailsDiv.textContent = 'No event selected.';
           attendBtn.style.display = 'none';
+          document.getElementById('import-section').style.display = 'none';
           return;
         }
 
@@ -144,16 +146,19 @@ Friends of the Happy Company Weekly Meeting,Meeting,848 0383 5985,Happy2bTC,happ
         if (!eventId) {
           eventDetailsDiv.textContent = 'No event selected.';
           attendBtn.style.display = 'none';
+          document.getElementById('import-section').style.display = 'none';
           return;
         }
         const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
         if (error || !event) {
           eventDetailsDiv.textContent = 'Event not found.';
           attendBtn.style.display = 'none';
+          document.getElementById('import-section').style.display = 'none';
           return;
         }
         eventDetailsDiv.innerHTML = `<h2>${event.title}</h2><div><strong>Date:</strong> ${nextOccurrence ? nextOccurrence.toDateString() : ''}</div><div><strong>Description:</strong> ${event.description || ''}</div>`;
         attendBtn.style.display = '';
+        document.getElementById('import-section').style.display = 'block';
       }
 
       eventSelect.addEventListener('change', async (e) => {
@@ -208,13 +213,13 @@ Friends of the Happy Company Weekly Meeting,Meeting,848 0383 5985,Happy2bTC,happ
         const previewDiv = document.getElementById('log-preview');
         previewDiv.innerHTML = '<h4>Parsed Log:</h4><table border="1" style="width:100%;"><tr><th>Name</th><th>Email</th><th>Join Time</th><th>Action</th></tr>';
         for (const line of dataLines) {
-          const cols = line.split(',');
+          const cols = line.split(',').map(col => col.trim().replace(/^"|"$/g, '')); // Trim and remove surrounding quotes
           if (cols.length <= Math.max(nameIndex, emailIndex, joinTimeIndex)) continue;
-          const name = cols[nameIndex].trim();
-          const email = cols[emailIndex].trim();
-          const joinTime = cols[joinTimeIndex].trim();
-          // Find user by email
-          const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('email', email).single();
+          const name = cols[nameIndex].replace(/\s*\(Host\)\s*$/, ''); // Remove (Host) suffix
+          const email = cols[emailIndex];
+          const joinTime = cols[joinTimeIndex];
+          // Find user by name (since email not in profiles table)
+          const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('full_name', name).single();
           const userId = profile?.id;
           const displayName = profile?.full_name || name;
           const action = userId ? `<button onclick="markAttendedFromLog('${userId}', '${joinTime}')">Mark Attended</button>` : 'User not found';
