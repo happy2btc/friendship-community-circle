@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Support Received</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; margin: 40px; display: flex; justify-content: center; }
+        .container { max-width: 800px; width: 100%; background-color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        h1 { text-align: center; color: #6b4f1d; }
+        .receipt-item { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+        .receipt-header { font-weight: bold; font-size: 1.1em; color: #2e8b57; }
+        .receipt-details { margin-top: 8px; }
+        .dollars { color: #8b4513; font-weight: bold; }
+        .date { color: #666; font-size: 0.9em; }
+        .total-section { background-color: #e6f7f2; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
+        .total-amount { font-size: 1.5em; font-weight: bold; color: #2e8b57; }
+        .menu-button {
+            display: block;
+            width: fit-content;
+            margin: 2rem auto 0 auto;
+            background-color: #6c757d;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .menu-button:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤝 Support Received</h1>
+        <p>This page shows your logged support receipts - funds you've received for your support requests.</p>
+        <div id="receipts-list"></div>
+        <div id="total-section" class="total-section" style="display:none;">
+            <h3>Total Support Received</h3>
+            <div class="total-amount" id="total-amount">$0.00</div>
+        </div>
+        <a href="menu.html" class="menu-button">← Back to Menu</a>
+    </div>
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+
+        async function loadSupportReceived() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                document.getElementById('receipts-list').innerHTML = '<p>Please log in to view your support receipts.</p>';
+                return;
+            }
+
+            const { data: receipts, error } = await supabase
+                .from('support_received')
+                .select('*')
+                .eq('recipient_id', user.id)
+                .order('received_at', { ascending: false });
+
+            if (error) {
+                console.error('Error loading support received:', error);
+                document.getElementById('receipts-list').innerHTML = '<p>Error loading data.</p>';
+                return;
+            }
+
+            if (!receipts || receipts.length === 0) {
+                document.getElementById('receipts-list').innerHTML = '<p>No support received yet. Use the "Log Received Support" form on the Request Support page to track funds you receive.</p>';
+                return;
+            }
+
+            // Calculate total
+            const total = receipts.reduce((sum, receipt) => sum + parseFloat(receipt.dollars_received || 0), 0);
+
+            // Display receipts
+            const listDiv = document.getElementById('receipts-list');
+            const items = receipts.map(receipt => {
+                const date = new Date(receipt.received_at).toLocaleDateString();
+                const time = new Date(receipt.received_at).toLocaleTimeString();
+                return `
+                    <div class="receipt-item">
+                        <div class="receipt-header">${receipt.support_sought}</div>
+                        <div class="receipt-details">
+                            <div class="dollars">$${parseFloat(receipt.dollars_received).toFixed(2)}</div>
+                            <div class="date">Received on ${date} at ${time}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            listDiv.innerHTML = items;
+
+            // Show total
+            document.getElementById('total-section').style.display = 'block';
+            document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
+        }
+
+        loadSupportReceived();
+    </script>
+</body>
+</html>
