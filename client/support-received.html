@@ -35,10 +35,6 @@
         <h1>🤝 Support Received</h1>
         <p>This page shows your logged support receipts - funds you've received for your support requests.</p>
         <div id="receipts-list"></div>
-        <div id="total-section" class="total-section" style="display:none;">
-            <h3>Total Support Received</h3>
-            <div class="total-amount" id="total-amount">$0.00</div>
-        </div>
         <a href="menu.html" class="menu-button">← Back to Menu</a>
     </div>
     <script type="module">
@@ -77,48 +73,9 @@
             }
             profilesMap['community'] = 'The Friendship Community Circle';
 
-            // Calculate total received
-            const totalReceived = receipts && receipts.length ? receipts.reduce((sum, receipt) => sum + parseFloat(receipt.dollars_received || 0), 0) : 0;
+            // ...existing code...
 
-            // Get total sought from support_requests table
-            const { data: requests } = await supabase
-                .from('support_requests')
-                .select('funding_goal')
-                .not('funding_goal', 'is', null);
-            const totalSought = requests && requests.length ? requests.reduce((sum, req) => sum + parseFloat(req.funding_goal || 0), 0) : 0;
-
-            // Calculate percentage
-            const percent = totalSought > 0 ? Math.min(100, Math.round((totalReceived / totalSought) * 100)) : 0;
-
-            // Display vertical thermometer with percentage marks
-            const thermometer = `
-                <div style="margin:30px 0 20px 0;text-align:center;display:flex;justify-content:center;align-items:flex-end;">
-                    <div style="display:flex;flex-direction:column;justify-content:space-between;height:180px;margin-right:8px;">
-                        <span style="font-size:0.95em;color:#6b4f1d;">100%</span>
-                        <span style="font-size:0.95em;color:#6b4f1d;">80%</span>
-                        <span style="font-size:0.95em;color:#6b4f1d;">60%</span>
-                        <span style="font-size:0.95em;color:#6b4f1d;">40%</span>
-                        <span style="font-size:0.95em;color:#6b4f1d;">20%</span>
-                        <span style="font-size:0.95em;color:#6b4f1d;">0%</span>
-                    </div>
-                    <div style="display:inline-block;position:relative;height:180px;width:48px;">
-                        <div style="position:absolute;bottom:0;left:0;width:48px;height:160px;background:#eee;border-radius:24px 24px 24px 24px;overflow:hidden;">
-                            <div style="position:absolute;bottom:0;left:0;width:48px;height:${Math.round(percent * 1.6)}px;background:#d32f2f;border-radius:24px 24px 0 0;transition:height 0.5s;"></div>
-                        </div>
-                        <div style="position:absolute;bottom:-20px;left:0;width:48px;height:40px;background:#d32f2f;border-radius:50%;border:4px solid #eee;"></div>
-                        <div style="position:absolute;top:0;left:0;width:48px;height:160px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;pointer-events:none;">
-                            <span style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:1.1em;color:#d32f2f;font-weight:bold;">${percent}%</span>
-                        </div>
-                    </div>
-                    <div style="margin-left:16px;align-self:center;">
-                        <div style="font-weight:bold;color:#6b4f1d;margin-bottom:8px;">Community Support Progress</div>
-                        <div style="margin-top:12px;font-size:1.1em;color:#d32f2f;font-weight:bold;">$${totalReceived.toLocaleString()} of $${totalSought.toLocaleString()} goal received</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('total-section').insertAdjacentHTML('beforebegin', thermometer);
-
-            // Display receipts
+            // Display each support received in its own container with thermometer
             const listDiv = document.getElementById('receipts-list');
             if (!receipts || receipts.length === 0) {
                 listDiv.innerHTML = `<div class="receipt-item">
@@ -129,25 +86,78 @@
                         </div>
                     </div>`;
             } else {
-                const items = receipts.map(receipt => {
-                    const recipientName = profilesMap[receipt.recipient_id] || 'Unknown';
-                    const date = new Date(receipt.received_at).toLocaleDateString();
-                    const time = new Date(receipt.received_at).toLocaleTimeString();
-                    return `
-                        <div class="receipt-item">
-                            <div class="receipt-header">${receipt.support_sought} - ${recipientName}</div>
-                            <div class="receipt-details">
-                                <div class="dollars">$${parseFloat(receipt.dollars_received).toFixed(2)}</div>
-                                <div class="date">Received on ${date} at ${time}</div>
+                // Group receipts by support_sought
+                const grouped = {};
+                receipts.forEach(receipt => {
+                    if (!grouped[receipt.support_sought]) grouped[receipt.support_sought] = [];
+                    grouped[receipt.support_sought].push(receipt);
+                });
+
+                // For each support_sought, get total received and total sought
+                const supportKeys = Object.keys(grouped);
+                const htmlBlocks = await Promise.all(supportKeys.map(async (supportTitle) => {
+                    const supportReceipts = grouped[supportTitle];
+                    const totalReceived = supportReceipts.reduce((sum, r) => sum + parseFloat(r.dollars_received || 0), 0);
+                    // Get total sought for this support_sought
+                    const { data: requests } = await supabase
+                        .from('support_requests')
+                        .select('funding_goal')
+                        .eq('mission_title', supportTitle)
+                        .not('funding_goal', 'is', null);
+                    const totalSought = requests && requests.length ? requests.reduce((sum, req) => sum + parseFloat(req.funding_goal || 0), 0) : 0;
+                    const percent = totalSought > 0 ? Math.min(100, Math.round((totalReceived / totalSought) * 100)) : 0;
+
+                    // Thermometer HTML: only a rising bar, no moving circle
+                    const thermometerHeight = 100; // px
+                    const percentPx = Math.round((percent / 100) * thermometerHeight);
+                    const thermometer = `
+                        <div style=\"margin:20px 0 10px 0;text-align:center;display:flex;justify-content:center;align-items:flex-end;\">
+                            <div style=\"display:flex;flex-direction:column;justify-content:space-between;height:120px;margin-right:8px;\">
+                                <span style=\"font-size:0.95em;color:#6b4f1d;\">100%</span>
+                                <span style=\"font-size:0.95em;color:#6b4f1d;\">80%</span>
+                                <span style=\"font-size:0.95em;color:#6b4f1d;\">60%</span>
+                                <span style=\"font-size:0.95em;color:#6b4f1d;\">40%</span>
+                                <span style=\"font-size:0.95em;color:#6b4f1d;\">20%</span>
+                                <span style=\"font-size:0.95em;color:#6b4f1d;\">0%</span>
+                            </div>
+                            <div style=\"display:inline-block;position:relative;height:120px;width:32px;\">
+                                <div style=\"position:absolute;bottom:0;left:0;width:32px;height:${thermometerHeight}px;background:#eee;border-radius:16px;overflow:hidden;\">
+                                    <div style=\"position:absolute;bottom:0;left:0;width:32px;height:${percentPx}px;background:#d32f2f;border-radius:16px 16px 0 0;transition:height 0.5s;\"></div>
+                                </div>
+                                <span style=\"position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:1em;color:#d32f2f;font-weight:bold;\">${percent}%</span>
+                            </div>
+                            <div style=\"margin-left:12px;align-self:center;\">
+                                <div style=\"font-weight:bold;color:#6b4f1d;margin-bottom:4px;\">${supportTitle} Progress</div>
+                                <div style=\"margin-top:8px;font-size:1em;color:#d32f2f;font-weight:bold;\">$${totalReceived.toLocaleString()} of $${totalSought.toLocaleString()} goal received</div>
                             </div>
                         </div>
                     `;
-                }).join('');
-                listDiv.innerHTML = items;
+
+                    // Receipts HTML
+                    const receiptsHtml = supportReceipts.map(receipt => {
+                        const recipientName = profilesMap[receipt.recipient_id] || 'Unknown';
+                        const date = new Date(receipt.received_at).toLocaleDateString();
+                        const time = new Date(receipt.received_at).toLocaleTimeString();
+                        return `
+                            <div class="receipt-item">
+                                <div class="receipt-header">${supportTitle} - ${recipientName}</div>
+                                <div class="receipt-details">
+                                    <div class="dollars">$${parseFloat(receipt.dollars_received).toFixed(2)}</div>
+                                    <div class="date">Received on ${date} at ${time}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // Container for this support_sought
+                    return `<div style="border:2px solid #e6f7f2;border-radius:14px;padding:18px;margin-bottom:28px;background:#fafbfa;">
+                        ${thermometer}
+                        ${receiptsHtml}
+                    </div>`;
+                }));
+                listDiv.innerHTML = htmlBlocks.join('');
             }
-            // Show total
-            document.getElementById('total-section').style.display = 'block';
-            document.getElementById('total-amount').textContent = `$${totalReceived.toFixed(2)}`;
+            // ...existing code...
         }
 
         loadSupportReceived();
