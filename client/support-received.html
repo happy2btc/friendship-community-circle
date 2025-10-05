@@ -47,14 +47,14 @@
         async function loadSupportReceived() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                document.getElementById('receipts-list').innerHTML = '<p>Please log in to view your support receipts.</p>';
+                document.getElementById('receipts-list').innerHTML = '<p>Please log in to view support receipts.</p>';
                 return;
             }
 
+            // Get all support received logs for all members, latest first
             const { data: receipts, error } = await supabase
                 .from('support_received')
-                .select('*')
-                .eq('recipient_id', user.id)
+                .select('id, recipient_id, support_sought, dollars_received, received_at, created_at')
                 .order('received_at', { ascending: false });
 
             if (error) {
@@ -63,34 +63,91 @@
                 return;
             }
 
-            if (!receipts || receipts.length === 0) {
-                document.getElementById('receipts-list').innerHTML = '<p>No support received yet. Use the "Log Received Support" form on the Request Support page to track funds you receive.</p>';
-                return;
+            // Get recipient names
+            const recipientIds = receipts && receipts.length ? [...new Set(receipts.map(r => r.recipient_id))] : [];
+            let profilesMap = {};
+            if (recipientIds.length > 0) {
+                const { data: profiles } = await supabase
+                    .from('profiles')
+                    .select('id, full_name')
+                    .in('id', recipientIds);
+                profiles?.forEach(profile => {
+                    profilesMap[profile.id] = profile.full_name;
+                });
             }
+            profilesMap['community'] = 'The Friendship Community Circle';
 
-            // Calculate total
-            const total = receipts.reduce((sum, receipt) => sum + parseFloat(receipt.dollars_received || 0), 0);
+            // Calculate total received
+            const totalReceived = receipts && receipts.length ? receipts.reduce((sum, receipt) => sum + parseFloat(receipt.dollars_received || 0), 0) : 0;
+
+            // Get total sought from support_requests table
+            const { data: requests } = await supabase
+                .from('support_requests')
+                .select('funding_goal')
+                .not('funding_goal', 'is', null);
+            const totalSought = requests && requests.length ? requests.reduce((sum, req) => sum + parseFloat(req.funding_goal || 0), 0) : 0;
+
+            // Calculate percentage
+            const percent = totalSought > 0 ? Math.min(100, Math.round((totalReceived / totalSought) * 100)) : 0;
+
+            // Display vertical thermometer with percentage marks
+            const thermometer = `
+                <div style="margin:30px 0 20px 0;text-align:center;display:flex;justify-content:center;align-items:flex-end;">
+                    <div style="display:flex;flex-direction:column;justify-content:space-between;height:180px;margin-right:8px;">
+                        <span style="font-size:0.95em;color:#6b4f1d;">100%</span>
+                        <span style="font-size:0.95em;color:#6b4f1d;">80%</span>
+                        <span style="font-size:0.95em;color:#6b4f1d;">60%</span>
+                        <span style="font-size:0.95em;color:#6b4f1d;">40%</span>
+                        <span style="font-size:0.95em;color:#6b4f1d;">20%</span>
+                        <span style="font-size:0.95em;color:#6b4f1d;">0%</span>
+                    </div>
+                    <div style="display:inline-block;position:relative;height:180px;width:48px;">
+                        <div style="position:absolute;bottom:0;left:0;width:48px;height:160px;background:#eee;border-radius:24px 24px 24px 24px;overflow:hidden;">
+                            <div style="position:absolute;bottom:0;left:0;width:48px;height:${Math.round(percent * 1.6)}px;background:#d32f2f;border-radius:24px 24px 0 0;transition:height 0.5s;"></div>
+                        </div>
+                        <div style="position:absolute;bottom:-20px;left:0;width:48px;height:40px;background:#d32f2f;border-radius:50%;border:4px solid #eee;"></div>
+                        <div style="position:absolute;top:0;left:0;width:48px;height:160px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;pointer-events:none;">
+                            <span style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:1.1em;color:#d32f2f;font-weight:bold;">${percent}%</span>
+                        </div>
+                    </div>
+                    <div style="margin-left:16px;align-self:center;">
+                        <div style="font-weight:bold;color:#6b4f1d;margin-bottom:8px;">Community Support Progress</div>
+                        <div style="margin-top:12px;font-size:1.1em;color:#d32f2f;font-weight:bold;">$${totalReceived.toLocaleString()} of $${totalSought.toLocaleString()} goal received</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('total-section').insertAdjacentHTML('beforebegin', thermometer);
 
             // Display receipts
             const listDiv = document.getElementById('receipts-list');
-            const items = receipts.map(receipt => {
-                const date = new Date(receipt.received_at).toLocaleDateString();
-                const time = new Date(receipt.received_at).toLocaleTimeString();
-                return `
-                    <div class="receipt-item">
-                        <div class="receipt-header">${receipt.support_sought}</div>
+            if (!receipts || receipts.length === 0) {
+                listDiv.innerHTML = `<div class="receipt-item">
+                        <div class="receipt-header">Support Title - Recipient</div>
                         <div class="receipt-details">
-                            <div class="dollars">$${parseFloat(receipt.dollars_received).toFixed(2)}</div>
-                            <div class="date">Received on ${date} at ${time}</div>
+                            <div class="dollars">$0.00</div>
+                            <div class="date">No support received yet</div>
                         </div>
-                    </div>
-                `;
-            }).join('');
-            listDiv.innerHTML = items;
-
+                    </div>`;
+            } else {
+                const items = receipts.map(receipt => {
+                    const recipientName = profilesMap[receipt.recipient_id] || 'Unknown';
+                    const date = new Date(receipt.received_at).toLocaleDateString();
+                    const time = new Date(receipt.received_at).toLocaleTimeString();
+                    return `
+                        <div class="receipt-item">
+                            <div class="receipt-header">${receipt.support_sought} - ${recipientName}</div>
+                            <div class="receipt-details">
+                                <div class="dollars">$${parseFloat(receipt.dollars_received).toFixed(2)}</div>
+                                <div class="date">Received on ${date} at ${time}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                listDiv.innerHTML = items;
+            }
             // Show total
             document.getElementById('total-section').style.display = 'block';
-            document.getElementById('total-amount').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('total-amount').textContent = `$${totalReceived.toFixed(2)}`;
         }
 
         loadSupportReceived();
