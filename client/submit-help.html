@@ -101,6 +101,11 @@
         option2.textContent = profile.full_name;
         recipientSelect.appendChild(option2);
       });
+      // Add the community as a recipient option
+      const communityOption = document.createElement('option');
+      communityOption.value = 'community';
+      communityOption.textContent = 'The Friendship Community Circle';
+      recipientSelect.appendChild(communityOption);
     }
     populateMembers();
 

@@ -50,6 +50,8 @@
       profiles?.forEach(profile => {
         profilesMap[profile.id] = profile.full_name;
       });
+      // Add the community name as an additional entry
+      profilesMap['community'] = 'The Friendship Community Circle';
 
       // Fetch help given records
       const { data: helpRecords, error } = await supabase
