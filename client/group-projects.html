@@ -153,6 +153,8 @@
       <option value="in process">In Process</option>
       <option value="completed">Completed</option>
     </select>
+    <label for="project-images">Project Images</label>
+    <input type="file" id="project-images" name="project-images" accept="image/*" multiple />
     <button type="submit">Submit Project</button>
     <button type="button" id="cancel-form-btn" style="margin-left:1rem;background:#ccc;color:#333;">Cancel</button>
   </form>
@@ -166,6 +168,7 @@
         <th>Date Entered</th>
         <th>Participants</th>
         <th>Status</th>
+        <th>Gallery</th>
       </tr>
     </thead>
     <tbody id="projects-tbody">
@@ -218,6 +221,12 @@
         const circleName = circles.find(c => c.id === project.circle_id)?.name || 'Unknown';
         const proposerName = profiles[project.proposer_id] || 'Unknown';
         const date = project.entered_at ? new Date(project.entered_at).toLocaleDateString() : '';
+        let galleryHtml = '';
+        if (project.images && Array.isArray(project.images) && project.images.length > 0) {
+          galleryHtml = `<div style="display:flex;gap:6px;flex-wrap:wrap;">` +
+            project.images.map(url => `<img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;box-shadow:0 1px 4px #ccc;" loading="lazy" />`).join('') +
+            `</div>`;
+        }
         projectsTbody.innerHTML += `
           <tr>
             <td>${circleName}</td>
@@ -227,6 +236,7 @@
             <td>${date}</td>
             <td>${project.num_participants || 0}</td>
             <td><span class="status ${project.status}">${project.status}</span></td>
+            <td>${galleryHtml}</td>
           </tr>
         `;
       }
@@ -254,7 +264,26 @@
       const description = projectForm.description.value.trim();
       const num_participants = parseInt(projectForm['num-participants'].value, 10) || 1;
       const status = projectForm.status.value;
-      // Insert project with proposer_id as selected UUID
+      // Handle image upload
+      const imageInput = document.getElementById('project-images');
+      let imageUrls = [];
+      if (imageInput.files.length > 0) {
+        for (let i = 0; i < imageInput.files.length; i++) {
+          const file = imageInput.files[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt}`;
+          const { data, error: uploadError } = await supabase.storage.from('project-images').upload(fileName, file);
+          if (uploadError) {
+            formError.textContent = 'Image upload failed: ' + uploadError.message;
+            return;
+          }
+          const { data: publicUrlData } = supabase.storage.from('project-images').getPublicUrl(fileName);
+          if (publicUrlData && publicUrlData.publicUrl) {
+            imageUrls.push(publicUrlData.publicUrl);
+          }
+        }
+      }
+      // Insert project with images
       const { error } = await supabase.from('group_projects').insert([
         {
           circle_id,
@@ -262,7 +291,8 @@
           name,
           description,
           num_participants,
-          status
+          status,
+          images: imageUrls
         }
       ]);
       if (error) {
