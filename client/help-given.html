@@ -36,6 +36,9 @@
 <body>
   <div class="help-container">
     <h2>🤝 Help Given</h2>
+    <div style="margin-bottom:1em;">
+      <input id="search-helper" type="text" placeholder="Search helper name..." style="width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    </div>
     <div id="help-list"></div>
     <a href="menu.html" class="menu-btn">🔙 Back to Menu</a>
   </div>
@@ -68,17 +71,46 @@
         return;
       }
 
+      // Build an array of records with display names for sorting
+      const displayRecords = helpRecords.map((record, i) => ({
+        ...record,
+        helperName: profilesMap[record.helper_id] || 'Unknown',
+        recipientName: profilesMap[record.recipient_id] || 'Unknown',
+        idx: i
+      }));
+      // Sort alphabetically by helperName (case-insensitive)
+      displayRecords.sort((a, b) => a.helperName.localeCompare(b.helperName, undefined, { sensitivity: 'base' }));
+
       let html = '';
-      for (const record of helpRecords) {
-        const helperName = profilesMap[record.helper_id] || 'Unknown';
-        const recipientName = profilesMap[record.recipient_id] || 'Unknown';
-        html += `<div class="help-item">
-          <span class="helper">${helperName}</span> helped <span class="helper">${recipientName}</span>
+      displayRecords.forEach((record, i) => {
+        html += `<div class="help-item" id="helper-${i}">
+          <span class="helper">${record.helperName}</span> helped <span class="helper">${record.recipientName}</span>
           <div class="help-details">${record.details || ''}</div>
           <div class="help-date">${new Date(record.created_at).toLocaleString()}</div>
         </div>`;
-      }
+      });
       document.getElementById('help-list').innerHTML = html;
+
+      // Add search functionality
+      setTimeout(() => {
+        const searchInput = document.getElementById('search-helper');
+        searchInput.oninput = function() {
+          const val = searchInput.value.trim().toLowerCase();
+          if (!val) return;
+          // Find the first help-item whose helper name matches
+          displayRecords.forEach((record, i) => {
+            if (record.helperName.toLowerCase().startsWith(val)) {
+              const el = document.getElementById(`helper-${i}`);
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.style.background = '#fffae6';
+                setTimeout(() => { el.style.background = ''; }, 1200);
+              }
+              return false;
+            }
+          });
+        };
+      }, 0);
     }
 
     loadHelpGiven();

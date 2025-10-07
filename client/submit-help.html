@@ -66,11 +66,14 @@
   <div class="form-container">
     <h2>Submit Help Given</h2>
     <form id="help-form">
-      <label for="helper">Who gave help?</label>
-      <select id="helper" name="helper" required></select>
 
-  <label for="recipient">Who received help?</label>
-  <select id="recipient" name="recipient" required></select>
+    <label for="helper">Who gave help?</label>
+    <input id="search-helper" type="text" placeholder="Search helper name..." style="width:100%;padding:10px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <select id="helper" name="helper" required></select>
+
+    <label for="recipient">Who received help?</label>
+    <input id="search-recipient" type="text" placeholder="Search recipient name..." style="width:100%;padding:10px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <select id="recipient" name="recipient" required></select>
 
   <label for="hours">How many hours?</label>
   <input type="number" id="hours" name="hours" min="0.25" step="0.25" required>
@@ -91,6 +94,8 @@
       if (error) return;
       const helperSelect = document.getElementById('helper');
       const recipientSelect = document.getElementById('recipient');
+      // Sort profiles alphabetically by full_name
+      profiles.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
       profiles.forEach(profile => {
         const option1 = document.createElement('option');
         option1.value = profile.id;
@@ -106,6 +111,33 @@
       communityOption.value = 'community';
       communityOption.textContent = 'The Friendship Community Circle';
       recipientSelect.appendChild(communityOption);
+
+      // Add search functionality for helper
+      const searchHelper = document.getElementById('search-helper');
+      searchHelper.oninput = function() {
+        const val = searchHelper.value.trim().toLowerCase();
+        if (!val) return;
+        for (let i = 0; i < helperSelect.options.length; i++) {
+          if (helperSelect.options[i].text.toLowerCase().startsWith(val)) {
+            helperSelect.selectedIndex = i;
+            helperSelect.options[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+          }
+        }
+      };
+      // Add search functionality for recipient
+      const searchRecipient = document.getElementById('search-recipient');
+      searchRecipient.oninput = function() {
+        const val = searchRecipient.value.trim().toLowerCase();
+        if (!val) return;
+        for (let i = 0; i < recipientSelect.options.length; i++) {
+          if (recipientSelect.options[i].text.toLowerCase().startsWith(val)) {
+            recipientSelect.selectedIndex = i;
+            recipientSelect.options[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+          }
+        }
+      };
     }
     populateMembers();
 
