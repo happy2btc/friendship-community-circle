@@ -209,10 +209,22 @@
         if (error) {
           membersAttendingStatus.textContent = 'Error: ' + error.message;
           membersAttendingStatus.style.color = 'red';
-        } else {
-          membersAttendingStatus.textContent = 'Attendance marked!';
-          await loadAttendance(currentEventId);
+          return;
         }
+        // Increment total_points in profiles for each attendee
+        let updateError = null;
+        for (const user_id of selected) {
+          const { error: upError } = await supabase.rpc('increment_profile_points', { user_id_input: user_id, points_to_add: 5 });
+          if (upError) updateError = upError;
+        }
+        if (updateError) {
+          membersAttendingStatus.textContent = 'Attendance marked, but error updating points: ' + updateError.message;
+          membersAttendingStatus.style.color = 'orange';
+        } else {
+          membersAttendingStatus.textContent = 'Attendance and points marked!';
+          membersAttendingStatus.style.color = '#2e8b57';
+        }
+        await loadAttendance(currentEventId);
       });
   // Load profiles for the dropdown on page load and when event changes
   loadProfilesForAttendance();
