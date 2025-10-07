@@ -44,8 +44,12 @@
     <div id="event-details"></div>
     <h2 style="text-align:center;">Attendance</h2>
     <ul id="attendance-list"></ul>
-    <button id="attend-btn" class="attend-btn">Mark Myself as Attended</button>
-    <div id="status"></div>
+    <div id="members-attending-section" style="margin:1.5em 0;">
+      <label for="members-select"><strong>Select members who attended:</strong></label>
+      <select id="members-select" multiple size="6" style="width:100%;padding:8px;border-radius:6px;margin-bottom:1em;"></select>
+      <button id="members-attending-btn" class="attend-btn" style="width:100%;">Members Attending</button>
+      <div id="members-attending-status" style="margin-top:1em;color:#2e8b57;font-weight:bold;"></div>
+    </div>
     <div id="import-section" style="display:none;">
     <h3>Import Attendance Log for Selected Event</h3>
     <textarea id="attendance-log" placeholder="Paste Zoom attendance log here (CSV format)..." rows="10" style="width:100%;"></textarea>
@@ -58,8 +62,24 @@
       const eventSelect = document.getElementById('event-select');
       const eventDetailsDiv = document.getElementById('event-details');
       const attendanceList = document.getElementById('attendance-list');
-      const attendBtn = document.getElementById('attend-btn');
-      const statusDiv = document.getElementById('status');
+  const membersSelect = document.getElementById('members-select');
+  const membersAttendingBtn = document.getElementById('members-attending-btn');
+  const membersAttendingStatus = document.getElementById('members-attending-status');
+      // Load all profiles for the multi-select
+      async function loadProfilesForAttendance() {
+        const { data: profiles, error } = await supabase.from('profiles').select('id, full_name').order('full_name');
+        membersSelect.innerHTML = '';
+        if (error || !profiles) {
+          membersSelect.innerHTML = '<option disabled>Error loading members</option>';
+          return;
+        }
+        profiles.forEach(profile => {
+          const option = document.createElement('option');
+          option.value = profile.id;
+          option.textContent = profile.full_name;
+          membersSelect.appendChild(option);
+        });
+      }
       const refreshBtn = document.getElementById('refresh-btn');
       let currentEventId = null;
       let currentEvents = [];
@@ -169,25 +189,34 @@
         statusDiv.textContent = '';
       });
 
-      attendBtn.addEventListener('click', async () => {
-        attendBtn.disabled = true;
-        statusDiv.textContent = '';
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          statusDiv.textContent = 'You must be logged in to mark attendance.';
-          attendBtn.disabled = false;
+
+      membersAttendingBtn.addEventListener('click', async () => {
+        const selected = Array.from(membersSelect.selectedOptions).map(opt => opt.value);
+        if (!currentEventId || selected.length === 0) {
+          membersAttendingStatus.textContent = 'Please select at least one member.';
+          membersAttendingStatus.style.color = 'red';
           return;
         }
-        const { error } = await supabase.from('event_attendance').insert({ event_id: currentEventId, user_id: user.id, attended_at: new Date().toISOString() });
+        membersAttendingStatus.textContent = 'Marking attendance...';
+        membersAttendingStatus.style.color = '#2e8b57';
+        const now = new Date().toISOString();
+        const rows = selected.map(user_id => ({
+          event_id: currentEventId,
+          user_id,
+          attended_at: now
+        }));
+        const { error } = await supabase.from('event_attendance').insert(rows);
         if (error) {
-          statusDiv.textContent = 'Error marking attendance: ' + error.message;
-          attendBtn.disabled = false;
+          membersAttendingStatus.textContent = 'Error: ' + error.message;
+          membersAttendingStatus.style.color = 'red';
         } else {
-          statusDiv.textContent = 'Attendance marked!';
+          membersAttendingStatus.textContent = 'Attendance marked!';
           await loadAttendance(currentEventId);
-          attendBtn.disabled = false;
         }
       });
+  // Load profiles for the dropdown on page load and when event changes
+  loadProfilesForAttendance();
+  eventSelect.addEventListener('change', loadProfilesForAttendance);
   
       document.getElementById('parse-log-btn').addEventListener('click', async () => {
         const logText = document.getElementById('attendance-log').value.trim();
