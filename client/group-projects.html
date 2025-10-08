@@ -222,10 +222,24 @@
         const proposerName = profiles[project.proposer_id] || 'Unknown';
         const date = project.entered_at ? new Date(project.entered_at).toLocaleDateString() : '';
         let galleryHtml = '';
-        if (project.images && Array.isArray(project.images) && project.images.length > 0) {
-          galleryHtml = `<div style="display:flex;gap:6px;flex-wrap:wrap;">` +
-            project.images.map(url => `<img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;box-shadow:0 1px 4px #ccc;" loading="lazy" />`).join('') +
-            `</div>`;
+        // Fetch all images from the bucket folder for this project (by project.id)
+        let imageUrls = [];
+        try {
+          const { data: files, error: listError } = await supabase.storage.from('project-images').list(`${project.id}/`);
+          console.log('Files in folder', project.id, files, listError);
+          if (!listError && files && files.length > 0) {
+            imageUrls = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)).map(f => {
+              const { data: publicUrlData } = supabase.storage.from('project-images').getPublicUrl(`${project.id}/${f.name}`);
+              return publicUrlData.publicUrl;
+            });
+          }
+        } catch (e) { /* ignore */ }
+        if (imageUrls.length > 0) {
+          galleryHtml = `
+            <div class="project-thumbnails" style="display:flex;gap:6px;flex-wrap:wrap;cursor:pointer;" data-images='${JSON.stringify(imageUrls)}'>
+              ${imageUrls.map(url => `<img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;box-shadow:0 1px 4px #ccc;" loading="lazy" />`).join('')}
+            </div>
+          `;
         }
         projectsTbody.innerHTML += `
           <tr>
@@ -239,6 +253,55 @@
             <td>${galleryHtml}</td>
           </tr>
         `;
+  // Gallery modal HTML
+  const galleryModalHtml = `
+    <div id="gallery-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
+      <div id="gallery-content" style="position:relative;max-width:90vw;max-height:90vh;">
+        <span id="gallery-close" style="position:absolute;top:-32px;right:0;font-size:2em;color:#fff;cursor:pointer;">&times;</span>
+        <button id="gallery-prev" style="position:absolute;left:-60px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:2em;cursor:pointer;box-shadow:0 2px 8px #222;">&#8592;</button>
+        <button id="gallery-next" style="position:absolute;right:-60px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:2em;cursor:pointer;box-shadow:0 2px 8px #222;">&#8594;</button>
+        <div id="gallery-images" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:center;"></div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', galleryModalHtml);
+
+  // Gallery modal logic with next/prev
+  const galleryModal = document.getElementById('gallery-modal');
+  const galleryImagesDiv = document.getElementById('gallery-images');
+  const galleryClose = document.getElementById('gallery-close');
+  const galleryPrev = document.getElementById('gallery-prev');
+  const galleryNext = document.getElementById('gallery-next');
+  let galleryImagesArr = [];
+  let galleryIndex = 0;
+
+  function showGalleryImage(idx) {
+    if (!galleryImagesArr.length) return;
+    galleryIndex = ((idx % galleryImagesArr.length) + galleryImagesArr.length) % galleryImagesArr.length;
+    galleryImagesDiv.innerHTML = `<img src="${galleryImagesArr[galleryIndex]}" style="max-width:80vw;max-height:70vh;margin:8px;border-radius:10px;box-shadow:0 2px 12px #222;" />`;
+  }
+
+  projectsTbody.addEventListener('click', function(e) {
+    const thumbDiv = e.target.closest('.project-thumbnails');
+    if (thumbDiv) {
+      galleryImagesArr = JSON.parse(thumbDiv.getAttribute('data-images'));
+      galleryIndex = 0;
+      showGalleryImage(galleryIndex);
+      galleryModal.style.display = 'flex';
+    }
+  });
+  galleryClose.onclick = () => { galleryModal.style.display = 'none'; };
+  galleryModal.onclick = (e) => {
+    if (e.target === galleryModal) galleryModal.style.display = 'none';
+  };
+  galleryPrev.onclick = (e) => {
+    e.stopPropagation();
+    showGalleryImage(galleryIndex - 1);
+  };
+  galleryNext.onclick = (e) => {
+    e.stopPropagation();
+    showGalleryImage(galleryIndex + 1);
+  };
       }
     }
 
@@ -264,40 +327,35 @@
       const description = projectForm.description.value.trim();
       const num_participants = parseInt(projectForm['num-participants'].value, 10) || 1;
       const status = projectForm.status.value;
-      // Handle image upload
-      const imageInput = document.getElementById('project-images');
-      let imageUrls = [];
-      if (imageInput.files.length > 0) {
-        for (let i = 0; i < imageInput.files.length; i++) {
-          const file = imageInput.files[i];
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt}`;
-          const { data, error: uploadError } = await supabase.storage.from('project-images').upload(fileName, file);
-          if (uploadError) {
-            formError.textContent = 'Image upload failed: ' + uploadError.message;
-            return;
-          }
-          const { data: publicUrlData } = supabase.storage.from('project-images').getPublicUrl(fileName);
-          if (publicUrlData && publicUrlData.publicUrl) {
-            imageUrls.push(publicUrlData.publicUrl);
-          }
-        }
-      }
-      // Insert project with images
-      const { error } = await supabase.from('group_projects').insert([
+      // Insert project first to get the project id
+      const { data: inserted, error: insertError } = await supabase.from('group_projects').insert([
         {
           circle_id,
           proposer_id,
           name,
           description,
           num_participants,
-          status,
-          images: imageUrls
+          status
         }
-      ]);
-      if (error) {
-        formError.textContent = error.message;
+      ]).select();
+      if (insertError || !inserted || !inserted[0] || !inserted[0].id) {
+        formError.textContent = (insertError && insertError.message) || 'Could not create project.';
         return;
+      }
+      const projectId = inserted[0].id;
+      // Handle image upload to project folder
+      const imageInput = document.getElementById('project-images');
+      if (imageInput.files.length > 0) {
+        for (let i = 0; i < imageInput.files.length; i++) {
+          const file = imageInput.files[i];
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${projectId}/${Date.now()}_${Math.random().toString(36).substr(2, 6)}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage.from('project-images').upload(fileName, file);
+          if (uploadError) {
+            formError.textContent = 'Image upload failed: ' + uploadError.message;
+            return;
+          }
+        }
       }
       formSuccess.textContent = 'Project submitted!';
       projectForm.reset();
