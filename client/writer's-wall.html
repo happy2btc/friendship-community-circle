@@ -126,6 +126,9 @@
             <label for="content">Your Creation</label>
             <textarea id="content" name="content" rows="8" required placeholder="Paste or write your poem, story, or essay here..."></textarea>
 
+            <label for="images">Image URLs (comma separated, optional)</label>
+            <input type="text" id="images" name="images" placeholder="https://... , https://...">
+
             <button type="submit">Post to Writer's Wall</button>
             <span id="form-status" style="margin-left:1em;color:#2e8b57;font-weight:bold;"></span>
         </form>
@@ -162,10 +165,16 @@
                 statusSpan.style.color = "red";
                 return;
             }
+            // Parse images
+            const imagesRaw = form.images.value.trim();
+            let images = [];
+            if (imagesRaw) {
+                images = imagesRaw.split(',').map(url => url.trim()).filter(url => url.length > 0);
+            }
             const wordCount = countWords(content);
             const points = Math.max(1, Math.floor(wordCount / 1000));
             const { error } = await supabase.from('writers_wall').insert([
-                { author_id, title, content, points }
+                { author_id, title, content, points, images }
             ]);
             if (error) {
                 statusSpan.textContent = "Error: " + error.message;
@@ -182,7 +191,7 @@
         async function loadPosts() {
             const { data, error } = await supabase
                 .from('writers_wall')
-                .select('id, author_id, title, content, created_at, points')
+                .select('id, author_id, title, content, created_at, points, images')
                 .order('created_at', { ascending: false });
             const list = document.getElementById('post-list');
             if (error) {
@@ -205,17 +214,58 @@
                     profiles.forEach(p => { profilesById[p.id] = p.full_name; });
                 }
             }
-            list.innerHTML = data.map(post => {
-                const authorName = profilesById[post.author_id] || 'Unknown';
-                return `
-                <div class="post-card">
-                    <div class="post-title">${post.title}</div>
-                    <div class="post-meta">by <a href="view-profile.html?id=${post.author_id}"><strong>${authorName}</strong></a> &middot; ${new Date(post.created_at).toLocaleString()}</div>
-                    <div class="post-content">${post.content.replace(/</g, "&lt;")}</div>
-                    <div class="post-points">Points: ${post.points} (${countWords(post.content)} words)</div>
-                </div>
-                `;
-            }).join('');
+                        // Prepare preview and full content for each post
+                        const postData = data.map((post, idx) => {
+                            const authorName = profilesById[post.author_id] || 'Unknown';
+                            let preview = post.content.split(/\r?\n/).slice(0, 3).join(' ');
+                            if (preview.length > 200) preview = preview.slice(0, 200) + '...';
+                            const safePreview = preview.replace(/</g, "&lt;");
+                            const safeFull = post.content.replace(/</g, "&lt;");
+                            return {
+                                idx,
+                                safePreview,
+                                safeFull,
+                                authorName,
+                                post
+                            };
+                        });
+                        list.innerHTML = postData.map(({idx, safePreview, authorName, post}) => `
+                            <div class="post-card" id="post-card-${idx}">
+                                <div class="post-title">${post.title}</div>
+                                <div class="post-meta">by <a href="view-profile.html?id=${post.author_id}"><strong>${authorName}</strong></a> &middot; ${new Date(post.created_at).toLocaleString()}</div>
+                                <div class="post-gallery" id="post-gallery-${idx}" style="margin-bottom:0.7em;"></div>
+                                <div class="post-content" id="post-content-${idx}">${safePreview}</div>
+                                <a href="#" class="read-more" id="read-more-${idx}" style="color:#6b4f1d;font-weight:bold;">Read More</a>
+                                <div class="post-points">Points: ${post.points} (${countWords(post.content)} words)</div>
+                            </div>
+                        `).join('');
+                        // Attach event listeners for Read More/Show Less
+                        postData.forEach(({idx, safePreview, safeFull}) => {
+                            const readMore = document.getElementById(`read-more-${idx}`);
+                            const contentDiv = document.getElementById(`post-content-${idx}`);
+                            let expanded = false;
+                            if (readMore && contentDiv) {
+                                readMore.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    if (!expanded) {
+                                        contentDiv.innerHTML = safeFull;
+                                        readMore.textContent = 'Show Less';
+                                    } else {
+                                        contentDiv.innerHTML = safePreview;
+                                        readMore.textContent = 'Read More';
+                                    }
+                                    expanded = !expanded;
+                                });
+                            }
+                            // Render image gallery if images exist
+                            const galleryDiv = document.getElementById(`post-gallery-${idx}`);
+                            const post = postData[idx].post;
+                            if (galleryDiv && post.images && Array.isArray(post.images) && post.images.length > 0) {
+                                galleryDiv.innerHTML = post.images.map((url, i) =>
+                                    `<img src="${url}" alt="Story image ${i+1}" style="max-width:90px;max-height:90px;margin:0 6px 6px 0;border-radius:6px;object-fit:cover;cursor:pointer;box-shadow:0 1px 4px #ccc;" onclick="window.open('${url}','_blank')">`
+                                ).join('');
+                            }
+                        });
         }
 
         loadPosts();
