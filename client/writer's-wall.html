@@ -157,7 +157,6 @@
             }
             const profileRes = await supabase.from('profiles').select('id, full_name').eq('id', user.id).single();
             const author_id = user.id;
-            const author_name = profileRes.data?.full_name || 'Unknown';
             if (!title || !content) {
                 statusSpan.textContent = "All fields required.";
                 statusSpan.style.color = "red";
@@ -166,7 +165,7 @@
             const wordCount = countWords(content);
             const points = Math.max(1, Math.floor(wordCount / 1000));
             const { error } = await supabase.from('writers_wall').insert([
-                { author_id, author_name, title, content, points }
+                { author_id, title, content, points }
             ]);
             if (error) {
                 statusSpan.textContent = "Error: " + error.message;
@@ -183,7 +182,7 @@
         async function loadPosts() {
             const { data, error } = await supabase
                 .from('writers_wall')
-                .select('id, author_id, author_name, title, content, created_at, points')
+                .select('id, author_id, title, content, created_at, points')
                 .order('created_at', { ascending: false });
             const list = document.getElementById('post-list');
             if (error) {
@@ -194,14 +193,29 @@
                 list.innerHTML = "<em>No posts yet. Be the first to share your writing!</em>";
                 return;
             }
-            list.innerHTML = data.map(post => `
+            // Fetch all author profiles in one query for efficiency
+            const authorIds = [...new Set(data.map(post => post.author_id).filter(Boolean))];
+            let profilesById = {};
+            if (authorIds.length > 0) {
+                const { data: profiles } = await supabase
+                    .from('profiles')
+                    .select('id, full_name')
+                    .in('id', authorIds);
+                if (profiles) {
+                    profiles.forEach(p => { profilesById[p.id] = p.full_name; });
+                }
+            }
+            list.innerHTML = data.map(post => {
+                const authorName = profilesById[post.author_id] || 'Unknown';
+                return `
                 <div class="post-card">
                     <div class="post-title">${post.title}</div>
-                    <div class="post-meta">by <a href="view-profile.html?id=${post.author_id}"><strong>${post.author_name}</strong></a> &middot; ${new Date(post.created_at).toLocaleString()}</div>
+                    <div class="post-meta">by <a href="view-profile.html?id=${post.author_id}"><strong>${authorName}</strong></a> &middot; ${new Date(post.created_at).toLocaleString()}</div>
                     <div class="post-content">${post.content.replace(/</g, "&lt;")}</div>
                     <div class="post-points">Points: ${post.points} (${countWords(post.content)} words)</div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         loadPosts();

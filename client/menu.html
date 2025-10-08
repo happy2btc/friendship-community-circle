@@ -144,7 +144,7 @@ import { supabase } from '/lib/supabase.js';
 // Most Active Member
 async function showMostActiveMember() {
     // Fetch all activities
-    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, eventsRes, helpGivenRes, supportResponsesRes] = await Promise.all([
+    const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, eventsRes, helpGivenRes, supportResponsesRes, writersWallRes] = await Promise.all([
         supabase.from('agreement_votes').select('voter_id, created_at'),
         supabase.from('suggestions').select('author_id, created_at'),
         supabase.from('comments').select('author_id, created_at'),
@@ -156,7 +156,8 @@ async function showMostActiveMember() {
         supabase.from('celebrations').select('user_id'),
         supabase.from('events').select('id, created_by'),
         supabase.from('help_given').select('helper_id, hours'),
-        supabase.from('support_responses').select('responder_id')
+        supabase.from('support_responses').select('responder_id'),
+        supabase.from('writers_wall').select('author_id, points')
     ]);
     let attendanceRes = await supabase.from('event_attendance').select('event_id, user_id');
     const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
@@ -179,7 +180,9 @@ async function showMostActiveMember() {
                 events_attended: 0,
                 help_hours: 0,
                 help_points: 0,
-                support_responses: 0
+                support_responses: 0,
+                writer_posts: 0,
+                writer_points: 0
             };
         }
     }
@@ -188,8 +191,8 @@ async function showMostActiveMember() {
         helpGivenRes.data.forEach(row => {
             if (row.helper_id && row.hours && row.helper_id !== builderId) {
                 initBreakdown(row.helper_id);
-                breakdown[row.helper_id].help_hours = (Number(breakdown[row.helper_id].help_hours) || 0) + Number(row.hours);
-                breakdown[row.helper_id].help_points = (breakdown[row.helper_id].help_points || 0) + (row.hours * 5);
+                    breakdown[row.helper_id].help_hours = (Number(breakdown[row.helper_id].help_hours) || 0) + Number(row.hours);
+                    breakdown[row.helper_id].help_points = (breakdown[row.helper_id].help_points || 0) + (row.hours * 5);
             }
         });
     }
@@ -314,6 +317,16 @@ async function showMostActiveMember() {
             breakdown[userId].events_attended += 1;
         }
     });
+    // Writer's Wall: tally posts and points per author
+    if (writersWallRes.data) {
+        writersWallRes.data.forEach(row => {
+            if (row.author_id) {
+                initBreakdown(row.author_id);
+                breakdown[row.author_id].writer_posts = (breakdown[row.author_id].writer_posts || 0) + 1;
+                breakdown[row.author_id].writer_points = (breakdown[row.author_id].writer_points || 0) + (row.points || 0);
+            }
+        });
+    }
     // Get profiles for display
     const idToProfile = {};
     if (Array.isArray(profilesFullRes.data)) {
@@ -328,19 +341,9 @@ async function showMostActiveMember() {
     const container = document.getElementById('most-active-member');
     container.innerHTML = '';
     if (userIds.length === 0) {
-        container.innerHTML = "<em>No other member has been active.</em>";
+        container.innerHTML = `<em>No other member has been active.</em><br><pre style="font-size:0.9em;color:#888;max-width:100%;overflow:auto;">userIds: ${JSON.stringify(userIds)}\nbreakdown: ${JSON.stringify(breakdown, null, 2)}</pre>`;
         return;
     }
-    // Optionally show debug info if needed:
-    // const debugBox = document.createElement('pre');
-    // debugBox.style.background = '#f8f8f8';
-    // debugBox.style.fontSize = '0.8em';
-    // debugBox.style.maxHeight = '200px';
-    // debugBox.style.overflow = 'auto';
-    // debugBox.style.margin = '1em 0';
-    // debugBox.textContent = 'DEBUG: userIds=' + JSON.stringify(userIds, null, 2) + '\n' +
-    //     'breakdown=' + JSON.stringify(breakdown, null, 2);
-    // container.appendChild(debugBox);
     // Calculate total for each user
     const members = userIds.map(id => {
         const b = breakdown[id];
@@ -361,7 +364,8 @@ async function showMostActiveMember() {
             (b.members_added || 0) * 2 +
             (b.celebrations_posted || 0) * 5 +
             (b.help_points || 0) +
-            (b.support_responses || 0) * 5;
+            (b.support_responses || 0) * 5 +
+            (b.writer_points || 0);
         return {
             id,
             profile,
@@ -370,12 +374,13 @@ async function showMostActiveMember() {
         };
     });
     members.sort((a, b) => b.total - a.total);
+    // Show most active member at the top
     const m = members[0];
-    container.innerHTML = `
+    container.innerHTML += `
         <a href="view-profile.html?id=${m.id}" style="text-decoration: none; color: inherit; display: block;">
             <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
             <h3>${m.profile.full_name}</h3>
-            <div class="activity-breakdown" >
+            <div class="activity-breakdown" style="margin-top:0.5em;">
                 <strong>All-Time Activities:</strong><br>
                 Votes: ${m.breakdown.votes || 0}<br>
                 Suggestions: ${m.breakdown.suggestions || 0}<br>
@@ -392,17 +397,20 @@ async function showMostActiveMember() {
                 Members Added: ${m.breakdown.members_added || 0}<br>
                 Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                 Support Responses: ${m.breakdown.support_responses || 0}<br>
+                <span style="color:#4a7c59;font-weight:bold;">Writer's Posts: ${m.breakdown.writer_posts || 0}</span><br>
                 <strong>Total:</strong> ${m.total}
             </div>
             <div class="personal-story">${m.profile.personal_story || ''}</div>
         </a>
         <div style="font-size:0.95em;color:#888;margin-bottom:0.5em;">
-                    <strong>Activities Legend:</strong><br>
-                    Votes, Suggestions, Comments, Wants, Offers, Passion, Projects & Struggles = 1 point each<br>
-                    Events Created/Attended, Profile Completed, Circles Created, Members Added, Celebration Wall Posts, Support Responses = 5-10 points<br>
-                    Help Given = 5 points/hour<br>
-                    <span style="color:#4a7c59;font-weight:bold;">Writer's Post = 1 point per 1000 words</span>
-                </div>`;
+            <strong>Activities Legend:</strong><br>
+            Votes, Suggestions, Comments, Wants, Offers, Passion, Projects & Struggles = 1 point each<br>
+            Events Created/Attended, Profile Completed, Circles Created, Members Added, Celebration Wall Posts, Support Responses = 5-10 points<br>
+            Help Given = 5 points/hour<br>
+            <span style="color:#4a7c59;font-weight:bold;">Writer's Post = 1 point per 1000 words</span>
+        </div>`;
+
+    // ...removed all-members activity breakdown...
 }
 
 // Newest Member
