@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Writer's Wall</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f8f4ff;
+            color: #333;
+            margin: 0;
+            padding: 0 0 40px 0;
+        }
+        .menu-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #e6f7f2;
+            padding: 18px 0 10px 0;
+            justify-content: center;
+        }
+        .menu-button {
+            background: #b3c6e6;
+            color: #333;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+        .menu-button:hover {
+            background: #8fa9d6;
+        }
+        .wall-container {
+            max-width: 700px;
+            margin: 2em auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px #e0e0e0;
+            padding: 2em;
+        }
+        h1 {
+            text-align: center;
+            color: #6b4f1d;
+        }
+        .post-form {
+            margin-bottom: 2em;
+            background: #f3f0fa;
+            padding: 1.5em;
+            border-radius: 10px;
+        }
+        .post-form label {
+            display: block;
+            margin-bottom: 0.3em;
+            font-weight: bold;
+        }
+        .post-form input, .post-form textarea {
+            width: 100%;
+            margin-bottom: 1em;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        .post-form button {
+            background: #6b4f1d;
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .post-form button:hover {
+            background: #8c6f4e;
+        }
+        .post-list {
+            margin-top: 2em;
+        }
+        .post-card {
+            background: #f9f7ff;
+            border-radius: 10px;
+            box-shadow: 0 1px 6px #e0e0e0;
+            margin-bottom: 1.5em;
+            padding: 1.2em 1.5em;
+        }
+        .post-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #4a7c59;
+            margin-bottom: 0.2em;
+        }
+        .post-meta {
+            font-size: 0.95em;
+            color: #888;
+            margin-bottom: 0.7em;
+        }
+        .post-content {
+            white-space: pre-wrap;
+            margin-bottom: 0.7em;
+        }
+        .post-points {
+            font-size: 0.95em;
+            color: #a67c52;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <a href="menu.html" class="menu-button">🏠 Main Menu</a>
+        <a href="profile.html" class="menu-button">👤 My Profile</a>
+        <a href="activities.html" class="menu-button">🏆 Member Activities</a>
+        <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
+        <a href="community-chat.html" class="menu-button">💬 Community Chat</a>
+    </div>
+    <div class="wall-container">
+        <h1>📝 Writer's Wall</h1>
+        <form class="post-form" id="writer-form">
+            <label for="title">Title of Work</label>
+            <input type="text" id="title" name="title" required maxlength="120">
+
+            <label for="content">Your Creation</label>
+            <textarea id="content" name="content" rows="8" required placeholder="Paste or write your poem, story, or essay here..."></textarea>
+
+            <button type="submit">Post to Writer's Wall</button>
+            <span id="form-status" style="margin-left:1em;color:#2e8b57;font-weight:bold;"></span>
+        </form>
+        <div class="post-list" id="post-list"></div>
+    </div>
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+
+        // Helper: count words
+        function countWords(text) {
+            return (text.trim().match(/\b\w+\b/g) || []).length;
+        }
+
+        // Post form handler
+        const form = document.getElementById('writer-form');
+        const statusSpan = document.getElementById('form-status');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            statusSpan.textContent = '';
+            const title = form.title.value.trim();
+            const content = form.content.value.trim();
+            // Get user info
+            const { data: userData } = await supabase.auth.getUser();
+            const user = userData?.user;
+            if (!user) {
+                statusSpan.textContent = "You must be logged in to post.";
+                statusSpan.style.color = "red";
+                return;
+            }
+            const profileRes = await supabase.from('profiles').select('id, full_name').eq('id', user.id).single();
+            const author_id = user.id;
+            const author_name = profileRes.data?.full_name || 'Unknown';
+            if (!title || !content) {
+                statusSpan.textContent = "All fields required.";
+                statusSpan.style.color = "red";
+                return;
+            }
+            const wordCount = countWords(content);
+            const points = Math.max(1, Math.floor(wordCount / 1000));
+            const { error } = await supabase.from('writers_wall').insert([
+                { author_id, author_name, title, content, points }
+            ]);
+            if (error) {
+                statusSpan.textContent = "Error: " + error.message;
+                statusSpan.style.color = "red";
+            } else {
+                statusSpan.textContent = "Posted!";
+                statusSpan.style.color = "#2e8b57";
+                form.reset();
+                loadPosts();
+            }
+        };
+
+        // Load posts
+        async function loadPosts() {
+            const { data, error } = await supabase
+                .from('writers_wall')
+                .select('id, author_id, author_name, title, content, created_at, points')
+                .order('created_at', { ascending: false });
+            const list = document.getElementById('post-list');
+            if (error) {
+                list.innerHTML = "<em>Error loading posts.</em>";
+                return;
+            }
+            if (!data || data.length === 0) {
+                list.innerHTML = "<em>No posts yet. Be the first to share your writing!</em>";
+                return;
+            }
+            list.innerHTML = data.map(post => `
+                <div class="post-card">
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-meta">by <a href="view-profile.html?id=${post.author_id}"><strong>${post.author_name}</strong></a> &middot; ${new Date(post.created_at).toLocaleString()}</div>
+                    <div class="post-content">${post.content.replace(/</g, "&lt;")}</div>
+                    <div class="post-points">Points: ${post.points} (${countWords(post.content)} words)</div>
+                </div>
+            `).join('');
+        }
+
+        loadPosts();
+    </script>
+</body>
+</html>

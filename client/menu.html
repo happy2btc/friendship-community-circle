@@ -132,6 +132,7 @@
     <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="flex:1;text-align:center;">🧙 Coven Community Network</a>
     <a href="http://localhost:5174/friendship-community-circle/circle.html?id=5516d022-5354-409d-9fcc-cc151df649b3" class="menu-button" style="flex:1;text-align:center;">💸 Universal Basic Income Circle</a>
     </div>
+    <a href="writer's-wall.html" class="menu-button">📝 Writer's Wall</a>
 </div>
     </div>
 
@@ -394,7 +395,14 @@ async function showMostActiveMember() {
                 <strong>Total:</strong> ${m.total}
             </div>
             <div class="personal-story">${m.profile.personal_story || ''}</div>
-        </a>`;
+        </a>
+        <div style="font-size:0.95em;color:#888;margin-bottom:0.5em;">
+                    <strong>Activities Legend:</strong><br>
+                    Votes, Suggestions, Comments, Wants, Offers, Passion, Projects & Struggles = 1 point each<br>
+                    Events Created/Attended, Profile Completed, Circles Created, Members Added, Celebration Wall Posts, Support Responses = 5-10 points<br>
+                    Help Given = 5 points/hour<br>
+                    <span style="color:#4a7c59;font-weight:bold;">Writer's Post = 1 point per 1000 words</span>
+                </div>`;
 }
 
 // Newest Member
