@@ -191,21 +191,34 @@
 import { supabase } from '/lib/supabase.js';
 // --- Browser Notification Permission & Test ---
 async function requestAndShowNotification() {
+    console.log('Notification button clicked');
     if (!('Notification' in window)) {
         alert('This browser does not support desktop notification');
+        console.log('Notification API not supported');
         return;
     }
     let permission = Notification.permission;
+    console.log('Current notification permission:', permission);
     if (permission === 'default') {
-        permission = await Notification.requestPermission();
+        try {
+            permission = await Notification.requestPermission();
+            console.log('Permission after request:', permission);
+        } catch (e) {
+            alert('Error requesting notification permission: ' + e);
+            console.error('Error requesting permission:', e);
+            return;
+        }
     }
     if (permission === 'granted') {
+        alert('Permission granted! Showing test notification.');
+        console.log('Permission granted, showing notification');
         new Notification('🔔 Friendship Community Circle', {
             body: 'This is a test notification! You will see real notifications here soon.',
-            icon: '/public/default-avatar.png'
+            icon: '/default-avatar.png'
         });
     } else {
-        alert('Notifications are blocked. Please enable them in your browser settings.');
+        alert('Notifications are blocked or denied. Please enable them in your browser settings.');
+        console.log('Permission not granted:', permission);
     }
 }
 
