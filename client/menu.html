@@ -83,7 +83,22 @@
     </style>
 </head>
 <body>
-        <h1>🌸 Welcome to the Community</h1>
+
+        <h1 style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+            🌸 Welcome to the Community
+            <div id="notification-bell-container" style="position: relative;">
+                <button id="notification-bell" style="background: none; border: none; cursor: pointer; position: relative; font-size: 1.7em;">
+                    🔔
+                    <span id="notification-count" style="display:none; position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; padding: 2px 7px; font-size: 0.8em; font-weight: bold; min-width: 18px; text-align: center;"></span>
+                </button>
+                <div id="notification-dropdown" style="display: none; position: absolute; right: 0; top: 2.5em; background: #fff; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 8px #eee; min-width: 260px; z-index: 1000; max-height: 350px; overflow-y: auto;">
+                    <div id="notification-list" style="padding: 0.5em 0.5em 0.5em 0.5em;"></div>
+                    <div style="text-align: right; padding: 0.5em 0.7em 0.5em 0.5em;">
+                        <button id="mark-all-read" style="background: #e6f7f2; color: #333; border: none; border-radius: 5px; padding: 4px 10px; font-size: 0.95em; cursor: pointer;">Mark all as read</button>
+                    </div>
+                </div>
+            </div>
+        </h1>
 
         <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
             <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
@@ -96,50 +111,213 @@
             </div>
         </div>
 
-    <!-- Message notification removed -->
-    <div class="menu-container">
-    <a href="welcome.html" class="menu-button" style="background:#ffe082;color:#6b4f1d;font-weight:bold;">👋 In Case You Missed It</a>
-    <a href="what's-new.html" class="menu-button">🆕 What's New</a>
-    <a href="profile.html" class="menu-button" id="profile-btn">👤 My Profile</a>
-    <a href="view-profiles.html" class="menu-button">👥 View All Profiles</a>
-    <a href="new-members.html" class="menu-button">🆕 New Members</a>
-    <a href="activities.html" class="menu-button">🏆 Member Activities</a>
-    <a href="exchange.html" class="menu-button">🎁 Wants and Offers</a>
-    <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
-    <a href="contribute.html" class="menu-button">✍️ Submit Your Project</a>
-    <a href="view-proj-strug.html" class="menu-button">📜 View Personal Projects - Struggles</a>
-    <a href="suggest.html" class="menu-button">💡 Make a Suggestion</a>
-    <a href="discussions.html" class="menu-button">�️ View Current Discussions</a>
-    <a href="agreements.html" class="menu-button">⚖️ Proposed Agreements & Voting</a>
-    <a href="completed-agreements.html" class="menu-button">📜 Completed Agreements</a>
-    <a href="create-circle.html" class="menu-button">➕ Create a New Circle</a>
-    <a href="circle-list.html" class="menu-button">🌐 Manage Circles</a>
-    <a href="event-details.html" class="menu-button">� Event Details & Attendance</a>
-    <a href="community-chat.html" class="menu-button" id="community-chat-btn">💬 Community Chat</a>
-    <a href="submit-help.html" class="menu-button">📝 Submit Help Given</a>
-    <a href="inbox.html" class="menu-button">📬 Inbox</a>
-    <a href="request-support.html" class="menu-button" style="background:#c0a062;color:#fff;">💸 Request Support</a>
-    <a href="view-support-requests.html" class="menu-button" id="view-support-btn" style="background:#c0a062;color:#fff;">🤲 View Support Requests</a>
-    <a href="support-received.html" class="menu-button" style="background:#c0a062;color:#fff;">🤝 Support Received</a>
-    <a href="group-projects.html" class="menu-button" id="group-projects-btn">🛠️ Group Projects</a>
-    <a href="skill-shares.html" class="menu-button" id="skill-shares-btn">🎬 Skill Shares</a>
-    <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
-    <a href="agreements-voting.html" class="menu-button">🗳️ Vote on Agreements</a>
-    <a href="help-given.html" class="menu-button">🤲 Help Given</a>
-    <button id="logout-button" class="logout-button">Log Out</button>
-    <a href="events-calendar.html" class="menu-button">📅 Events Calendar</a>
-    <div style="display:flex;gap:20px;margin-top:24px;max-width:800px;width:100%;">
-    <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="flex:1;text-align:center;">🧙 Coven Community Network</a>
-    <a href="http://localhost:5174/friendship-community-circle/circle.html?id=5516d022-5354-409d-9fcc-cc151df649b3" class="menu-button" style="flex:1;text-align:center;">💸 Universal Basic Income Circle</a>
-    </div>
-    <a href="writer's-wall.html" class="menu-button">📝 Writer's Wall</a>
-</div>
+            <div class="menu-container" style="display:block;max-width:800px;margin:0 auto;">
+                <a href="welcome.html" class="menu-button" style="background:#ffe082;color:#6b4f1d;font-weight:bold;margin-bottom:8px;">👋 In Case You Missed It</a>
+                <a href="what's-new.html" class="menu-button" style="background:#b3c6e6;color:#2e2e2e;font-weight:bold;margin-bottom:18px;">🆕 What's New</a>
+                <details style="margin-bottom:12px;">
+                        <summary style="background:#cce3fa;color:#234;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">👤 Profiles & Members</summary>
+                        <div style="background:#eaf4fb;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="profile.html" class="menu-button" style="background:#cce3fa;color:#234;">My Profile</a>
+                            <a href="view-profiles.html" class="menu-button" style="background:#cce3fa;color:#234;">View All Profiles</a>
+                            <a href="new-members.html" class="menu-button" style="background:#cce3fa;color:#234;">New Members</a>
+                            <a href="activities.html" class="menu-button" style="background:#cce3fa;color:#234;">Member Activities</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#e6d6f7;color:#432;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">🎁 Wants & Offers</summary>
+                        <div style="background:#f4eafd;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="exchange.html" class="menu-button" style="background:#e6d6f7;color:#432;">Wants and Offers</a>
+                            <a href="view-exchanges.html" class="menu-button" style="background:#e6d6f7;color:#432;">Browse All Offerings</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#d2f7e6;color:#234;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">🛠️ Projects & Contributions</summary>
+                        <div style="background:#eafbf4;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="contribute.html" class="menu-button" style="background:#d2f7e6;color:#234;">Submit Your Project</a>
+                            <a href="view-proj-strug.html" class="menu-button" style="background:#d2f7e6;color:#234;">View Personal Projects - Struggles</a>
+                            <a href="group-projects.html" class="menu-button" style="background:#d2f7e6;color:#234;">Group Projects</a>
+                            <a href="skill-shares.html" class="menu-button" style="background:#d2f7e6;color:#234;">Skill Shares</a>
+                            <a href="writer's-wall.html" class="menu-button" style="background:#d2f7e6;color:#234;">Writer's Wall</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#fff3cd;color:#654;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">💡 Suggestions & Agreements</summary>
+                        <div style="background:#fffbe6;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="suggest.html" class="menu-button" style="background:#fff3cd;color:#654;">Make a Suggestion</a>
+                            <a href="discussions.html" class="menu-button" style="background:#fff3cd;color:#654;">View Current Discussions</a>
+                            <a href="agreements.html" class="menu-button" style="background:#fff3cd;color:#654;">Proposed Agreements & Voting</a>
+                            <a href="completed-agreements.html" class="menu-button" style="background:#fff3cd;color:#654;">Completed Agreements</a>
+                            <a href="agreements-voting.html" class="menu-button" style="background:#fff3cd;color:#654;">Vote on Agreements</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#f7d6e6;color:#543;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">➕ Circles</summary>
+                        <div style="background:#fbeaf4;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="create-circle.html" class="menu-button" style="background:#f7d6e6;color:#543;">Create a New Circle</a>
+                            <a href="circle-list.html" class="menu-button" style="background:#f7d6e6;color:#543;">Manage Circles</a>
+                            <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="background:#f7d6e6;color:#543;">Coven Community Network</a>
+                            <a href="circle.html?id=5516d022-5354-409d-9fcc-cc151df649b3" class="menu-button" style="background:#f7d6e6;color:#543;">Universal Basic Income Circle</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#d6f7f7;color:#234;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">📅 Events & Community</summary>
+                        <div style="background:#eafafb;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="events-calendar.html" class="menu-button" style="background:#d6f7f7;color:#234;">Events Calendar</a>
+                            <a href="event-details.html" class="menu-button" style="background:#d6f7f7;color:#234;">Event Details & Attendance</a>
+                            <a href="community-chat.html" class="menu-button" style="background:#d6f7f7;color:#234;">Community Chat</a>
+                            <a href="personal-chat.html" class="menu-button" style="background:#d6f7f7;color:#234;">Personal Messages</a>
+                            <a href="celebration-wall.html" class="menu-button" style="background:#d6f7f7;color:#234;">Celebration Wall</a>
+                            <a href="inbox.html" class="menu-button" style="background:#d6f7f7;color:#234;">Inbox</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#ffe0cc;color:#543;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">💸 Support & Help</summary>
+                        <div style="background:#fff4ea;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="request-support.html" class="menu-button" style="background:#ffe0cc;color:#543;">Request Support</a>
+                            <a href="view-support-requests.html" class="menu-button" style="background:#ffe0cc;color:#543;">View Support Requests</a>
+                            <a href="support-received.html" class="menu-button" style="background:#ffe0cc;color:#543;">Support Received</a>
+                            <a href="submit-help.html" class="menu-button" style="background:#ffe0cc;color:#543;">Submit Help Given</a>
+                            <a href="help-given.html" class="menu-button" style="background:#ffe0cc;color:#543;">Help Given</a>
+                        </div>
+            </details>
+            <button id="logout-button" class="logout-button">Log Out</button>
+        </div>
     </div>
 
-        <script type="module">
+    <script type="module">
 // Message notification code removed
 // Optional: If you want to filter projects by circle, you can add a dropdown and redirect logic here.
+
 import { supabase } from '/lib/supabase.js';
+// --- Browser Notification Permission & Test ---
+async function requestAndShowNotification() {
+    if (!('Notification' in window)) {
+        alert('This browser does not support desktop notification');
+        return;
+    }
+    let permission = Notification.permission;
+    if (permission === 'default') {
+        permission = await Notification.requestPermission();
+    }
+    if (permission === 'granted') {
+        new Notification('🔔 Friendship Community Circle', {
+            body: 'This is a test notification! You will see real notifications here soon.',
+            icon: '/public/default-avatar.png'
+        });
+    } else {
+        alert('Notifications are blocked. Please enable them in your browser settings.');
+    }
+}
+
+// Add a button to trigger notification permission and test
+const notifTestBtn = document.createElement('button');
+notifTestBtn.textContent = 'Enable Desktop Notifications';
+notifTestBtn.style = 'margin: 1em auto; display: block; background: #2196f3; color: #fff; border: none; border-radius: 6px; padding: 10px 18px; font-size: 1em; font-weight: bold; cursor: pointer;';
+notifTestBtn.onclick = requestAndShowNotification;
+document.body.insertBefore(notifTestBtn, document.body.firstChild.nextSibling);
+// --- End Browser Notification Permission & Test ---
+// --- Notification Bell Logic ---
+const bell = document.getElementById('notification-bell');
+const dropdown = document.getElementById('notification-dropdown');
+const notifCount = document.getElementById('notification-count');
+const notifList = document.getElementById('notification-list');
+const markAllReadBtn = document.getElementById('mark-all-read');
+let notifications = [];
+let unreadCount = 0;
+let pollingInterval = null;
+
+function showDropdown(show) {
+    dropdown.style.display = show ? 'block' : 'none';
+}
+
+bell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showDropdown(dropdown.style.display !== 'block');
+});
+document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== bell) {
+        showDropdown(false);
+    }
+});
+
+async function fetchNotifications() {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return;
+    const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+    if (error) {
+        notifList.innerHTML = '<em>Error loading notifications</em>';
+        notifCount.style.display = 'none';
+        return;
+    }
+    notifications = data || [];
+    unreadCount = notifications.filter(n => !n.read).length;
+    renderNotifications();
+}
+
+function renderNotifications() {
+    notifList.innerHTML = '';
+    if (!notifications.length) {
+        notifList.innerHTML = '<em>No notifications</em>';
+        notifCount.style.display = 'none';
+        return;
+    }
+    notifications.forEach(n => {
+        const div = document.createElement('div');
+        div.style.padding = '0.5em 0.2em';
+        div.style.borderBottom = '1px solid #eee';
+        div.style.background = n.read ? '#f7f7f7' : '#e6f7f2';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `<span style="font-size:1.1em;">${n.icon || '🔔'}</span> <span>${n.message}</span><br><span style="font-size:0.85em;color:#888;">${new Date(n.created_at).toLocaleString()}</span>`;
+        if (!n.read) {
+            div.style.fontWeight = 'bold';
+        }
+        div.addEventListener('click', async () => {
+            if (!n.read) {
+                await markNotificationRead(n.id);
+                n.read = true;
+                renderNotifications();
+            }
+            if (n.link) {
+                window.location.href = n.link;
+            }
+        });
+        notifList.appendChild(div);
+    });
+    if (unreadCount > 0) {
+        notifCount.textContent = unreadCount;
+        notifCount.style.display = 'inline-block';
+    } else {
+        notifCount.style.display = 'none';
+    }
+}
+
+async function markNotificationRead(id) {
+    await supabase.from('notifications').update({ read: true }).eq('id', id);
+    fetchNotifications();
+}
+
+markAllReadBtn.addEventListener('click', async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return;
+    await supabase.from('notifications').update({ read: true }).eq('user_id', userId);
+    fetchNotifications();
+});
+
+function startNotificationPolling() {
+    fetchNotifications();
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(fetchNotifications, 15000); // every 15s
+}
+
+startNotificationPolling();
+// --- End Notification Bell Logic ---
 
 // Most Active Member
 async function showMostActiveMember() {

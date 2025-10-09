@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Personal Chat</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; color: #222; }
+    .chat-container { max-width: 500px; margin: 2em auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 2em; }
+    .chat-header { font-size: 1.2em; font-weight: bold; color: #4a7c59; margin-bottom: 1em; }
+    .chat-messages { min-height: 200px; max-height: 300px; overflow-y: auto; margin-bottom: 1em; border: 1px solid #eee; border-radius: 6px; padding: 1em; background: #fafafa; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; }
+    .chat-send { background: #4a7c59; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .chat-send:disabled { background: #ccc; }
+    .chat-message-self { text-align: right; color: #2e8b57; }
+    .chat-message-other { text-align: left; color: #333; }
+    .chat-message-meta { font-size: 0.85em; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header" id="chat-header">Personal Chat</div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Type your message..." />
+      <button id="chat-send" class="chat-send">Send</button>
+    </div>
+    <div id="chat-status" style="margin-top:0.5em;color:#a94442;font-weight:bold;"></div>
+  </div>
+  <a href="menu.html" class="menu-button" style="display:block;margin:2em auto 0 auto;width:fit-content;">⬅️ Back to Menu</a>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+    const params = new URLSearchParams(window.location.search);
+    const otherUserId = params.get('user');
+    const chatHeader = document.getElementById('chat-header');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
+    const chatStatus = document.getElementById('chat-status');
+    let currentUserId = null;
+    let otherUserName = '';
+
+    async function getCurrentUser() {
+      const { data } = await supabase.auth.getUser();
+      return data?.user?.id || null;
+    }
+
+    async function getOtherUserName() {
+      if (!otherUserId) return '';
+      const { data } = await supabase.from('profiles').select('full_name').eq('id', otherUserId).single();
+      return data?.full_name || 'Member';
+    }
+
+    async function loadMessages() {
+      if (!currentUserId || !otherUserId) return;
+      const { data, error } = await supabase
+        .from('personal_messages')
+        .select('id, sender_id, receiver_id, content, created_at')
+        .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId})`)
+        .order('created_at', { ascending: true });
+      if (error) {
+        chatMessages.innerHTML = '<em>Error loading messages.</em>';
+        return;
+      }
+      chatMessages.innerHTML = (data || []).map(msg => `
+        <div class="${msg.sender_id === currentUserId ? 'chat-message-self' : 'chat-message-other'}">
+          <div>${msg.content.replace(/</g, '&lt;')}</div>
+          <div class="chat-message-meta">${msg.sender_id === currentUserId ? 'You' : otherUserName} &middot; ${new Date(msg.created_at).toLocaleString()}</div>
+        </div>
+      `).join('');
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const content = chatInput.value.trim();
+      if (!content) return;
+      chatSend.disabled = true;
+      chatStatus.textContent = '';
+      // Insert the message
+      const { error } = await supabase.from('personal_messages').insert([
+        { sender_id: currentUserId, receiver_id: otherUserId, content }
+      ]);
+      if (error) {
+        chatStatus.textContent = 'Error sending message: ' + error.message;
+        chatSend.disabled = false;
+        return;
+      }
+      // Fetch sender's name for notification
+      let senderName = 'Someone';
+      try {
+        const { data: senderProfile } = await supabase.from('profiles').select('full_name').eq('id', currentUserId).single();
+        if (senderProfile && senderProfile.full_name) senderName = senderProfile.full_name;
+      } catch {}
+      // Insert notification for receiver
+      const notifMsg = `${senderName} sent you a message.`;
+      const notifLink = `personal-chat.html?user=${encodeURIComponent(currentUserId)}`;
+      await supabase.from('notifications').insert([
+        {
+          user_id: otherUserId,
+          message: notifMsg,
+          icon: '💬',
+          link: notifLink,
+          read: false
+        }
+      ]);
+      chatInput.value = '';
+      await loadMessages();
+      chatSend.disabled = false;
+    }
+
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Initial load
+    (async () => {
+      currentUserId = await getCurrentUser();
+      otherUserName = await getOtherUserName();
+      chatHeader.textContent = `Chat with ${otherUserName}`;
+      await loadMessages();
+      // Optionally, poll for new messages every 5 seconds
+      setInterval(loadMessages, 5000);
+    })();
+  </script>
+</body>
+</html>
