@@ -65,8 +65,16 @@
         <img class="profile-img" src="${avatarSrc || 'https://via.placeholder.com/120'}" alt="Profile Picture">
         <div class="profile-name">${data.full_name || 'No Name'}</div>
         <div class="profile-bio">${data.bio || ''}</div>
+        <button id="chat-btn" class="menu-button" style="margin-top:1em;background:#2196f3;">💬 Chat with ${data.full_name || 'this member'}</button>
         ${galleryHtml}
       `;
+      // Add chat button handler
+      const chatBtn = document.getElementById('chat-btn');
+      if (chatBtn) {
+        chatBtn.addEventListener('click', () => {
+          window.location.href = `personal-chat.html?user=${encodeURIComponent(profileId)}`;
+        });
+      }
     }
     loadProfile();
   </script>
