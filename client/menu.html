@@ -286,7 +286,7 @@ function renderNotifications() {
         div.style.borderBottom = '1px solid #eee';
         div.style.background = n.read ? '#f7f7f7' : '#e6f7f2';
         div.style.cursor = 'pointer';
-        div.innerHTML = `<span style="font-size:1.1em;">${n.icon || '🔔'}</span> <span>${n.message}</span><br><span style="font-size:0.85em;color:#888;">${new Date(n.created_at).toLocaleString()}</span>`;
+    div.innerHTML = `<span style=\"font-size:1.1em;\">${n.icon || '🔔'}</span> <span style=\"font-size:12pt;\">${n.message}</span><br><span style=\"font-size:0.85em;color:#888;\">${new Date(n.created_at).toLocaleString()}</span>`;
         if (!n.read) {
             div.style.fontWeight = 'bold';
         }
