@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Friendship Community Circle</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #e6f7f2;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .welcome-box {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 16px #e0e0e0;
+      padding: 3em 2em;
+      text-align: center;
+      max-width: 400px;
+    }
+    .welcome-box h1 {
+      color: #2e8b57;
+      margin-bottom: 0.5em;
+    }
+    .welcome-box p {
+      font-size: 1.15em;
+      margin-bottom: 2em;
+    }
+    .menu-link {
+      display: inline-block;
+      background: #6b4f1d;
+      color: #fff;
+      padding: 1em 2em;
+      border-radius: 8px;
+      font-size: 1.2em;
+      font-weight: bold;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .menu-link:hover {
+      background: #8c6f4e;
+    }
+  </style>
+</head>
+<body>
+  <div class="welcome-box" style="max-width:700px;">
+    <h1 style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+      🌸 Welcome!
+      <div id="notification-bell-container" style="position: relative;">
+        <button id="notification-bell" style="background: none; border: none; cursor: pointer; position: relative; font-size: 1.7em;">
+          🔔
+          <span id="notification-count" style="display:none; position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; padding: 2px 7px; font-size: 0.8em; font-weight: bold; min-width: 18px; text-align: center;"></span>
+        </button>
+        <div id="notification-dropdown" style="display: none; position: absolute; right: 0; top: 2.5em; background: #fff; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 2px 8px #eee; min-width: 260px; z-index: 2000; max-height: 350px; overflow-y: auto; overflow-wrap: break-word;">
+          <div id="notification-list" style="padding: 0.5em 0.5em 0.5em 0.5em;"></div>
+          <div style="text-align: right; padding: 0.5em 0.7em 0.5em 0.5em;">
+            <button id="mark-all-read" style="background: #e6f7f2; color: #333; border: none; border-radius: 5px; padding: 4px 10px; font-size: 0.95em; cursor: pointer;">Mark all as read</button>
+          </div>
+        </div>
+      </div>
+    </h1>
+    <button id="notif-test-btn" style="margin: 1em auto; display: block; background: #2196f3; color: #fff; border: none; border-radius: 6px; padding: 10px 18px; font-size: 1em; font-weight: bold; cursor: pointer;">Enable Desktop Notifications</button>
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; justify-content:center;">
+      <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
+        <h2>🌟 Most Active Member</h2>
+        <div id="most-active-member"></div>
+      </div>
+      <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
+        <h2>🆕 Newest Member</h2>
+        <div id="newest-member"></div>
+      </div>
+    </div>
+    <a href="welcome.html" class="menu-button" style="background:#ffe082;color:#6b4f1d;font-weight:bold;margin-bottom:8px;display:inline-block;">👋 In Case You Missed It</a>
+    <a href="what's-new.html" class="menu-button" style="background:#b3c6e6;color:#2e2e2e;font-weight:bold;margin-bottom:18px;display:inline-block;">🆕 What's New</a>
+    <a href="menu.html" class="menu-link" style="margin-top:2em;">Enter Community Menu</a>
+  </div>
+  <script type="module" src="/lib/supabase.js"></script>
+  <script type="module">
+    // --- Desktop Notification Permission & Test ---
+    async function requestAndShowNotification() {
+      if (!('Notification' in window)) {
+        alert('This browser does not support desktop notification');
+        return;
+      }
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        try {
+          permission = await Notification.requestPermission();
+        } catch (e) {
+          alert('Error requesting notification permission: ' + e);
+          return;
+        }
+      }
+      if (permission === 'granted') {
+        alert('Permission granted! Showing test notification.');
+        new Notification('🔔 Friendship Community Circle', {
+          body: 'This is a test notification! You will see real notifications here soon.',
+          icon: '/default-avatar.png'
+        });
+      } else {
+        alert('Notifications are blocked or denied. Please enable them in your browser settings.');
+      }
+    }
+    document.getElementById('notif-test-btn').onclick = requestAndShowNotification;
+    // --- Notification Bell Logic ---
+    import { supabase } from '/lib/supabase.js';
+    const bell = document.getElementById('notification-bell');
+    const dropdown = document.getElementById('notification-dropdown');
+    const notifCount = document.getElementById('notification-count');
+    const notifList = document.getElementById('notification-list');
+    const markAllReadBtn = document.getElementById('mark-all-read');
+    let notifications = [];
+    let unreadCount = 0;
+    let pollingInterval = null;
+    function showDropdown(show) {
+      dropdown.style.display = show ? 'block' : 'none';
+    }
+    bell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showDropdown(dropdown.style.display !== 'block');
+    });
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && e.target !== bell) {
+        showDropdown(false);
+      }
+    });
+    async function fetchNotifications() {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) {
+        notifList.innerHTML = '<em>Error loading notifications</em>';
+        notifCount.style.display = 'none';
+        return;
+      }
+      notifications = data || [];
+      unreadCount = notifications.filter(n => !n.read).length;
+      renderNotifications();
+    }
+    function renderNotifications() {
+      notifList.innerHTML = '';
+      if (!notifications.length) {
+        notifList.innerHTML = '<em>No notifications</em>';
+        notifCount.style.display = 'none';
+        return;
+      }
+      notifications.forEach(n => {
+        const div = document.createElement('div');
+        div.style.padding = '0.5em 0.2em';
+        div.style.borderBottom = '1px solid #eee';
+        div.style.background = n.read ? '#f7f7f7' : '#e6f7f2';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `<span style=\"font-size:1.1em;\">${n.icon || '🔔'}</span> <span style=\"font-size:12pt;\">${n.message}</span><br><span style=\"font-size:0.85em;color:#888;\">${new Date(n.created_at).toLocaleString()}</span>`;
+        if (!n.read) {
+          div.style.fontWeight = 'bold';
+        }
+        div.addEventListener('click', async () => {
+          if (!n.read) {
+            await markNotificationRead(n.id);
+            n.read = true;
+            renderNotifications();
+          }
+          if (n.link) {
+            window.location.href = n.link;
+          }
+        });
+        notifList.appendChild(div);
+      });
+      if (unreadCount > 0) {
+        notifCount.textContent = unreadCount;
+        notifCount.style.display = 'inline-block';
+      } else {
+        notifCount.style.display = 'none';
+      }
+    }
+    async function markNotificationRead(id) {
+      await supabase.from('notifications').update({ read: true }).eq('id', id);
+      fetchNotifications();
+    }
+    markAllReadBtn.addEventListener('click', async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+      await supabase.from('notifications').update({ read: true }).eq('user_id', userId);
+      fetchNotifications();
+    });
+    function startNotificationPolling() {
+      fetchNotifications();
+      if (pollingInterval) clearInterval(pollingInterval);
+      pollingInterval = setInterval(fetchNotifications, 15000); // every 15s
+    }
+    startNotificationPolling();
+    // --- End Notification Bell Logic ---
+
+    // --- Most Active Member ---
+    async function showMostActiveMember() {
+      // Fetch all activities
+      const [votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, eventsRes, helpGivenRes, supportResponsesRes, writersWallRes] = await Promise.all([
+        supabase.from('agreement_votes').select('voter_id, created_at'),
+        supabase.from('suggestions').select('author_id, created_at'),
+        supabase.from('comments').select('author_id, created_at'),
+        supabase.from('member_offerings').select('user_id, want, give, passion'),
+        supabase.from('contributions').select('user_id, project, challenge, help, collab, skills, urgency, contact'),
+        supabase.from('profiles').select('id, full_name, avatar_url, personal_story, bio, youtube, twitter, substack, facebook, instagram, linkedin, website'),
+        supabase.from('circles').select('id, name, created_by'),
+        supabase.from('circle_members').select('added_by'),
+        supabase.from('celebrations').select('user_id'),
+        supabase.from('events').select('id, created_by'),
+        supabase.from('help_given').select('helper_id, hours'),
+        supabase.from('support_responses').select('responder_id'),
+        supabase.from('writers_wall').select('author_id, points')
+      ]);
+      let attendanceRes = await supabase.from('event_attendance').select('event_id, user_id');
+      const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
+      const breakdown = {};
+      function initBreakdown(id) {
+        if (!breakdown[id]) {
+          breakdown[id] = {
+            votes: 0,
+            suggestions: 0,
+            comments: 0,
+            wants: 0,
+            offers: 0,
+            passion: 0,
+            projects: 0,
+            profile: 0,
+            circles_created: 0,
+            members_added: 0,
+            celebrations_posted: 0,
+            events_created: 0,
+            events_attended: 0,
+            help_hours: 0,
+            help_points: 0,
+            support_responses: 0,
+            writer_posts: 0,
+            writer_points: 0
+          };
+        }
+      }
+      // Help Given: tally hours and points per helper
+      if (helpGivenRes.data) {
+        helpGivenRes.data.forEach(row => {
+          if (row.helper_id && row.hours && row.helper_id !== builderId) {
+            initBreakdown(row.helper_id);
+            breakdown[row.helper_id].help_hours = (Number(breakdown[row.helper_id].help_hours) || 0) + Number(row.hours);
+            breakdown[row.helper_id].help_points = (breakdown[row.helper_id].help_points || 0) + (row.hours * 5);
+          }
+        });
+      }
+      // Support Responses
+      if (supportResponsesRes.data) {
+        supportResponsesRes.data.forEach(row => {
+          if (row.responder_id && row.responder_id !== builderId) {
+            initBreakdown(row.responder_id);
+            breakdown[row.responder_id].support_responses = (breakdown[row.responder_id].support_responses || 0) + 1;
+          }
+        });
+      }
+      // Votes
+      votesRes.data?.forEach(v => {
+        if (v.voter_id !== builderId) {
+          initBreakdown(v.voter_id);
+          breakdown[v.voter_id].votes += 1;
+        }
+      });
+      // Suggestions
+      suggestionsRes.data?.forEach(s => {
+        if (s.author_id !== builderId) {
+          initBreakdown(s.author_id);
+          breakdown[s.author_id].suggestions += 1;
+        }
+      });
+      // Comments
+      commentsRes.data?.forEach(c => {
+        if (c.author_id !== builderId) {
+          initBreakdown(c.author_id);
+          breakdown[c.author_id].comments += 1;
+        }
+      });
+      // Wants, Offers, Passion
+      offeringsRes.data?.forEach(o => {
+        if (o.user_id !== builderId) {
+          initBreakdown(o.user_id);
+          if (o.want && o.want.trim() !== "") breakdown[o.user_id].wants += 1;
+          if (o.give && o.give.trim() !== "") breakdown[o.user_id].offers += 1;
+          if (o.passion && o.passion.trim() !== "") breakdown[o.user_id].passion += 1;
+        }
+      });
+      // Projects & Struggles
+      const contribByUser = {};
+      contributionsRes.data?.forEach(con => {
+        if (con.user_id !== builderId) {
+          if (!contribByUser[con.user_id]) contribByUser[con.user_id] = [];
+          contribByUser[con.user_id].push(con);
+        }
+      });
+      Object.entries(contribByUser).forEach(([userId, contribs]) => {
+        initBreakdown(userId);
+        let fieldsFilled = 0;
+        contribs.forEach(con => {
+          ['project','challenge','help','collab','skills','urgency','contact'].forEach(field => {
+            if (con[field] && con[field].trim() !== '') {
+              fieldsFilled += 1;
+            }
+          });
+        });
+        breakdown[userId].projects += fieldsFilled;
+      });
+      // Profile completion
+      profilesFullRes.data?.forEach(p => {
+        if (p.id !== builderId) {
+          let filled = 0;
+          if (p.full_name && p.full_name.trim() !== "") filled++;
+          if (p.bio && p.bio.trim() !== "") filled++;
+          if (p.avatar_url && p.avatar_url.trim() !== "") filled++;
+          if (p.youtube || p.twitter || p.substack || p.facebook || p.instagram || p.linkedin || p.website) filled++;
+          if (filled >= 2) {
+            initBreakdown(p.id);
+            breakdown[p.id].profile = 1;
+          }
+        }
+      });
+      // Circles created: credit by created_by (profile id)
+      if (Array.isArray(circlesRes.data)) {
+        circlesRes.data.forEach(c => {
+          const creatorId = c && c.created_by;
+          if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
+            initBreakdown(creatorId);
+            breakdown[creatorId].circles_created += 1;
+          }
+        });
+      } else if (circlesRes.data && typeof circlesRes.data === 'object' && circlesRes.data.created_by) {
+        const creatorId = circlesRes.data.created_by;
+        if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
+          initBreakdown(creatorId);
+          breakdown[creatorId].circles_created += 1;
+        }
+      }
+      // Members added
+      membersRes.data?.forEach(m => {
+        const userId = m.added_by || m.user_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+          initBreakdown(userId);
+          breakdown[userId].members_added += 1;
+        }
+      });
+      // Celebration wall posts
+      celebrationsRes.data?.forEach(c => {
+        const userId = c.user_id || c.creator_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+          initBreakdown(userId);
+          breakdown[userId].celebrations_posted += 1;
+        }
+      });
+      // Events created
+      eventsRes.data?.forEach(e => {
+        const creatorId = e.created_by;
+        if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
+          initBreakdown(creatorId);
+          breakdown[creatorId].events_created += 1;
+        }
+      });
+      // Events attended
+      attendanceRes.data?.forEach(a => {
+        const userId = a.user_id;
+        if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+          initBreakdown(userId);
+          breakdown[userId].events_attended += 1;
+        }
+      });
+      // Writer's Wall: tally posts and points per author
+      if (writersWallRes.data) {
+        writersWallRes.data.forEach(row => {
+          if (row.author_id) {
+            initBreakdown(row.author_id);
+            breakdown[row.author_id].writer_posts = (breakdown[row.author_id].writer_posts || 0) + 1;
+            breakdown[row.author_id].writer_points = (breakdown[row.author_id].writer_points || 0) + (row.points || 0);
+          }
+        });
+      }
+      // Get profiles for display
+      const idToProfile = {};
+      if (Array.isArray(profilesFullRes.data)) {
+        profilesFullRes.data.forEach(p => {
+          if (p && typeof p.id === 'string' && p.id.trim() !== '') {
+            idToProfile[p.id] = p;
+          }
+        });
+      }
+      // Build member activity list
+      const userIds = Object.keys(breakdown).filter(id => id && id !== 'null');
+      const container = document.getElementById('most-active-member');
+      container.innerHTML = '';
+      if (userIds.length === 0) {
+        container.innerHTML = `<em>No other member has been active.</em><br><pre style="font-size:0.9em;color:#888;max-width:100%;overflow:auto;">userIds: ${JSON.stringify(userIds)}\nbreakdown: ${JSON.stringify(breakdown, null, 2)}</pre>`;
+        return;
+      }
+      // Calculate total for each user
+      const members = userIds.map(id => {
+        const b = breakdown[id];
+        const profile = idToProfile[id] || { full_name: id, avatar_url: '', personal_story: '' };
+        const total =
+          (b.votes || 0) * 1 +
+          (b.suggestions || 0) * 1 +
+          (b.comments || 0) * 1 +
+          (b.wants || 0) * 1 +
+          (b.offers || 0) * 1 +
+          (b.passion || 0) * 1 +
+          (b.projects || 0) * 1 +
+          (b.projects_proposed || 0) * 5 +
+          (b.events_created || 0) * 5 +
+          (b.events_attended || 0) * 5 +
+          (b.profile || 0) * 5 +
+          (b.circles_created || 0) * 10 +
+          (b.members_added || 0) * 2 +
+          (b.celebrations_posted || 0) * 5 +
+          (b.help_points || 0) +
+          (b.support_responses || 0) * 5 +
+          (b.writer_points || 0);
+        return {
+          id,
+          profile,
+          total,
+          breakdown: b
+        };
+      });
+      members.sort((a, b) => b.total - a.total);
+      // Show most active member at the top
+      const m = members[0];
+      container.innerHTML += `
+        <a href="view-profile.html?id=${m.id}" style="text-decoration: none; color: inherit; display: block;">
+            <img src="${m.profile.avatar_url && m.profile.avatar_url.trim() !== '' ? m.profile.avatar_url : 'default-avatar.png'}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:1em;">
+            <h3>${m.profile.full_name}</h3>
+            <div class="activity-breakdown" style="margin-top:0.5em;">
+                <strong>All-Time Activities:</strong><br>
+                Votes: ${m.breakdown.votes || 0}<br>
+                Suggestions: ${m.breakdown.suggestions || 0}<br>
+                Comments: ${m.breakdown.comments || 0}<br>
+                Wants: ${m.breakdown.wants || 0}<br>
+                Offers: ${m.breakdown.offers || 0}<br>
+                Passion: ${m.breakdown.passion || 0}<br>
+                Projects & Struggles: ${m.breakdown.projects || 0}<br>
+                <span style="color:#2e8b57;font-weight:bold;">Help Given: ${m.breakdown.help_hours || 0} hours</span><br>
+                Events Created: ${m.breakdown.events_created || 0}<br>
+                Events Attended: ${m.breakdown.events_attended || 0}<br>
+                Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
+                Circles Created: ${m.breakdown.circles_created || 0}<br>
+                Members Added: ${m.breakdown.members_added || 0}<br>
+                Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
+                Support Responses: ${m.breakdown.support_responses || 0}<br>
+                <span style="color:#4a7c59;font-weight:bold;">Writer's Posts: ${m.breakdown.writer_posts || 0}</span><br>
+                <strong>Total:</strong> ${m.total}
+            </div>
+            <div class="personal-story">${m.profile.personal_story || ''}</div>
+        </a>
+        <div style="font-size:0.95em;color:#888;margin-bottom:0.5em;">
+            <strong>Activities Legend:</strong><br>
+            Votes, Suggestions, Comments, Wants, Offers, Passion, Projects & Struggles = 1 point each<br>
+            Events Created/Attended, Profile Completed, Circles Created, Members Added, Celebration Wall Posts, Support Responses = 5-10 points<br>
+            Help Given = 5 points/hour<br>
+            <span style="color:#4a7c59;font-weight:bold;">Writer's Post = 1 point per 1000 words</span>
+    </div>`;
+  }
+    // --- Newest Member ---
+    async function showNewestMember() {
+      const cutoffDate = new Date('2025-09-19T00:00:00Z');
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, affirmation_text, affirmation_date')
+        .order('affirmation_date', { ascending: false });
+      const recentProfiles = (profiles || [])
+        .filter(p => p.affirmation_date && new Date(p.affirmation_date) >= cutoffDate)
+        .sort((a, b) => new Date(b.affirmation_date) - new Date(a.affirmation_date))
+        .slice(0, 3); // Show up to 3 recent members
+
+      const newestMemberDiv = document.getElementById('newest-member');
+      newestMemberDiv.innerHTML = '';
+      if (recentProfiles.length === 0) {
+        newestMemberDiv.innerHTML = "<em>No new member since 9/19/2025.</em>";
+        return;
+      }
+      for (const profile of recentProfiles) {
+        // Get circles for this member (membership)
+        const { data: memberCircles } = await supabase
+          .from('circle_members')
+          .select('circle_id')
+          .eq('user_id', profile.id);
+        // Get circles created by this member (credit)
+        const { data: createdCircles } = await supabase
+          .from('circles')
+          .select('id, name')
+          .eq('created_by', profile.id);
+        let circleNames = [];
+        // Always add circles created by member, marked as creator
+        let createdNames = [];
+        if (createdCircles && createdCircles.length > 0) {
+          for (const c of createdCircles) {
+            createdNames.push(c.name);
+            circleNames.push(c.name + ' (creator)');
+          }
+        }
+        // Add circles where member is a member, but not already credited as creator
+        if (memberCircles && memberCircles.length > 0) {
+          const circleIds = memberCircles.map(c => c.circle_id);
+          const { data: circleData } = await supabase
+            .from('circles')
+            .select('id, name')
+            .in('id', circleIds);
+          if (circleData) {
+            for (const c of circleData) {
+              // Only add if not already credited as creator (by name)
+              if (!createdNames.includes(c.name) && !circleNames.includes(c.name)) {
+                circleNames.push(c.name);
+              }
+            }
+          }
+        }
+
+        const memberCard = document.createElement('a');
+        memberCard.href = `view-profile.html?id=${profile.id}`;
+        memberCard.className = 'member-card';
+        memberCard.style.marginBottom = '1em';
+        memberCard.style.textDecoration = 'none';
+        memberCard.style.color = 'inherit';
+        memberCard.style.display = 'block';
+        // Use avatar_url or default
+        const avatarUrl = profile.avatar_url && profile.avatar_url.trim() !== ''
+          ? profile.avatar_url
+          : 'public/default-avatar.png';
+        memberCard.innerHTML = `
+            <img src="${avatarUrl}" alt="Profile Picture" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:0.5em;">
+            <strong>${profile.full_name || 'Unnamed Member'}</strong>
+            <div style="color:#888;">Joined: ${profile.affirmation_date ? new Date(profile.affirmation_date).toLocaleDateString() : '—'}</div>
+            <div style="color:#555;">Circles: ${circleNames.length ? circleNames.join(', ') : 'None'}</div>
+        `;
+        newestMemberDiv.appendChild(memberCard);
+      }
+  // removed extra closing brace
+    }
+
+    showMostActiveMember();
+    showNewestMember();
+  </script>
+</body>
+</html>
