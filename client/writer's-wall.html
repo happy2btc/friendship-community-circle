@@ -111,7 +111,7 @@
 </head>
 <body>
     <div class="menu-container">
-        <a href="menu.html" class="menu-button">🏠 Main Menu</a>
+    <a href="main-menu.html" class="menu-button">🏠 Main Menu</a>
         <a href="profile.html" class="menu-button">👤 My Profile</a>
         <a href="activities.html" class="menu-button">🏆 Member Activities</a>
         <a href="celebration-wall.html" class="menu-button">🎉 Celebration Wall</a>
@@ -126,8 +126,8 @@
             <label for="content">Your Creation</label>
             <textarea id="content" name="content" rows="8" required placeholder="Paste or write your poem, story, or essay here..."></textarea>
 
-            <label for="images">Image URLs (comma separated, optional)</label>
-            <input type="text" id="images" name="images" placeholder="https://... , https://...">
+            <label for="images">Upload Images (jpg, png, gif, etc., optional)</label>
+            <input type="file" id="images" name="images" accept="image/*" multiple>
 
             <button type="submit">Post to Writer's Wall</button>
             <span id="form-status" style="margin-left:1em;color:#2e8b57;font-weight:bold;"></span>
@@ -165,11 +165,26 @@
                 statusSpan.style.color = "red";
                 return;
             }
-            // Parse images
-            const imagesRaw = form.images.value.trim();
+            // Handle image uploads
             let images = [];
-            if (imagesRaw) {
-                images = imagesRaw.split(',').map(url => url.trim()).filter(url => url.length > 0);
+            const files = form.images.files;
+            if (files && files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    // Create a unique file path: writers-wall/{user_id}/{timestamp}_{filename}
+                    const filePath = `writers-wall/${author_id}/${Date.now()}_${file.name}`;
+                    let { error: uploadError } = await supabase.storage.from('writers-wall').upload(filePath, file, { upsert: false });
+                    if (uploadError) {
+                        statusSpan.textContent = `Image upload failed: ${uploadError.message}`;
+                        statusSpan.style.color = "red";
+                        return;
+                    }
+                    // Get public URL
+                    const { data: publicUrlData } = supabase.storage.from('writers-wall').getPublicUrl(filePath);
+                    if (publicUrlData && publicUrlData.publicUrl) {
+                        images.push(publicUrlData.publicUrl);
+                    }
+                }
             }
             const wordCount = countWords(content);
             const points = Math.max(1, Math.floor(wordCount / 1000));
