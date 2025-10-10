@@ -45,8 +45,8 @@
       if (error) {
         errorDiv.textContent = error.message;
       } else {
-        // Redirect after login
-        window.location.href = redirectUrl || 'home.html';
+        // Always redirect to home.html after login
+        window.location.href = 'home.html';
       }
     });
   </script>
