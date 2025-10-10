@@ -213,15 +213,20 @@
                     <!-- Tab content will be injected here -->
                 </div>
             </div>
-            <button id="logout-button" class="logout-button">Log Out</button>
+            <button id="logout-button" class="logout-button" style="margin-top:16px;">Log Out</button>
+
+                </div>
         </div>
-    </div>
+
+        <div style="width:100%;max-width:480px;margin:32px auto 0 auto;text-align:center;">
+        </div>
 
     <script type="module">
 // Message notification code removed
 // Optional: If you want to filter projects by circle, you can add a dropdown and redirect logic here.
 
 import { supabase } from '/lib/supabase.js';
+
 // --- Browser Notification Permission & Test ---
 async function requestAndShowNotification() {
     console.log('Notification button clicked');
@@ -713,13 +718,20 @@ async function showNewestMember() {
     }
 }
 
-const logoutButton = document.getElementById('logout-button');
-logoutButton.addEventListener('click', async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        console.error('Error logging out:', error);
-    } else {
-    window.location.href = 'index.html';
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Use querySelector to get the only logout button
+    const logoutButton = document.querySelector('#logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error logging out:', error);
+            } else {
+                    window.location.href = 'login.html';
+            }
+        });
     }
 });
 
@@ -867,5 +879,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<div style="width:100%;max-width:480px;margin:32px auto 0 auto;text-align:center;">
+    <a href="home.html" class="menu-button" style="background:#2e8b57;color:#fff;margin-top:24px;">🏠 Home Page</a>
+</div>
 </body>
 </html>
