@@ -5,6 +5,25 @@
   <title>Circles</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
+    .fixed-menu-btn {
+      position: fixed;
+      top: 24px;
+      right: 32px;
+      z-index: 100;
+      background-color: #6c757d;
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 7px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.08em;
+      box-shadow: 0 2px 8px #0002;
+      transition: background 0.2s;
+      display: block;
+    }
+    .fixed-menu-btn:hover, .fixed-menu-btn:focus {
+      background-color: #495057;
+    }
     body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
     .circle-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
     .circle-actions { margin-top: 1rem; }
@@ -15,7 +34,7 @@
   <h1>Circles</h1>
   <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="display:block; width:fit-content; margin-bottom:1rem; background-color:#4a7c59; color:#fff; padding:10px 18px; border-radius:6px; text-decoration:none; font-weight:bold; text-align:center;">🧙 Coven Community Network</a>
   <div id="circles"></div>
-  <a href="main-menu.html" class="menu-button" style="display:block; width:fit-content; margin:2rem auto 0 auto; background-color:#6c757d; color:#fff; padding:10px 18px; border-radius:6px; text-decoration:none; font-weight:bold; text-align:center;">🔙 Return to Menu</a>
+  <a href="main-menu.html" class="fixed-menu-btn">🔙 Return to Menu</a>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
     const circlesDiv = document.getElementById('circles');
