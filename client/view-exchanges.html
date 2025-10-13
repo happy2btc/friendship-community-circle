@@ -6,7 +6,22 @@
   <title>Browse the Circle of Exchange</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
-    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; }
+    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; position: relative; }
+    .main-content-wrap {
+      margin-right: 340px; /* width of image + some gap */
+      transition: margin 0.3s;
+    }
+    .wizard-image-right {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      height: 90vh;
+      max-height: 700px;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.93;
+    }
     h1 { text-align: center; color: #6b4f1d; }
     .offerings-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
     .offering-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -33,9 +48,12 @@
   </style>
 </head>
 <body>
-  <h1>🎁 Offerings in the Circle</h1>
-  <div id="offerings-container">
-    <p>Loading offerings...</p>
+  <img src="public/wizard-right.jpg" alt="Wizard" class="wizard-image-right" />
+  <div class="main-content-wrap">
+    <h1>🎁 Offerings in the Circle</h1>
+    <div id="offerings-container">
+      <p>Loading offerings...</p>
+    </div>
   </div>
   <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
 
