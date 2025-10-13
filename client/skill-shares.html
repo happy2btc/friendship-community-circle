@@ -5,7 +5,31 @@
   <title>Skill Sharing</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
-    body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    body {
+      font-family: Georgia, serif;
+      background: #f9f6f1;
+      color: #3b2f2f;
+      padding: 2rem;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('public/sarkaria-8-bedroom.jpg') center/cover no-repeat;
+      z-index: 0;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .container, h1, .menu-button {
+      position: relative;
+      z-index: 1;
+    }
     .container { max-width: 800px; margin: auto; }
     h1 { font-size: 2em; margin-bottom: 1em; }
     .skill-form { background: #fff; border-radius: 8px; padding: 1.5em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 2em; }
