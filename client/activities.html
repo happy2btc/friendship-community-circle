@@ -4,7 +4,30 @@
     <meta charset="UTF-8">
     <title>Member Activities</title>
     <style>
-        body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; max-width: 800px; margin: auto; }
+        body {
+            font-family: sans-serif;
+            background: #f9f9f9;
+            padding: 2rem;
+            max-width: 800px;
+            margin: auto;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('public/Shadow sunset.png') center/cover no-repeat;
+            z-index: 0;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        main, .legend-container, .back-menu-btn {
+            position: relative;
+            z-index: 1;
+        }
         h1 { text-align: center; }
         .member-card {
             background: #fff;
@@ -29,7 +52,9 @@
         }
         .activity-breakdown {
             font-size: 1em;
-            color: #555;
+            color: #181818;
+            font-weight: 600;
+            text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
             margin: 0.5rem 0 0 0;
         }
         .personal-story {
