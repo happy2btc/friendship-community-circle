@@ -5,8 +5,41 @@
   <title>💡 Make a Suggestion</title>
   <script type="module" src="/lib/supabase.js"></script>
   <style>
-    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; max-width: 600px; margin: auto; }
-    h1 { text-align: center; color: #4a7c59; }
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('public/suggest-brain.png') center/cover no-repeat;
+      z-index: 0;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    form, h1, .menu-button, #status-message {
+      position: relative;
+      z-index: 1;
+    }
+    h1 {
+      text-align: center;
+      color: #181818;
+      font-size: 2.5em;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 12px #fff, 0 1px 2px #0002;
+      margin-bottom: 1.2em;
+    }
     form { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     label { display: block; margin-top: 1.2rem; font-weight: bold; }
     textarea, input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
