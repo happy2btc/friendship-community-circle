@@ -5,6 +5,60 @@
     <title>Support Received</title>
     <script type="module" src="/lib/supabase.js"></script>
     <style>
+        .fixed-menu-btn {
+            position: fixed;
+            top: 24px;
+            right: 32px;
+            z-index: 100;
+            background-color: #6b4f1d;
+            color: #fff;
+            padding: 12px 22px;
+            border-radius: 7px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.08em;
+            box-shadow: 0 2px 8px #0002;
+            transition: background 0.2s;
+            display: block;
+        }
+        .fixed-menu-btn:hover, .fixed-menu-btn:focus {
+            background-color: #495057;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('/friendship-community-circle/year-of-the-snake.jpg'), url('/year-of-the-snake.jpg'), url('year-of-the-snake.jpg');
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            z-index: 0;
+            opacity: 0.48;
+            pointer-events: none;
+        }
+        .main-content, h1, .menu-button, #status-message, .container {
+            position: relative;
+            z-index: 10;
+        }
+        .container {
+            background: rgba(255,255,255,0.92);
+            box-shadow: 0 4px 16px #0002;
+        }
+        /* Overlay to further boost contrast if needed */
+        .overlay-bg {
+            content: '';
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255,255,255,0.45);
+            z-index: 5;
+            pointer-events: none;
+        }
         body { font-family: Georgia, serif; background-color: #f9f6f1; color: #3b2f2f; margin: 40px; display: flex; justify-content: center; }
         .container { max-width: 800px; width: 100%; background-color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
         h1 { text-align: center; color: #6b4f1d; }
@@ -31,11 +85,12 @@
     </style>
 </head>
 <body>
+    <div class="overlay-bg"></div>
     <div class="container">
         <h1>🤝 Support Received</h1>
         <p>This page shows your logged support receipts - funds you've received for your support requests.</p>
         <div id="receipts-list"></div>
-    <a href="main-menu.html" class="menu-button">← Back to Menu</a>
+    <a href="main-menu.html" class="fixed-menu-btn">← Back to Menu</a>
     </div>
     <script type="module">
         import { supabase } from '/lib/supabase.js';

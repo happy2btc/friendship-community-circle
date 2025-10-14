@@ -4,6 +4,44 @@
   <meta charset="UTF-8">
   <title>Request Financial Support</title>
   <style>
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('/friendship-community-circle/overalls.jpg'), url('/overalls.jpg'), url('overalls.jpg');
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      z-index: 0;
+      opacity: 0.48;
+      pointer-events: none;
+    }
+    .form-container, h2, .fixed-menu-btn, #form-status {
+      position: relative;
+      z-index: 1;
+    }
+    .fixed-menu-btn {
+      position: fixed;
+      top: 24px;
+      right: 32px;
+      z-index: 100;
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 7px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.08em;
+      box-shadow: 0 2px 8px #0002;
+      transition: background 0.2s;
+      display: block;
+    }
+    .fixed-menu-btn:hover, .fixed-menu-btn:focus {
+      background-color: #495057;
+    }
     body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
     .form-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
     form label, form select, form input, form textarea, form button {
@@ -92,7 +130,7 @@
       <a href="support-received.html" class="menu-button" style="margin-top:24px;background:#d32f2f;color:#fff;">🔎 View All Support Received</a>
     </div>
   </div>
-  <a href="main-menu.html" class="menu-button">🔙 Back to Menu</a>
+  <a href="main-menu.html" class="fixed-menu-btn">🔙 Back to Menu</a>
 
   <script type="module">
     import { supabase } from '/lib/supabase.js';
