@@ -154,6 +154,10 @@
             </div>
             <button type="submit" id="update-button">Update Profile</button>
             <p id="status"></p>
+            <div id="member-circles-section" style="margin:24px 0 18px 0;">
+                <h3 style="color:#2e8b57;">Circles I Belong To</h3>
+                <ul id="member-circles-list" style="padding-left:18px;"></ul>
+            </div>
             <button type="button" id="show-messages-btn" style="margin-top:18px;background:#1976d2;">Show All My Messages</button>
             <div id="all-messages-section" style="margin-top:18px;display:none;">
                 <h3 style="color:#1976d2;">My Sent Messages</h3>
@@ -171,6 +175,41 @@
         import { supabase } from '/lib/supabase.js';
         // --- Multiple Image Upload & Gallery ---
     // ...existing code...
+
+        // --- Member Circles ---
+        async function loadMemberCircles() {
+            // Get the profile being viewed (self or by id)
+            const params = new URLSearchParams(window.location.search);
+            const memberId = params.get('id');
+            let userId = memberId;
+            if (!userId) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                userId = user.id;
+            }
+            // Get all circle memberships for this user
+            const { data: memberships } = await supabase
+                .from('circle_members')
+                .select('circle_id')
+                .eq('user_id', userId);
+            if (!memberships || memberships.length === 0) {
+                document.getElementById('member-circles-list').innerHTML = '<li>Not a member of any circles yet.</li>';
+                return;
+            }
+            // Get circle names
+            const circleIds = memberships.map(m => m.circle_id);
+            const { data: circles } = await supabase
+                .from('circles')
+                .select('id, name')
+                .in('id', circleIds);
+            const list = document.getElementById('member-circles-list');
+            if (!circles || circles.length === 0) {
+                list.innerHTML = '<li>Not a member of any circles yet.</li>';
+                return;
+            }
+            list.innerHTML = circles.map(c => `<li>${c.name}</li>`).join('');
+        }
+        loadMemberCircles();
         // --- Show All Personal Messages ---
         const showMessagesBtn = document.getElementById('show-messages-btn');
         const allMessagesSection = document.getElementById('all-messages-section');
