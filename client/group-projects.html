@@ -307,8 +307,17 @@
         const input = form.querySelector('.comment-input');
         const comment = input.value.trim();
         if (!comment) return;
-        // Save comment to supabase (assumes group_project_comments table exists)
-        await supabase.from('group_project_comments').insert([{ project_id: projectId, comment }]);
+        // Get current user info
+        const { data: userData } = await supabase.auth.getUser();
+        let author_name = 'Member';
+        let user_id = null;
+        if (userData && userData.user) {
+          user_id = userData.user.id;
+          // Try to get full name from profiles
+          const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user_id).single();
+          if (profile && profile.full_name) author_name = profile.full_name;
+        }
+        await supabase.from('group_project_comments').insert([{ project_id: projectId, comment, author_name, user_id }]);
         input.value = '';
         loadComments(projectId);
       });
