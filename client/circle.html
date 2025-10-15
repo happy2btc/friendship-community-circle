@@ -63,15 +63,61 @@
   <button class="tab-btn" data-tab="chat">Chat</button>
   <button class="tab-btn" data-tab="blog">Blog</button>
   <button class="tab-btn" data-tab="members">Members</button>
+  <button class="tab-btn" data-tab="projects">Projects</button>
       <!-- Future tabs: <button class="tab-btn" data-tab="activities">Activities</button> <button class="tab-btn" data-tab="projects">Projects</button> <button class="tab-btn" data-tab="resources">Resources</button> <button class="tab-btn" data-tab="links">Links</button> -->
     </div>
     <div id="tab-content" style="margin-top:2em;"></div>
+
+  <div id="projects-tab-content" style="display:none;"></div>
   </div>
   <a href="main-menu.html" class="menu-button">🔙 Return to Main Menu</a>
   <script type="module">
+// --- Projects Tab Logic ---
+async function loadProjectsTab() {
+  const { data: projects } = await supabase
+    .from('group_projects')
+    .select('id, name, description, status, num_participants, proposer_id, entered_at')
+    .eq('circle_id', circleId)
+    .order('entered_at', { ascending: false });
+  const container = document.getElementById('projects-tab-content');
+  if (!projects || projects.length === 0) {
+    container.innerHTML = '<h2>Group Projects</h2><p>No group projects for this circle yet.</p>';
+    return;
+  }
+  container.innerHTML = '<h2>Group Projects</h2>' + projects.map(p => `
+    <div class="agreement-card">
+      <strong>${p.name}</strong><br>
+      <span>${p.description || ''}</span><br>
+      <span>Status: ${p.status || '—'}</span><br>
+      <span>Participants: ${p.num_participants || 0}</span><br>
+      <span>Proposed: ${p.entered_at ? new Date(p.entered_at).toLocaleDateString() : ''}</span>
+    </div>
+  `).join('');
+}
 import { supabase } from '/lib/supabase.js';
 const params = new URLSearchParams(window.location.search);
 const circleId = params.get('id');
+
+// --- Tab Switching Logic ---
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContent = document.getElementById('tab-content');
+const projectsTabContent = document.getElementById('projects-tab-content');
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', async () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.getAttribute('data-tab');
+    tabContent.style.display = (tab === 'projects') ? 'none' : '';
+    projectsTabContent.style.display = (tab === 'projects') ? '' : 'none';
+    if (tab === 'projects') {
+      await loadProjectsTab();
+    }
+  });
+});
+// Default to first tab
+tabBtns[0].classList.add('active');
+tabContent.style.display = '';
+projectsTabContent.style.display = 'none';
 
 // Access control: Only allow members to view the circle
 async function checkCircleAccess() {
