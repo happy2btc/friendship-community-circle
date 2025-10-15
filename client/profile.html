@@ -207,7 +207,7 @@
                 list.innerHTML = '<li>Not a member of any circles yet.</li>';
                 return;
             }
-            list.innerHTML = circles.map(c => `<li>${c.name}</li>`).join('');
+            list.innerHTML = circles.map(c => `<li><a href="circle.html?id=${c.id}" style="color:#1976d2;text-decoration:underline;">${c.name}</a></li>`).join('');
         }
         loadMemberCircles();
         // --- Show All Personal Messages ---
