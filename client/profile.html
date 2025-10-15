@@ -154,6 +154,11 @@
             </div>
             <button type="submit" id="update-button">Update Profile</button>
             <p id="status"></p>
+            <button type="button" id="show-messages-btn" style="margin-top:18px;background:#1976d2;">Show All My Messages</button>
+            <div id="all-messages-section" style="margin-top:18px;display:none;">
+                <h3 style="color:#1976d2;">My Sent Messages</h3>
+                <div id="messages-list" style="max-height:300px;overflow-y:auto;background:#f4f8fb;padding:12px;border-radius:8px;"></div>
+            </div>
         </form>
                 <button type="button" id="view-gallery-btn" style="margin:20px 0 0 0;">View All Pictures</button>
                 <div id="gallery-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fff; overflow:auto; z-index:9999;">
@@ -166,6 +171,53 @@
         import { supabase } from '/lib/supabase.js';
         // --- Multiple Image Upload & Gallery ---
     // ...existing code...
+        // --- Show All Personal Messages ---
+        const showMessagesBtn = document.getElementById('show-messages-btn');
+        const allMessagesSection = document.getElementById('all-messages-section');
+        const messagesList = document.getElementById('messages-list');
+
+        showMessagesBtn?.addEventListener('click', async () => {
+            showMessagesBtn.disabled = true;
+            messagesList.innerHTML = '<em>Loading messages...</em>';
+            allMessagesSection.style.display = 'block';
+            let userId;
+            // Try to get the profile being viewed (for admin viewing others, or self)
+            const params = new URLSearchParams(window.location.search);
+            const memberId = params.get('id');
+            if (memberId) {
+                userId = memberId;
+            } else {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    messagesList.innerHTML = '<span style="color:red;">Not logged in.</span>';
+                    return;
+                }
+                userId = user.id;
+            }
+            // Fetch messages sent by this user
+            const { data: messages, error } = await supabase
+                .from('personal_messages')
+                .select('id, content, created_at')
+                .eq('sender_id', userId)
+                .order('created_at', { ascending: false });
+            if (error) {
+                messagesList.innerHTML = `<span style='color:red;'>Error loading messages: ${error.message}</span>`;
+                showMessagesBtn.disabled = false;
+                return;
+            }
+            if (!messages || messages.length === 0) {
+                messagesList.innerHTML = '<em>No messages sent yet.</em>';
+                showMessagesBtn.disabled = false;
+                return;
+            }
+            messagesList.innerHTML = messages.map(msg =>
+                `<div style='margin-bottom:14px;padding:10px 12px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.04);'>
+                    <div style='font-size:0.98em;color:#333;'>${msg.content}</div>
+                    <div style='font-size:0.85em;color:#888;margin-top:4px;'>Sent: ${new Date(msg.created_at).toLocaleString()}</div>
+                </div>`
+            ).join('');
+            showMessagesBtn.disabled = false;
+        });
         const imagesInput = document.getElementById('profile-images');
         const thumbnailsDiv = document.getElementById('image-thumbnails');
         imagesInput?.addEventListener('change', async (e) => {
