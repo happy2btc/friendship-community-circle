@@ -245,7 +245,6 @@
         let imageUrls = [];
         try {
           const { data: files, error: listError } = await supabase.storage.from('project-images').list(`${project.id}/`);
-          console.log('Files in folder', project.id, files, listError);
           if (!listError && files && files.length > 0) {
             imageUrls = files.filter(f => f.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)).map(f => {
               const { data: publicUrlData } = supabase.storage.from('project-images').getPublicUrl(`${project.id}/${f.name}`);
@@ -260,11 +259,24 @@
             </div>
           `;
         }
+        // Comment section, join, and update buttons
         projectsTbody.innerHTML += `
           <tr>
             <td>${circleName}</td>
             <td>${project.name}</td>
-            <td>${project.description || ''}</td>
+            <td>${project.description || ''}
+              <div style="margin-top:10px;">
+                <button class="join-btn" data-project="${project.id}" style="background:#1976d2;color:#fff;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;margin-right:8px;">Join</button>
+                <button class="update-btn" data-project="${project.id}" style="background:#ffc107;color:#333;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;">Update</button>
+              </div>
+              <div class="comments-section" data-project="${project.id}" style="margin-top:12px;background:#f4f8fb;padding:8px 10px;border-radius:6px;">
+                <div class="comments-list" id="comments-list-${project.id}"></div>
+                <form class="comment-form" data-project="${project.id}" style="margin-top:8px;display:flex;gap:6px;">
+                  <input type="text" class="comment-input" placeholder="Add a comment..." style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #ccc;" required />
+                  <button type="submit" style="background:#2e8b57;color:#fff;border:none;border-radius:4px;padding:4px 12px;">Post</button>
+                </form>
+              </div>
+            </td>
             <td>${proposerName}</td>
             <td>${date}</td>
             <td>${project.num_participants || 0}</td>
@@ -284,6 +296,53 @@
     </div>
   `;
   document.body.insertAdjacentHTML('beforeend', galleryModalHtml);
+
+  // --- Comment, Join, and Update Handlers ---
+  setTimeout(() => {
+    // Comment submit
+    document.querySelectorAll('.comment-form').forEach(form => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const projectId = form.getAttribute('data-project');
+        const input = form.querySelector('.comment-input');
+        const comment = input.value.trim();
+        if (!comment) return;
+        // Save comment to supabase (assumes group_project_comments table exists)
+        await supabase.from('group_project_comments').insert([{ project_id: projectId, comment }]);
+        input.value = '';
+        loadComments(projectId);
+      });
+    });
+    // Join button
+    document.querySelectorAll('.join-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const projectId = btn.getAttribute('data-project');
+        // Save join to supabase (assumes group_project_participants table exists)
+        await supabase.from('group_project_participants').insert([{ project_id: projectId }]);
+        alert('You have joined this project!');
+      });
+    });
+    // Update button
+    document.querySelectorAll('.update-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const projectId = btn.getAttribute('data-project');
+        alert('Update form for project ' + projectId + ' coming soon!');
+        // You can implement a modal or form to update project details here
+      });
+    });
+    // Load comments for each project
+    document.querySelectorAll('.comments-section').forEach(sec => {
+      const projectId = sec.getAttribute('data-project');
+      loadComments(projectId);
+    });
+  }, 0);
+
+  async function loadComments(projectId) {
+    const { data: comments } = await supabase.from('group_project_comments').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+    const list = document.getElementById('comments-list-' + projectId);
+    if (!list) return;
+    list.innerHTML = (comments || []).map(c => `<div style="margin-bottom:4px;"><span style="color:#1976d2;font-weight:bold;">${c.author_name || 'Member'}:</span> ${c.comment}</div>`).join('');
+  }
 
   // Gallery modal logic with next/prev
   const galleryModal = document.getElementById('gallery-modal');
