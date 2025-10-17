@@ -212,6 +212,7 @@
       <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
   <h2>🌟 Most Active Member</h2>
   <div id="most-active-member"></div>
+      <div id="community-total" style="margin-top:12px;padding:10px;border-radius:8px;background:#f6fbf9;border:1px solid #e6f7f2;font-weight:700;text-align:center;">Loading community total...</div>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
     async function getActivitiesMostActive() {
@@ -751,6 +752,154 @@
           <div class="personal-story">${m.profile.personal_story || ''}</div>
       </a>`;
   }
+
+  // --- Community total derived from activities breakdown ---
+  async function computeActivitiesTotals() {
+    const builderId = "81c50097-74f3-4c7a-b00c-598995b8d1cb";
+    const activity = {};
+    const breakdown = {};
+
+    const [writersWallRes, helpGivenRes, attendanceRes, eventsRes, supportResponsesRes, votesRes, suggestionsRes, commentsRes, offeringsRes, contributionsRes, profilesFullRes, circlesRes, membersRes, celebrationsRes, groupProjectsRes] = await Promise.all([
+      supabase.from('writers_wall').select('author_id, points'),
+      supabase.from('help_given').select('helper_id, hours'),
+      supabase.from('event_attendance').select('user_id'),
+      supabase.from('events').select('created_by'),
+      supabase.from('support_responses').select('responder_id'),
+      supabase.from('agreement_votes').select('voter_id'),
+      supabase.from('suggestions').select('author_id'),
+      supabase.from('comments').select('author_id'),
+      supabase.from('member_offerings').select('user_id, want, give, passion'),
+      supabase.from('contributions').select('user_id, project, challenge, help, collab, skills, urgency, contact'),
+      supabase.from('profiles').select('id'),
+      supabase.from('circles').select('created_by'),
+      supabase.from('circle_members').select('added_by'),
+      supabase.from('celebrations').select('user_id'),
+      supabase.from('group_projects').select('proposer_id')
+    ]);
+
+    // helper to init
+    function initBreak(id) {
+      if (!breakdown[id]) breakdown[id] = {};
+    }
+
+    // Writers wall
+    (writersWallRes.data || []).forEach(r => {
+      if (r.author_id && r.author_id !== builderId) {
+        initBreak(r.author_id);
+        breakdown[r.author_id].writer_points = (breakdown[r.author_id].writer_points || 0) + (r.points || 0);
+        breakdown[r.author_id].writer_posts = (breakdown[r.author_id].writer_posts || 0) + 1;
+        activity[r.author_id] = (activity[r.author_id] || 0) + (r.points || 0);
+      }
+    });
+
+    // Help given
+    (helpGivenRes.data || []).forEach(r => {
+      if (r.helper_id && r.helper_id !== builderId) {
+        initBreak(r.helper_id);
+        breakdown[r.helper_id].help_hours = (breakdown[r.helper_id].help_hours || 0) + Number(r.hours || 0);
+        breakdown[r.helper_id].help_points = (breakdown[r.helper_id].help_points || 0) + (Number(r.hours || 0) * 5);
+        activity[r.helper_id] = (activity[r.helper_id] || 0) + (Number(r.hours || 0) * 5);
+      }
+    });
+
+    // Event attendance
+    const attendedBy = {};
+    (attendanceRes.data || []).forEach(a => { if (a.user_id && a.user_id !== builderId) attendedBy[a.user_id] = (attendedBy[a.user_id] || 0) + 1; });
+    Object.entries(attendedBy).forEach(([id, count]) => { activity[id] = (activity[id] || 0) + (count * 5); });
+
+    // Events created
+    (eventsRes.data || []).forEach(e => { if (e.created_by && e.created_by !== builderId) activity[e.created_by] = (activity[e.created_by] || 0) + 5; });
+
+    // Support responses
+    (supportResponsesRes.data || []).forEach(r => { if (r.responder_id && r.responder_id !== builderId) activity[r.responder_id] = (activity[r.responder_id] || 0) + 5; });
+
+    // Votes, suggestions, comments
+    (votesRes.data || []).forEach(v => { if (v.voter_id && v.voter_id !== builderId) activity[v.voter_id] = (activity[v.voter_id] || 0) + 1; });
+    (suggestionsRes.data || []).forEach(s => { if (s.author_id && s.author_id !== builderId) activity[s.author_id] = (activity[s.author_id] || 0) + 1; });
+    (commentsRes.data || []).forEach(c => { if (c.author_id && c.author_id !== builderId) activity[c.author_id] = (activity[c.author_id] || 0) + 1; });
+
+    // Offerings
+    (offeringsRes.data || []).forEach(o => {
+      if (o.user_id && o.user_id !== builderId) {
+        let points = 0;
+        if (o.want && o.want.trim()) points += 1;
+        if (o.give && o.give.trim()) points += 1;
+        if (o.passion && o.passion.trim()) points += 1;
+        activity[o.user_id] = (activity[o.user_id] || 0) + points;
+      }
+    });
+
+    // Contributions (fields filled)
+    const contribByUser = {};
+    (contributionsRes.data || []).forEach(con => {
+      if (con.user_id && con.user_id !== builderId) {
+        contribByUser[con.user_id] = contribByUser[con.user_id] || [];
+        contribByUser[con.user_id].push(con);
+      }
+    });
+    Object.entries(contribByUser).forEach(([id, list]) => {
+      let fields = 0;
+      list.forEach(con => { ['project','challenge','help','collab','skills','urgency','contact'].forEach(f => { if (con[f] && con[f].toString().trim() !== '') fields++; }); });
+      activity[id] = (activity[id] || 0) + fields;
+    });
+
+    // Profile completion
+    (profilesFullRes.data || []).forEach(p => {
+      if (p.id && p.id !== builderId) {
+        // very light check - award 5 if filled
+        activity[p.id] = (activity[p.id] || 0) + 0; // handled elsewhere if needed
+      }
+    });
+
+    // Circles created
+    (circlesRes.data || []).forEach(c => { if (c.created_by && c.created_by !== builderId) activity[c.created_by] = (activity[c.created_by] || 0) + 10; });
+    // Members added
+    (membersRes.data || []).forEach(m => { if (m.added_by && m.added_by !== builderId) activity[m.added_by] = (activity[m.added_by] || 0) + 2; });
+    // Celebrations
+    (celebrationsRes.data || []).forEach(c => { if (c.user_id && c.user_id !== builderId) activity[c.user_id] = (activity[c.user_id] || 0) + 5; });
+    // Group project proposals
+    (groupProjectsRes.data || []).forEach(gp => { if (gp.proposer_id && gp.proposer_id !== builderId) activity[gp.proposer_id] = (activity[gp.proposer_id] || 0) + 5; });
+
+    // Build members list and totals
+    const userIds = Object.keys(activity).filter(id => id && id !== 'null');
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, avatar_url');
+    const idToProfile = {};
+    (profiles || []).forEach(p => { idToProfile[p.id] = p; });
+    const members = userIds.map(id => ({ id, profile: idToProfile[id] || { full_name: id }, total: activity[id] }));
+    members.sort((a,b) => b.total - a.total);
+    return members;
+  }
+
+  async function loadCommunityTotal() {
+    const el = document.getElementById('community-total');
+    if (!el) return;
+    el.textContent = 'Loading community total...';
+    try {
+      const members = await computeActivitiesTotals();
+      const total = (members || []).reduce((s,m) => s + (Number(m.total) || 0), 0);
+      el.textContent = `Community Total Achievement Points: ${total}`;
+    } catch (err) {
+      console.error('Error computing community total from activities:', err);
+      el.textContent = 'Community total unavailable';
+    }
+  }
+
+  // realtime listeners for tables that affect activity totals
+  function subscribeActivityChanges() {
+    const tables = ['agreement_votes','suggestions','comments','member_offerings','contributions','profiles','circles','circle_members','celebrations','events','help_given','support_responses','writers_wall','event_attendance','group_projects'];
+    tables.forEach(t => {
+      try {
+        supabase.from(t).on('*', payload => {
+          // debounce-ish: schedule a refresh shortly
+          if (window._communityTotalTimer) clearTimeout(window._communityTotalTimer);
+          window._communityTotalTimer = setTimeout(loadCommunityTotal, 500);
+        }).subscribe();
+      } catch (e) { console.warn('Realtime subscribe failed for', t, e); }
+    });
+  }
+
+  loadCommunityTotal();
+  subscribeActivityChanges();
 
   // --- Newest Members ---
   async function showNewestMember() {
