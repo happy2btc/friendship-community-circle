@@ -86,28 +86,54 @@
         console.warn('Could not load featured celebration', e);
       }
 
-      // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
-      // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
-      const fiveDaysAgoDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-      const fiveDaysAgo = fiveDaysAgoDate.toISOString().split('.')[0] + 'Z';
+  // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
+  // Use a 14-day window for recent items
+  const windowDays = 14;
+  const cutoffDate = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+  const cutoff = cutoffDate.toISOString().split('.')[0] + 'Z';
+      // Prune any hard-coded news-card elements that appear before the dynamic feed
+      try {
+        const newsListEl = document.getElementById('news-list');
+        if (newsListEl) {
+          document.querySelectorAll('.container > .news-card').forEach(card => {
+            // only consider cards that are before the dynamic news-list node
+            if (card.compareDocumentPosition(newsListEl) & Node.DOCUMENT_POSITION_FOLLOWING) {
+              const dateEl = card.querySelector('.news-date');
+              if (!dateEl) return;
+              const parsed = new Date(dateEl.textContent.trim());
+              if (!isNaN(parsed) && parsed < cutoffDate) {
+                card.remove();
+              }
+            }
+          });
+        }
+      } catch (e) { console.warn('Prune static cards failed', e); }
       // Fetch from all actual tables, including events
-      const [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
-        discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
-        suggestionsRes, eventsRes, whatsNewRes, supportRequestsRes] = await Promise.all([
-        supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', fiveDaysAgo),
-        supabase.from('celebrations').select('id, created_at, description').gte('created_at', fiveDaysAgo),
-        supabase.from('circles').select('id, created_at, name, description').gte('created_at', fiveDaysAgo),
-        supabase.from('comments').select('id, created_at, content').gte('created_at', fiveDaysAgo),
-        supabase.from('contributions').select('id, created_at, project, challenge, help, collab, skills, urgency, contact').gte('created_at', fiveDaysAgo),
-        supabase.from('discussions').select('id, created_at, title, description').gte('created_at', fiveDaysAgo),
-        supabase.from('group_projects').select('id, created_at, name').gte('created_at', fiveDaysAgo),
-        supabase.from('member_offerings').select('id, created_at, want, give, passion').gte('created_at', fiveDaysAgo),
-        supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', fiveDaysAgo),
-        supabase.from('suggestions').select('id, created_at, description').gte('created_at', fiveDaysAgo),
-        supabase.from('events').select('id, title, description, start_time, end_time, location, zoom_link, timezone, created_at').gte('created_at', fiveDaysAgo),
-        supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', fiveDaysAgo),
-        supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', fiveDaysAgo)
-      ]);
+      let agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes, discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes, suggestionsRes, eventsRes, whatsNewRes, supportRequestsRes;
+      try {
+        [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
+          discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
+          suggestionsRes, eventsRes, whatsNewRes, supportRequestsRes] = await Promise.all([
+          supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', cutoff),
+          supabase.from('celebrations').select('id, created_at, description').gte('created_at', cutoff),
+          supabase.from('circles').select('id, created_at, name, description').gte('created_at', cutoff),
+          supabase.from('comments').select('id, created_at, content').gte('created_at', cutoff),
+          supabase.from('contributions').select('id, created_at, project, challenge, help, collab, skills, urgency, contact').gte('created_at', cutoff),
+          supabase.from('discussions').select('id, created_at, title, description').gte('created_at', cutoff),
+          supabase.from('group_projects').select('id, created_at, name').gte('created_at', cutoff),
+          supabase.from('member_offerings').select('id, created_at, want, give, passion').gte('created_at', cutoff),
+          supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', cutoff),
+          supabase.from('suggestions').select('id, created_at, description').gte('created_at', cutoff),
+          supabase.from('events').select('id, title, description, start_time, end_time, location, zoom_link, timezone, created_at').gte('created_at', cutoff),
+          supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', cutoff),
+          supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', cutoff)
+        ]);
+      } catch (e) {
+        console.error('Failed fetching whats-new data:', e);
+        // fall back to empty responses so feed can render static cards
+        agreementsRes = celebrationsRes = circlesRes = commentsRes = contributionsRes = { data: [] };
+        discussionsRes = groupProjectsRes = memberOfferingsRes = skillSharesRes = suggestionsRes = eventsRes = whatsNewRes = supportRequestsRes = { data: [] };
+      }
 
   // Debug output for agreements and suggestions
   console.log('Agreements response:', agreementsRes);
@@ -117,6 +143,9 @@
   if (eventsRes.error) console.error('Events error:', eventsRes.error);
   console.log('Support Requests response:', supportRequestsRes);
   if (supportRequestsRes.error) console.error('Support Requests error:', supportRequestsRes.error);
+
+  console.log('Group Projects response:', groupProjectsRes);
+  if (groupProjectsRes.error) console.error('Group Projects error:', groupProjectsRes.error);
 
   const allNews = [];
       // Events (calendar)
@@ -149,7 +178,8 @@
           type: 'Celebration',
           title: 'New Celebration',
           description: c.description || '',
-          created_at: c.created_at
+          created_at: c.created_at || new Date().toISOString(),
+          id: c.id
         });
       });
       // Circles
@@ -190,7 +220,7 @@
           id: gp.id,
           title: gp.name || 'New Group Project',
           description: '',
-          created_at: gp.created_at
+          created_at: gp.created_at || new Date().toISOString()
         });
       });
       // Member Offerings
@@ -247,7 +277,9 @@
         });
       });
 
-      allNews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  // Ensure every item has a valid created_at before sorting
+  allNews.forEach(item => { if (!item.created_at) item.created_at = new Date().toISOString(); });
+  allNews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       const newsList = document.getElementById('news-list');
       if (allNews.length === 0) {
@@ -276,7 +308,8 @@
           autoLink = `<a href="discussions.html?id=${item.id}">View Discussion</a>`;
         }
         if (item.type === 'Group Project' && item.id) {
-          autoLink = `<a href="group-project.html?id=${item.id}">View Project</a>`;
+          // point to the listing/project detail page (group-projects.html handles id query)
+          autoLink = `<a href="group-projects.html?id=${item.id}">View Project</a>`;
         }
         if (item.type === 'Contribution' && item.id) {
           autoLink = `<a href="activities.html?id=${item.id}">View Activity</a>`;
@@ -316,6 +349,24 @@
         loadWhatsNew();
       }
     });
+    // Periodic refresh every minute
+    setInterval(loadWhatsNew, 60_000);
+
+    // Realtime subscriptions to refresh the feed when key tables change
+    (function subscribeRealtime() {
+      try {
+        const tables = ['celebrations','group_projects','events','suggestions','agreements','member_offerings','skill_shares','contributions','support_requests'];
+        tables.forEach(t => {
+          try {
+            supabase.from(t).on('*', payload => {
+              // small debounce
+              if (window._whatsNewTimer) clearTimeout(window._whatsNewTimer);
+              window._whatsNewTimer = setTimeout(loadWhatsNew, 500);
+            }).subscribe();
+          } catch (e) { console.warn('Realtime subscribe failed for', t, e); }
+        });
+      } catch (e) { console.warn('Realtime subscription setup failed', e); }
+    })();
   </script>
 </body>
 </html>
