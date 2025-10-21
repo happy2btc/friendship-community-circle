@@ -56,8 +56,22 @@
       <label for="skill_description">Skill Description</label>
       <textarea id="skill_description" name="skill_description" rows="3"></textarea>
 
-      <label for="video">Upload Video</label>
-      <input type="file" id="video" name="video" accept="video/*" required>
+      <label for="video_mode">Video Source</label>
+      <select id="video_mode" name="video_mode" aria-label="Video source">
+        <option value="url">Paste a video URL (recommended)</option>
+        <option value="upload">Upload a local video file</option>
+      </select>
+
+      <div id="video-url-wrapper" style="margin-top:0.5em;">
+        <label for="video_url">Video URL</label>
+        <input type="url" id="video_url" name="video_url" placeholder="https://..." />
+        <div style="font-size:0.9em;color:#666;margin-top:0.25em;">Paste a hosted video URL (YouTube embed, direct mp4 link, or hosted file URL). If the URL is a YouTube link we will render it in an iframe.</div>
+      </div>
+
+      <div id="video-upload-wrapper" style="display:none;margin-top:0.5em;">
+        <label for="video">Upload Video</label>
+        <input type="file" id="video" name="video" accept="video/*" />
+      </div>
 
       <button type="submit">Share Skill</button>
     </form>
@@ -98,6 +112,16 @@
       return publicUrl;
     }
 
+    // Toggle between URL input and file upload
+    document.getElementById('video_mode').addEventListener('change', (e) => {
+      const mode = e.target.value;
+      document.getElementById('video-url-wrapper').style.display = mode === 'url' ? 'block' : 'none';
+      document.getElementById('video-upload-wrapper').style.display = mode === 'upload' ? 'block' : 'none';
+      // clear fields when switching
+      if (mode === 'url') document.getElementById('video').value = '';
+      else document.getElementById('video_url').value = '';
+    });
+
     // Handle form submit
     document.getElementById('skill-share-form').onsubmit = async (e) => {
       e.preventDefault();
@@ -108,18 +132,29 @@
       }
       const skill_name = document.getElementById('skill_name').value.trim();
       const skill_description = document.getElementById('skill_description').value.trim();
-      const videoFile = document.getElementById('video').files[0];
-      if (!skill_name || !videoFile) {
-        alert('Please enter a skill name and select a video.');
+      const mode = document.getElementById('video_mode').value;
+      let video_url = '';
+      if (!skill_name) {
+        alert('Please enter a skill name.');
         return;
       }
-      let video_url;
       try {
-        video_url = await uploadVideo(videoFile);
+        if (mode === 'url') {
+          const candidate = document.getElementById('video_url').value.trim();
+          if (!candidate) { alert('Please paste a video URL.'); return; }
+          // Basic validation
+          if (!/^https?:\/\//i.test(candidate)) { alert('Please enter a valid URL (starting with http:// or https://)'); return; }
+          video_url = candidate;
+        } else {
+          const videoFile = document.getElementById('video').files[0];
+          if (!videoFile) { alert('Please select a video file to upload.'); return; }
+          video_url = await uploadVideo(videoFile);
+        }
       } catch (err) {
-        alert('Video upload failed: ' + err.message);
+        alert('Video handling failed: ' + (err.message || err));
         return;
       }
+
       // Insert into skill_shares table
       const { error } = await supabase.from('skill_shares').insert([{
         skill_name,
@@ -132,6 +167,10 @@
         return;
       }
       document.getElementById('skill-share-form').reset();
+      // reset UI to show URL input by default
+      document.getElementById('video_mode').value = 'url';
+      document.getElementById('video-url-wrapper').style.display = 'block';
+      document.getElementById('video-upload-wrapper').style.display = 'none';
       loadSkills();
     };
 
@@ -156,7 +195,9 @@
               <span class="skill-presenter">${presenter}</span>
               <span class="skill-date">${new Date(skill.created_at).toLocaleString()}</span>
             </div>
-            ${skill.video_url ? `<video controls src="${skill.video_url}"></video>` : ''}
+            ${skill.video_url ? (skill.video_url.includes('youtube.com') || skill.video_url.includes('youtu.be') ? `
+              <div style="margin-top:0.5em;"><iframe width="560" height="315" src="https://www.youtube.com/embed/${(function(){ try { const u = new URL(skill.video_url); if (u.hostname.includes('youtu.be')) return u.pathname.slice(1); if (u.hostname.includes('youtube.com')) return u.searchParams.get('v'); } catch(e){ } return ''; })()}" frameborder="0" allowfullscreen></iframe></div>
+            ` : `<video controls src="${skill.video_url}"></video>`) : ''}
           </div>
         `;
       })).then(arr => arr.join(''));
