@@ -133,8 +133,11 @@
                 <div id="substack-link" style="margin-top:8px;"></div>
             </div>
             <div class="form-group">
-                <label for="website">Website</label>
-                <input type="text" id="website" placeholder="Personal or business website URL">
+                <label for="website-list">Websites</label>
+                <div id="website-list" style="margin-bottom:8px;">
+                    <!-- JS will inject website inputs here -->
+                </div>
+                <button type="button" id="add-website-btn" style="background:#6c757d;color:#fff;padding:8px 12px;border-radius:6px;border:none;cursor:pointer;">+ Add website</button>
                 <div id="website-link" style="margin-top:8px;"></div>
             </div>
             <div class="form-group">
@@ -330,7 +333,8 @@
 
     const linkedinEl = document.getElementById('linkedin');
     const linkedinLinkDiv = document.getElementById('linkedin-link');
-    const websiteEl = document.getElementById('website');
+    // websiteEl removed - using multiple inputs
+    const websiteListEl = document.getElementById('website-list');
     const websiteLinkDiv = document.getElementById('website-link');
     const substackEl = document.getElementById('substack');
     const substackLinkDiv = document.getElementById('substack-link');
@@ -459,7 +463,15 @@
                 youtubeEl.value = data.youtube || '';
                 twitterEl.value = data.twitter || '';
                 substackEl.value = data.substack || '';
-                websiteEl.value = data.website || '';
+                // Populate multiple website inputs (newline separated)
+                const websitesRaw = data.website || '';
+                websiteListEl.innerHTML = '';
+                if (websitesRaw && websitesRaw.trim() !== '') {
+                    const list = websitesRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+                    list.forEach(w => addWebsiteInput(w));
+                } else {
+                    addWebsiteInput('');
+                }
                 linkedinEl.value = data.linkedin || '';
                 facebookEl.value = data.facebook || '';
                 instagramEl.value = data.instagram || '';
@@ -481,6 +493,57 @@
                 // Show email if own profile
                 emailEl.value = (user && profileId === user.id) ? user.email : '';
             }
+        }
+
+        // --- Multiple Websites support ---
+        function addWebsiteInput(value = '') {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '8px';
+            wrapper.style.marginBottom = '8px';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'website-input';
+            input.placeholder = 'https://example.com';
+            input.style.flex = '1';
+            input.style.padding = '8px';
+            input.value = value;
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.textContent = '✖';
+            remove.title = 'Remove';
+            remove.style.background = '#e74c3c';
+            remove.style.color = '#fff';
+            remove.style.border = 'none';
+            remove.style.borderRadius = '6px';
+            remove.style.width = '40px';
+            remove.style.cursor = 'pointer';
+            remove.addEventListener('click', () => { wrapper.remove(); renderWebsiteLinks(); });
+
+            input.addEventListener('input', () => renderWebsiteLinks());
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(remove);
+            websiteListEl.appendChild(wrapper);
+            renderWebsiteLinks();
+            return input;
+        }
+
+        document.getElementById('add-website-btn').addEventListener('click', () => addWebsiteInput(''));
+
+        function renderWebsiteLinks() {
+            const inputs = Array.from(document.querySelectorAll('.website-input')).map(i => i.value.trim()).filter(Boolean);
+            if (inputs.length === 0) {
+                websiteLinkDiv.innerHTML = '';
+                return;
+            }
+            websiteLinkDiv.innerHTML = inputs.map(u => {
+                let url = u;
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                return `<div style="margin-bottom:6px;"><a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${u}</a></div>`;
+            }).join('');
         }
 
         avatarInput.addEventListener('change', (event) => {
@@ -516,13 +579,11 @@
             } else {
                 substackLinkDiv.innerHTML = '';
             }
-            // Update Website link after save
-            if (websiteEl.value.trim() !== '') {
-                let url = websiteEl.value.trim();
-                websiteLinkDiv.innerHTML = `<a href="${url}" target="_blank" style="color:#2196f3;text-decoration:underline;">${url}</a>`;
-            } else {
-                websiteLinkDiv.innerHTML = '';
-            }
+            // Update Website links after save (render from inputs)
+            // gather website inputs -> join with newline
+            const websiteInputs = Array.from(document.querySelectorAll('.website-input')).map(i => i.value.trim()).filter(Boolean);
+            const websitesJoined = websiteInputs.join('\n');
+            renderWebsiteLinks();
             // Update LinkedIn link after save
             if (linkedinEl.value.trim() !== '') {
                 let url = linkedinEl.value.trim();
@@ -580,7 +641,7 @@
                         youtube: youtubeEl.value.trim(),
                         twitter: twitterEl.value.trim(),
                         substack: substackEl.value.trim(),
-                        website: websiteEl.value.trim(),
+                        website: websitesJoined,
                         linkedin: linkedinEl.value.trim(),
                         facebook: facebookEl.value.trim(),
                         instagram: instagramEl.value.trim()
