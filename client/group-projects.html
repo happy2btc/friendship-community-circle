@@ -271,8 +271,9 @@
               </div>
               <div class="comments-section" data-project="${project.id}" style="margin-top:12px;background:#f4f8fb;padding:8px 10px;border-radius:6px;">
                 <div class="comments-list" id="comments-list-${project.id}"></div>
-                <form class="comment-form" data-project="${project.id}" style="margin-top:8px;display:flex;gap:6px;">
+                <form class="comment-form" data-project="${project.id}" style="margin-top:8px;display:flex;gap:6px;align-items:center;">
                   <input type="text" class="comment-input" placeholder="Add a comment..." style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #ccc;" required />
+                  <input type="text" class="display-name-input" placeholder="Display name (optional)" style="width:180px;padding:4px 8px;border-radius:4px;border:1px solid #ccc;" />
                   <button type="submit" style="background:#2e8b57;color:#fff;border:none;border-radius:4px;padding:4px 12px;">Post</button>
                 </form>
               </div>
@@ -305,7 +306,9 @@
         e.preventDefault();
         const projectId = form.getAttribute('data-project');
         const input = form.querySelector('.comment-input');
+        const displayNameInput = form.querySelector('.display-name-input');
         const comment = input.value.trim();
+        const display_name = (displayNameInput && displayNameInput.value.trim()) || null;
         if (!comment) return;
         // Get current user info
         const { data: userData } = await supabase.auth.getUser();
@@ -314,11 +317,16 @@
         if (userData && userData.user) {
           user_id = userData.user.id;
           // Try to get full name from profiles
-          const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user_id).single();
+          const { data: profile } = await supabase.from('profiles').select('full_name,is_admin').eq('id', user_id).single();
           if (profile && profile.full_name) author_name = profile.full_name;
+        } else if (display_name) {
+          // anonymous with provided display name
+          author_name = display_name;
         }
-        await supabase.from('group_project_comments').insert([{ project_id: projectId, comment, author_name, user_id }]);
+        // Insert with moderation flag: approved = false by default
+        await supabase.from('group_project_comments').insert([{ project_id: projectId, comment, author_name, user_id, display_name, approved: false }]);
         input.value = '';
+        if (displayNameInput) displayNameInput.value = '';
         loadComments(projectId);
       });
     });
@@ -347,10 +355,48 @@
   }, 0);
 
   async function loadComments(projectId) {
-    const { data: comments } = await supabase.from('group_project_comments').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+    // Determine if current viewer is admin (so they can see pending comments)
+    const { data: userData } = await supabase.auth.getUser();
+    let viewerIsAdmin = false;
+    if (userData && userData.user) {
+      const uid = userData.user.id;
+      const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', uid).single();
+      if (profile && profile.is_admin) viewerIsAdmin = true;
+    }
+    // If viewer is admin, fetch all comments for management; otherwise fetch only approved ones
+    let query = supabase.from('group_project_comments').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+    if (!viewerIsAdmin) query = query.eq('approved', true);
+    const { data: comments } = await query;
     const list = document.getElementById('comments-list-' + projectId);
     if (!list) return;
-    list.innerHTML = (comments || []).map(c => `<div style="margin-bottom:4px;"><span style="color:#1976d2;font-weight:bold;">${c.author_name || 'Member'}:</span> ${c.comment}</div>`).join('');
+    list.innerHTML = '';
+    (comments || []).forEach(c => {
+      const name = c.author_name || c.display_name || 'Member';
+      const approvedBadge = c.approved ? '' : '<span style="color:#856404;margin-left:6px;font-size:0.9em">(pending)</span>';
+      const approveButton = viewerIsAdmin && !c.approved ? ` <button data-comment="${c.id}" data-project="${projectId}" class="approve-comment-btn" style="margin-left:8px;padding:2px 6px;border-radius:4px;background:#28a745;color:#fff;border:none;cursor:pointer;">Approve</button>` : '';
+      const row = document.createElement('div');
+      row.style.marginBottom = '6px';
+      row.innerHTML = `<span style="color:#1976d2;font-weight:bold;">${escapeHtml(name)}:</span> ${escapeHtml(c.comment)} ${approvedBadge} ${approveButton}`;
+      list.appendChild(row);
+    });
+    // Wire approve buttons
+    document.querySelectorAll('.approve-comment-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const commentId = btn.getAttribute('data-comment');
+        await supabase.from('group_project_comments').update({ approved: true }).eq('id', commentId);
+        loadComments(btn.getAttribute('data-project'));
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // Gallery modal logic with next/prev
