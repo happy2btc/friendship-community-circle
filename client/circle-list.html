@@ -28,11 +28,21 @@
     .circle-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
     .circle-actions { margin-top: 1rem; }
     button { margin-right: 1rem; }
+    /* Quick access circles */
+    .quick-circles { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0 18px 0; }
+    .quick-circle-btn { background: linear-gradient(180deg,#fff8ef,#f3e7d3); border:1px solid #d8bfa3; padding:8px 12px; border-radius:8px; color:#3b2f2f; text-decoration:none; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,0.06); display:inline-flex; gap:8px; align-items:center; }
+    .quick-circle-btn:hover { transform: translateY(-2px); }
+    .quick-circle-count { font-size:0.8rem; color:#666; margin-left:6px; }
   </style>
 </head>
 <body>
   <h1>Circles</h1>
-  <a href="circle.html?id=1d9493e2-b9b0-48f4-b12f-6411939809e9" class="menu-button" style="display:block; width:fit-content; margin-bottom:1rem; background-color:#4a7c59; color:#fff; padding:10px 18px; border-radius:6px; text-decoration:none; font-weight:bold; text-align:center;">🧙 Coven Community Network</a>
+  <!-- Quick Access Circles -->
+  <div id="quick-access-wrapper">
+    <h3 style="margin:6px 0 8px 0;">Quick Access — Circles</h3>
+    <div id="quick-circles" class="quick-circles"></div>
+  </div>
+  <!-- original static Coven Community Network button removed; quick-access list shows all circles below -->
   <div id="circles"></div>
   <a href="main-menu.html" class="fixed-menu-btn">🔙 Return to Menu</a>
   <script type="module">
@@ -110,6 +120,46 @@
     }
 
     loadCircles();
+    // --- Quick Access rendering ---
+    // Show all circles in quick access (no static favorites)
+    function makeCircleButton(circle, count) {
+      const a = document.createElement('a');
+      a.href = `circle.html?id=${encodeURIComponent(circle.id)}`;
+      a.className = 'quick-circle-btn';
+      a.innerHTML = `<span>${circle.name}</span>` + (typeof count === 'number' ? `<span class="quick-circle-count">(${count})</span>` : '');
+      return a;
+    }
+
+    async function renderQuickCircles() {
+      const container = document.getElementById('quick-circles');
+      container.innerHTML = '';
+      try {
+        const { data: circles } = await supabase.from('circles').select('id,name');
+        if (!circles || !circles.length) return;
+        // fetch member counts and render all circles (sorted by name)
+        const counts = await Promise.all(circles.map(async c => {
+          const { count } = await supabase.from('circle_members').select('id', { head: true, count: 'exact' }).eq('circle_id', c.id);
+          return { id: c.id, name: c.name, count: count || 0 };
+        }));
+        // render all circles; you can change sorting if desired
+        counts.sort((a,b) => b.count - a.count); // show most-popular first
+        counts.forEach(c => container.appendChild(makeCircleButton(c, c.count)));
+      } catch (e) {
+        console.warn('Quick circles load failed', e);
+      }
+    }
+
+    renderQuickCircles();
+    // Realtime subscription to refresh when memberships change
+    try {
+      supabase
+        .channel('public:circle_members')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'circle_members' }, () => {
+          clearTimeout(window.__quickCirclesTimer);
+          window.__quickCirclesTimer = setTimeout(renderQuickCircles, 500);
+        })
+        .subscribe();
+    } catch (e) { console.warn('Realtime quick circles failed', e); }
   </script>
 </body>
 </html>
