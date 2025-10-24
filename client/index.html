@@ -187,19 +187,28 @@
 
           // SIGN UP SUCCESS: enqueue welcome on server as a fallback, then redirect to affirm page
           try {
-            // Replace <PROJECT> with your Supabase functions project subdomain
-            const funcUrl = 'https:/${PROJECT_REF}.functions.supabase.co/register-user';
-            // Fire-and-forget: don't block the user flow if the call fails
-            fetch(funcUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                user_id: signUpData.user?.id,
-                display_name: name || null,
-                email: email || null,
-                wallet_address: null
-              })
-            }).catch(e => console.warn('register-user fallback failed (non-fatal):', e));
+            // Compute functions URL from the Supabase URL so this works across projects
+            // e.g. supabaseUrl: https://project-ref.supabase.co -> functions URL: https://project-ref.functions.supabase.co
+            import('./lib/supabase.js').then(({ supabaseUrl }) => {
+              try {
+                const host = new URL(supabaseUrl).host; // e.g. project-ref.supabase.co
+                const projectRef = host.split('.supabase.co')[0];
+                const funcUrl = `https://${projectRef}.functions.supabase.co/register-user`;
+                // Fire-and-forget: don't block the user flow if the call fails
+                fetch(funcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    user_id: signUpData.user?.id,
+                    display_name: name || null,
+                    email: email || null,
+                    wallet_address: null
+                  })
+                }).catch(e => console.warn('register-user fallback failed (non-fatal):', e));
+              } catch (err) {
+                console.warn('Could not compute functions URL for register-user fallback', err);
+              }
+            }).catch(e => console.warn('Failed to import supabaseUrl for fallback', e));
           } catch (e) {
             console.warn('register-user fallback exception:', e);
           }
