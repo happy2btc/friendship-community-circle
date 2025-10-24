@@ -23,41 +23,47 @@
     .empty{color:var(--muted);padding:8px}
     .status{font-size:0.95rem;color:var(--muted)}
     .actions{display:flex;gap:8px}
+  .visit-banner{background:var(--accent);color:#fff;padding:12px;border-radius:10px;margin-bottom:12px;display:flex;gap:18px;align-items:center;justify-content:space-between}
+  .visit-banner .big{font-size:1.15rem;font-weight:800}
+  .visit-banner .small{color:rgba(255,255,255,0.95);font-weight:600}
+  .activity-item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .activity-left{flex:1}
+  .activity-right{white-space:nowrap;color:var(--muted);font-size:0.85rem}
     @media (max-width:600px){body{padding:0.75rem}} 
   </style>
 </head>
 <body>
   <a href="main-menu.html" aria-label="Back to Menu" style="position:fixed; top:16px; left:16px; z-index:1200; background:#2b6b4f; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.15);">🔙 Back to Menu</a>
   <div class="wrap">
+    <!-- Prominent visit banner (first thing on the page) -->
+    <div class="visit-banner" id="visit-banner">
+      <div>
+        <div class="small">Visits today</div>
+        <div class="big" id="visits-today-banner">…</div>
+      </div>
+      <div style="text-align:right">
+        <div class="small">Visits this week</div>
+        <div class="big" id="visits-week-banner">…</div>
+      </div>
+      <div style="margin-left:12px;display:flex;align-items:center;gap:8px">
+        <button id="sync-visits-btn" type="button" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:6px 8px;border-radius:6px;font-weight:700">Sync visits</button>
+        <div id="sync-status" class="small" style="color:rgba(255,255,255,0.9)"></div>
+      </div>
+    </div>
     <header>
       <div>
-        <h1>Circle Pulse</h1>
-        <div class="lead">This week's announcements — what can we / are we working on as a circle that will make a difference in our lives?</div>
+        <h1>Activity Pulse</h1>
+        <div class="lead">Recent member activity that awarded points (most recent actions appear first).</div>
       </div>
     </header>
 
-    <section class="card" aria-labelledby="post-heading">
-      <h2 id="post-heading" style="margin:0 0 6px 0">Share a weekly announcement</h2>
-      <p class="small">Post a short update, request, event, or a small ask that others can respond to this week.</p>
-      <form id="pulse-form">
-        <input id="title" placeholder="Short headline (e.g., Community Garden Work Day)" />
-        <textarea id="body" rows="3" placeholder="Details: time, place, what help is needed, connection options..."></textarea>
-        <input id="display_name" placeholder="Optional display name (leave blank for 'Member')" />
-        <div class="actions">
-          <button id="submit">Share to Circle</button>
-          <button type="button" id="view-local-btn" style="background:#eee;color:#111;padding:8px 10px;border-radius:8px;font-weight:600;border:1px solid #ddd">View saved</button>
-          <div class="status" id="form-status" aria-live="polite"></div>
-        </div>
-        <div id="local-saves" style="display:none;margin-top:10px"></div>
-      </form>
-  <!-- explanatory note removed per request -->
-    </section>
+    <!-- Posting form removed — this page now focuses on activity and site metrics -->
 
-    <!-- Announcements (visible to visitors) -->
-    <section class="card" id="announcements-section">
-      <h2 style="margin-top:0">This Week</h2>
-      <div id="announcements" class="ann-list">
-        <div class="empty">Loading announcements...</div>
+    <!-- Activity feed: show member actions that awarded points -->
+    <section class="card" id="activity-section">
+      <h2 style="margin-top:0">Recent activity (points awarded)</h2>
+      <div id="activity-feed" class="ann-list">
+        <div class="empty">Loading activity...</div>
       </div>
     </section>
 
@@ -67,120 +73,187 @@
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
-    const form = document.getElementById('pulse-form');
-    const titleEl = document.getElementById('title');
-    const bodyEl = document.getElementById('body');
-    const nameEl = document.getElementById('display_name');
-  const statusEl = document.getElementById('form-status');
+    // ----------------------
+    // Visit counting (day / week)
+    // Records one visit per browser per day. Tries to insert into `site_visits` table.
+    // If DB insert fails, stores a local fallback list under 'site_visits_local'.
+    // Then loads counts from DB when available, otherwise computes from local fallback.
+    // ----------------------
 
-    // Utilities
-    function showStatus(msg, timeout=4000){ statusEl.textContent = msg; if(timeout) setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, timeout); }
+    const visitRecordedKey = 'site_visit_recorded_date';
+    const siteVisitsLocalKey = 'site_visits_local';
+  const visitorIdKey = 'visitor_id_v1';
 
-    const viewLocalBtn = document.getElementById('view-local-btn');
-    const localSavesEl = document.getElementById('local-saves');
-
-    function loadLocalSaves(){ try{ return JSON.parse(localStorage.getItem('circle_pulse_local_announcements_v1') || '[]'); }catch(e){ console.warn('local parse failed', e); return []; } }
-
-    function renderLocalSaves(){ const arr = loadLocalSaves(); if(!arr || arr.length===0){ localSavesEl.innerHTML = '<div class="small">No local saves.</div>'; return; } localSavesEl.innerHTML = ''; for(const it of arr){ const el = document.createElement('div'); el.className = 'card'; el.style.marginBottom = '6px'; const who = it.display_name || 'Member'; const date = it.created_at ? new Date(it.created_at).toLocaleString() : ''; el.innerHTML = `<div style="font-weight:700">${escapeHtml(it.title || it.body || 'Untitled')}</div><div style="margin:6px 0">${escapeHtml(it.body || '')}</div><div class="meta">Saved locally • ${escapeHtml(who)}${date ? ' • '+escapeHtml(date) : ''}</div>`; localSavesEl.appendChild(el); } }
-
-    viewLocalBtn.addEventListener('click', ()=>{
-      if(localSavesEl.style.display === 'none' || !localSavesEl.style.display){ renderLocalSaves(); localSavesEl.style.display = 'block'; viewLocalBtn.textContent = 'Hide saved'; }
-      else { localSavesEl.style.display = 'none'; viewLocalBtn.textContent = 'View saved'; }
-    });
-
-    form.addEventListener('submit', async (ev)=>{
-      ev.preventDefault();
-      const title = (titleEl.value||'').trim();
-      const body = (bodyEl.value||'').trim();
-      const display_name = (nameEl.value||'').trim() || null;
-      if(!title && !body){ showStatus('Please enter a headline or details.'); return; }
-
-      const payload = { title, body, display_name };
-
-      // Try to insert into preferred tables in order (single loop)
-      const candidates = ['circle_announcements','what_s_new','suggestions'];
-      let posted = false;
-      for (const t of candidates) {
-        try {
-          const { data, error } = await supabase.from(t).insert([{ ...payload, approved: true }]).select();
-          if (!error) {
-            posted = true;
-            showStatus('Shared to circle.');
-            titleEl.value = '';
-            bodyEl.value = '';
-            nameEl.value = '';
-            try{ await refreshAnnouncements(); }catch(e){ console.warn('refreshAnnouncements failed', e); }
-            break;
-          }
-        } catch (err) {
-          console.warn('Insert attempt error for', t, err);
+    async function recordVisitOncePerDay(){
+      try{
+        const now = new Date();
+        const today = now.toISOString().slice(0,10);
+        // create or reuse a persistent visitor id so we can correlate pre-login activity
+        let visitorId = localStorage.getItem(visitorIdKey);
+        if (!visitorId) {
+          try { visitorId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'v-' + Date.now() + '-' + Math.floor(Math.random()*1000000); }catch(e){ visitorId = 'v-' + Date.now() + '-' + Math.floor(Math.random()*1000000); }
+          localStorage.setItem(visitorIdKey, visitorId);
         }
-      }
 
-      if (!posted) {
-        // Fallback: store locally so user doesn't lose the content
-        const now = new Date().toISOString();
+        if(localStorage.getItem(visitRecordedKey) === today) return; // already recorded today from this browser
+
+        // collect referrer and utm params
+        const referrer = document.referrer || null;
+        const landing_url = window.location.href || null;
+        const urlParams = new URLSearchParams(window.location.search || '');
+        const utm_source = urlParams.get('utm_source');
+        const utm_medium = urlParams.get('utm_medium');
+        const utm_campaign = urlParams.get('utm_campaign');
+
+        // Attempt DB insert (includes visitor_id and referrer/UTM info)
         try{
-          const key = 'circle_pulse_local_announcements_v1';
-          const raw = localStorage.getItem(key);
-          const arr = raw ? JSON.parse(raw) : [];
-          arr.unshift({ id: 'local-'+Date.now(), title, body, display_name, created_at: now });
-          localStorage.setItem(key, JSON.stringify(arr.slice(0,50)));
-        }catch(e){ console.warn('local save failed', e); }
-        showStatus('Saved locally (table not available).');
-        titleEl.value=''; bodyEl.value=''; nameEl.value='';
-      }
-    });
+          await supabase.from('site_visits').insert([{
+            path: window.location.pathname,
+            user_agent: navigator.userAgent,
+            visitor_id: visitorId,
+            referrer,
+            landing_url,
+            utm_source,
+            utm_medium,
+            utm_campaign
+          }]);
+          localStorage.setItem(visitRecordedKey, today);
+          return;
+        }catch(dbErr){
+          console.warn('site_visits insert failed, saving locally', dbErr);
+          // fall through to local save
+        }
 
+        // Local fallback record
+        try{
+          const arr = JSON.parse(localStorage.getItem(siteVisitsLocalKey) || '[]');
+          arr.unshift({ id: 'local-'+Date.now(), visitor_id: visitorId, path: window.location.pathname, user_agent: navigator.userAgent, referrer: document.referrer || null, landing_url: window.location.href || null, utm_source, utm_medium, utm_campaign, created_at: new Date().toISOString() });
+          localStorage.setItem(siteVisitsLocalKey, JSON.stringify(arr.slice(0, 1000)));
+          localStorage.setItem(visitRecordedKey, today);
+        }catch(e){ console.warn('local site_visits save failed', e); }
+      }catch(e){ console.warn('recordVisitOncePerDay general error', e); }
+    }
 
-    // Announcements rendering + loading
-    const annContainer = document.getElementById('announcements');
+    async function loadVisitCounts(){
+      // Support both the banner IDs and the older inline IDs for compatibility
+      const todayEl = document.getElementById('visits-today-banner') || document.getElementById('visits-today');
+      const weekEl = document.getElementById('visits-week-banner') || document.getElementById('visits-week');
+      if(!todayEl || !weekEl) return;
 
-    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const weekAgo = new Date(now.getTime() - 7*24*60*60*1000).toISOString();
 
-    function renderAnnouncements(items){
-      annContainer.innerHTML = '';
-      if(!items || items.length === 0){ annContainer.innerHTML = '<div class="empty">No announcements yet — be the first to share!</div>'; return; }
-      for(const it of items){
-        const el = document.createElement('div'); el.className = 'ann';
-        const who = it.display_name || 'Member';
-        const date = it.created_at ? new Date(it.created_at).toLocaleString() : '';
-        el.innerHTML = `<div style="font-weight:700;margin-bottom:6px">${escapeHtml(it.title || it.body || 'Untitled')}</div>
-                        <div style="margin-bottom:8px">${escapeHtml(it.body || '')}</div>
-                        <div class="meta">Posted by ${escapeHtml(who)}${date ? ' • '+escapeHtml(date) : ''}</div>`;
-        annContainer.appendChild(el);
+      try{
+        const dayRes = await supabase.from('site_visits').select('id', { count: 'exact' }).gte('created_at', startOfDay);
+        const weekRes = await supabase.from('site_visits').select('id', { count: 'exact' }).gte('created_at', weekAgo);
+        if(dayRes.error || weekRes.error){ throw new Error('db count error'); }
+        const dayCount = dayRes.count ?? 0;
+        const weekCount = weekRes.count ?? 0;
+        todayEl.textContent = String(dayCount);
+        weekEl.textContent = String(weekCount);
+        return;
+      }catch(err){
+        // DB unavailable — compute from local fallback
+        try{
+          const arr = JSON.parse(localStorage.getItem(siteVisitsLocalKey) || '[]');
+          let dayCount = 0, weekCount = 0;
+          for(const it of arr){
+            if(!it.created_at) continue;
+            if(it.created_at >= startOfDay) dayCount++;
+            if(it.created_at >= weekAgo) weekCount++;
+          }
+          todayEl.textContent = String(dayCount || '—');
+          weekEl.textContent = String(weekCount || '—');
+        }catch(e){
+          console.warn('loadVisitCounts fallback failed', e);
+          try{ if(todayEl) todayEl.textContent = '—'; if(weekEl) weekEl.textContent = '—'; }catch(_){}
+        }
       }
     }
 
-    async function loadAnnouncements(){
-      annContainer.innerHTML = '<div class="empty">Loading announcements...</div>';
+    // Record and load counts on page load
+    (async ()=>{ await recordVisitOncePerDay(); await loadVisitCounts(); })();
+
+    // Sync local visits button (uploads site_visits_local to Edge Function)
+    const syncBtn = document.getElementById('sync-visits-btn');
+    const syncStatusEl = document.getElementById('sync-status');
+    if(syncBtn){
+      syncBtn.addEventListener('click', async ()=>{
+        try{
+          syncBtn.disabled = true; syncStatusEl.textContent = 'Syncing...';
+          const arr = JSON.parse(localStorage.getItem(siteVisitsLocalKey) || '[]');
+          if(!arr || arr.length === 0){ syncStatusEl.textContent = 'No local visits to sync.'; syncBtn.disabled = false; return; }
+
+          // Call Edge Function via Supabase client functions.invoke
+          const payload = { type: 'sync-visits', visits: arr };
+          let res;
+          try{
+            res = await supabase.functions.invoke('record-point-event', { body: payload });
+          }catch(e){
+            console.error('functions.invoke error', e);
+            syncStatusEl.textContent = 'Sync failed (network).'; syncBtn.disabled = false; return;
+          }
+
+          if(res.error){
+            console.error('sync response error', res.error);
+            syncStatusEl.textContent = 'Sync failed: '+(res.error.message||res.error); syncBtn.disabled = false; return;
+          }
+
+          // On success clear local fallback and refresh counts
+          localStorage.removeItem(siteVisitsLocalKey);
+          syncStatusEl.textContent = 'Synced '+(arr.length)+' visits.';
+          await loadVisitCounts();
+        }catch(err){
+          console.error('sync error', err);
+          syncStatusEl.textContent = 'Sync failed.';
+        }finally{ syncBtn.disabled = false; setTimeout(()=>{ syncStatusEl.textContent=''; }, 4000); }
+      });
+    }
+
+
+    // Activity feed rendering + loading (member_point_events)
+    const activityContainer = document.getElementById('activity-feed');
+
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function renderActivities(items){
+      activityContainer.innerHTML = '';
+      if(!items || items.length === 0){ activityContainer.innerHTML = '<div class="empty">No recent activity.</div>'; return; }
+      for(const it of items){
+        const el = document.createElement('div'); el.className = 'ann';
+        el.innerHTML = `<div class="activity-item"><div class="activity-left"><div style="font-weight:700">${escapeHtml(it.action || 'Action')}</div><div style="margin-top:6px">${escapeHtml(it.meta || '')}</div></div><div class="activity-right"><div>${escapeHtml(it.display_name || 'Member')}</div><div class="meta">${it.points ? '+'+escapeHtml(String(it.points))+' pts' : ''}${it.created_at ? ' • '+escapeHtml(new Date(it.created_at).toLocaleString()) : ''}</div></div></div>`;
+        activityContainer.appendChild(el);
+      }
+    }
+
+    async function loadActivities(){
+      activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
       try{
         const { data, error } = await supabase
-          .from('circle_announcements')
-          .select('id,title,body,display_name,created_at')
-          .eq('approved', true)
+          .from('member_point_events')
+          .select('id,display_name,action,meta,points,created_at')
           .order('created_at', { ascending: false })
           .limit(50);
         if(error){
-          console.warn('circle_announcements load error', error.message);
-          // fallback to local
-          const local = JSON.parse(localStorage.getItem('circle_pulse_local_announcements_v1') || '[]');
-          renderAnnouncements(local);
+          console.warn('member_point_events load error', error.message);
+          const local = JSON.parse(localStorage.getItem('member_point_events_local') || '[]');
+          renderActivities(local);
           return;
         }
-        renderAnnouncements(data || []);
+        renderActivities(data || []);
       }catch(e){
-        console.error('loadAnnouncements error', e);
-        const local = JSON.parse(localStorage.getItem('circle_pulse_local_announcements_v1') || '[]');
-        renderAnnouncements(local);
+        console.error('loadActivities error', e);
+        const local = JSON.parse(localStorage.getItem('member_point_events_local') || '[]');
+        renderActivities(local);
       }
     }
 
-    // After successful post, refresh announcements
-    async function refreshAnnouncements(){ await loadAnnouncements(); }
+    // After successful post, refresh activities (keeps activity feed fresh)
+    async function refreshActivities(){ await loadActivities(); }
 
-    // Initial load
-    (async ()=>{ await loadAnnouncements(); })();
+    // Initial load + periodic refresh
+    (async ()=>{ await loadActivities(); setInterval(()=>{ loadActivities().catch(()=>{}); }, 60_000); })();
 
     </script>
 </body>
