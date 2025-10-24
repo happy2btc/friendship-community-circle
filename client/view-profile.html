@@ -50,16 +50,64 @@
         .eq('user_id', profileId)
         .limit(100); // Fetch up to 100 images
 
+      // Try resolving a stored path to a usable URL.
+      async function resolveImageUrl(path) {
+        if (!path) return null;
+        // If it's already an absolute URL, use it directly
+        if (/^https?:\/\//i.test(path)) return path;
+        // Normalize path: remove leading slash
+        let normalized = path.replace(/^\/+/, '');
+        // If path looks like "bucket/obj...", split out the bucket
+        let bucket = 'profile-pictures'; // confirmed bucket name
+        let objectPath = normalized;
+        const parts = normalized.split('/');
+        if (parts.length > 1 && parts[0] === bucket) {
+          // stored value included bucket, strip it
+          parts.shift();
+          objectPath = parts.join('/');
+        }
+
+        // Try public URL first (no network call if public)
+        try {
+          const { data: pubData, error: pubErr } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+          if (!pubErr && pubData && pubData.publicUrl) return pubData.publicUrl;
+        } catch (e) {
+          // ignore and try signed url
+        }
+
+        // Try creating a signed URL
+        try {
+          const { data: signedData, error: sErr } = await supabase.storage.from(bucket).createSignedUrl(objectPath, 3600);
+          if (!sErr && signedData && signedData.signedUrl) return signedData.signedUrl;
+        } catch (e) {
+          // ignore and fall back
+        }
+
+        // Fallback: attempt to construct a public URL using the project's storage path pattern
+        try {
+          const fallback = `https://guykaykkefwabnuhqcyv.supabase.co/storage/v1/object/public/${bucket}/${encodeURIComponent(objectPath)}`;
+          return fallback;
+        } catch (e) {
+          console.warn('Could not construct fallback URL for', path);
+        }
+
+        console.warn('Could not resolve image path:', path);
+        return null;
+      }
+
       let galleryHtml = '';
       if (images && images.length) {
         const signedUrls = await Promise.all(images.map(async img => {
-            const { data: signedUrlData } = await supabase.storage.from('profile-pictures').createSignedUrl(img.image_url, 3600);
-            if (signedUrlData?.signedUrl) {
-                return `<a href="${signedUrlData.signedUrl}" target="_blank"><img src="${signedUrlData.signedUrl}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #eee;"></a>`;
+            const url = await resolveImageUrl(img.image_url);
+            if (url) {
+                return `<a href="${url}" target="_blank"><img src="${url}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;box-shadow:0 2px 8px #eee;"></a>`;
             }
             return '';
         }));
-        galleryHtml = `<h3 style="margin-top:2em;color:#4a7c59;">Gallery</h3><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;">${signedUrls.join('')}</div>`;
+        const content = signedUrls.filter(Boolean).join('');
+        if (content) {
+          galleryHtml = `<h3 style="margin-top:2em;color:#4a7c59;">Gallery</h3><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;">${content}</div>`;
+        }
       }
       container.innerHTML = `
         <img class="profile-img" src="${avatarSrc || 'https://via.placeholder.com/120'}" alt="Profile Picture">
