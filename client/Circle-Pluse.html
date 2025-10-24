@@ -27,6 +27,7 @@
   </style>
 </head>
 <body>
+  <a href="main-menu.html" aria-label="Back to Menu" style="position:fixed; top:16px; left:16px; z-index:1200; background:#2b6b4f; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.15);">🔙 Back to Menu</a>
   <div class="wrap">
     <header>
       <div>
@@ -44,17 +45,23 @@
         <input id="display_name" placeholder="Optional display name (leave blank for 'Member')" />
         <div class="actions">
           <button id="submit">Share to Circle</button>
+          <button type="button" id="view-local-btn" style="background:#eee;color:#111;padding:8px 10px;border-radius:8px;font-weight:600;border:1px solid #ddd">View saved</button>
           <div class="status" id="form-status" aria-live="polite"></div>
         </div>
+        <div id="local-saves" style="display:none;margin-top:10px"></div>
       </form>
-      <p class="small" style="margin-top:8px">Note: this client will attempt to post to a Supabase table named <code>circle_announcements</code>. If that table doesn't exist or the insert is denied, the page falls back to storing your announcement locally in your browser (you can still copy/paste to share manually).</p>
+  <!-- explanatory note removed per request -->
     </section>
 
-    <!-- Announcements list removed per request: page now focuses on sharing a weekly announcement -->
+    <!-- Announcements (visible to visitors) -->
+    <section class="card" id="announcements-section">
+      <h2 style="margin-top:0">This Week</h2>
+      <div id="announcements" class="ann-list">
+        <div class="empty">Loading announcements...</div>
+      </div>
+    </section>
 
-    <footer style="margin-top:1rem;color:var(--muted);font-size:0.95rem">
-      <div>Want this to show up for everyone? I can provide a small SQL migration to create a <code>circle_announcements</code> table and a simple approval column so moderators can review posts.</div>
-    </footer>
+    <!-- footer removed per request -->
   </div>
 
   <script type="module">
@@ -69,6 +76,18 @@
     // Utilities
     function showStatus(msg, timeout=4000){ statusEl.textContent = msg; if(timeout) setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, timeout); }
 
+    const viewLocalBtn = document.getElementById('view-local-btn');
+    const localSavesEl = document.getElementById('local-saves');
+
+    function loadLocalSaves(){ try{ return JSON.parse(localStorage.getItem('circle_pulse_local_announcements_v1') || '[]'); }catch(e){ console.warn('local parse failed', e); return []; } }
+
+    function renderLocalSaves(){ const arr = loadLocalSaves(); if(!arr || arr.length===0){ localSavesEl.innerHTML = '<div class="small">No local saves.</div>'; return; } localSavesEl.innerHTML = ''; for(const it of arr){ const el = document.createElement('div'); el.className = 'card'; el.style.marginBottom = '6px'; const who = it.display_name || 'Member'; const date = it.created_at ? new Date(it.created_at).toLocaleString() : ''; el.innerHTML = `<div style="font-weight:700">${escapeHtml(it.title || it.body || 'Untitled')}</div><div style="margin:6px 0">${escapeHtml(it.body || '')}</div><div class="meta">Saved locally • ${escapeHtml(who)}${date ? ' • '+escapeHtml(date) : ''}</div>`; localSavesEl.appendChild(el); } }
+
+    viewLocalBtn.addEventListener('click', ()=>{
+      if(localSavesEl.style.display === 'none' || !localSavesEl.style.display){ renderLocalSaves(); localSavesEl.style.display = 'block'; viewLocalBtn.textContent = 'Hide saved'; }
+      else { localSavesEl.style.display = 'none'; viewLocalBtn.textContent = 'View saved'; }
+    });
+
     form.addEventListener('submit', async (ev)=>{
       ev.preventDefault();
       const title = (titleEl.value||'').trim();
@@ -78,24 +97,27 @@
 
       const payload = { title, body, display_name };
 
-      // Try to insert into preferred tables in order
+      // Try to insert into preferred tables in order (single loop)
       const candidates = ['circle_announcements','what_s_new','suggestions'];
       let posted = false;
-      for(const t of candidates){
-        try{
+      for (const t of candidates) {
+        try {
           const { data, error } = await supabase.from(t).insert([{ ...payload, approved: true }]).select();
-          if(!error){ posted = true; showStatus('Shared to circle.'); titleEl.value=''; bodyEl.value=''; nameEl.value=''; await refresh(); break; }
-          // If table doesn't exist/permission denied, continue to next
-        }catch(err){ console.warn('Insert attempt error for', t, err); }
-      }
-      for(const t of candidates){
-        try{
-          const { data, error } = await supabase.from(t).insert([{ ...payload, approved: true }]).select();
-          if(!error){ posted = true; showStatus('Shared to circle.'); titleEl.value=''; bodyEl.value=''; nameEl.value=''; break; }
-        }catch(err){ console.warn('Insert attempt error for', t, err); }
+          if (!error) {
+            posted = true;
+            showStatus('Shared to circle.');
+            titleEl.value = '';
+            bodyEl.value = '';
+            nameEl.value = '';
+            try{ await refreshAnnouncements(); }catch(e){ console.warn('refreshAnnouncements failed', e); }
+            break;
+          }
+        } catch (err) {
+          console.warn('Insert attempt error for', t, err);
+        }
       }
 
-      if(!posted){
+      if (!posted) {
         // Fallback: store locally so user doesn't lose the content
         const now = new Date().toISOString();
         try{
@@ -111,6 +133,55 @@
     });
 
 
-  </script>
+    // Announcements rendering + loading
+    const annContainer = document.getElementById('announcements');
+
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function renderAnnouncements(items){
+      annContainer.innerHTML = '';
+      if(!items || items.length === 0){ annContainer.innerHTML = '<div class="empty">No announcements yet — be the first to share!</div>'; return; }
+      for(const it of items){
+        const el = document.createElement('div'); el.className = 'ann';
+        const who = it.display_name || 'Member';
+        const date = it.created_at ? new Date(it.created_at).toLocaleString() : '';
+        el.innerHTML = `<div style="font-weight:700;margin-bottom:6px">${escapeHtml(it.title || it.body || 'Untitled')}</div>
+                        <div style="margin-bottom:8px">${escapeHtml(it.body || '')}</div>
+                        <div class="meta">Posted by ${escapeHtml(who)}${date ? ' • '+escapeHtml(date) : ''}</div>`;
+        annContainer.appendChild(el);
+      }
+    }
+
+    async function loadAnnouncements(){
+      annContainer.innerHTML = '<div class="empty">Loading announcements...</div>';
+      try{
+        const { data, error } = await supabase
+          .from('circle_announcements')
+          .select('id,title,body,display_name,created_at')
+          .eq('approved', true)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if(error){
+          console.warn('circle_announcements load error', error.message);
+          // fallback to local
+          const local = JSON.parse(localStorage.getItem('circle_pulse_local_announcements_v1') || '[]');
+          renderAnnouncements(local);
+          return;
+        }
+        renderAnnouncements(data || []);
+      }catch(e){
+        console.error('loadAnnouncements error', e);
+        const local = JSON.parse(localStorage.getItem('circle_pulse_local_announcements_v1') || '[]');
+        renderAnnouncements(local);
+      }
+    }
+
+    // After successful post, refresh announcements
+    async function refreshAnnouncements(){ await loadAnnouncements(); }
+
+    // Initial load
+    (async ()=>{ await loadAnnouncements(); })();
+
+    </script>
 </body>
 </html>
