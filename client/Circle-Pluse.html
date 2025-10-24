@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Circle Pulse — What's Happening This Week</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--accent:#2e8b57;--muted:#666;--card:#fff;--bg:#f7faf7}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:1.25rem;background:var(--bg);color:#111}
+    .wrap{max-width:900px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:1rem}
+    h1{margin:0;font-size:1.5rem}
+    .lead{color:var(--muted);margin-top:0.25rem}
+    .card{background:var(--card);border:1px solid #eee;border-radius:10px;padding:1rem;margin-bottom:1rem;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+    form{display:grid;gap:8px}
+    input,textarea,select{padding:10px;border-radius:6px;border:1px solid #ddd;font-size:1rem}
+    button{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700}
+    .small{font-size:0.9rem;color:var(--muted)}
+    .ann-list{display:grid;gap:8px}
+    .ann{border-left:4px solid var(--accent);padding:8px 12px;background:#fff;border-radius:6px}
+    .meta{font-size:0.85rem;color:var(--muted)}
+    .empty{color:var(--muted);padding:8px}
+    .status{font-size:0.95rem;color:var(--muted)}
+    .actions{display:flex;gap:8px}
+    @media (max-width:600px){body{padding:0.75rem}} 
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Circle Pulse</h1>
+        <div class="lead">This week's announcements — what can we / are we working on as a circle that will make a difference in our lives?</div>
+      </div>
+    </header>
+
+    <section class="card" aria-labelledby="post-heading">
+      <h2 id="post-heading" style="margin:0 0 6px 0">Share a weekly announcement</h2>
+      <p class="small">Post a short update, request, event, or a small ask that others can respond to this week.</p>
+      <form id="pulse-form">
+        <input id="title" placeholder="Short headline (e.g., Community Garden Work Day)" />
+        <textarea id="body" rows="3" placeholder="Details: time, place, what help is needed, connection options..."></textarea>
+        <input id="display_name" placeholder="Optional display name (leave blank for 'Member')" />
+        <div class="actions">
+          <button id="submit">Share to Circle</button>
+          <div class="status" id="form-status" aria-live="polite"></div>
+        </div>
+      </form>
+      <p class="small" style="margin-top:8px">Note: this client will attempt to post to a Supabase table named <code>circle_announcements</code>. If that table doesn't exist or the insert is denied, the page falls back to storing your announcement locally in your browser (you can still copy/paste to share manually).</p>
+    </section>
+
+    <!-- Announcements list removed per request: page now focuses on sharing a weekly announcement -->
+
+    <footer style="margin-top:1rem;color:var(--muted);font-size:0.95rem">
+      <div>Want this to show up for everyone? I can provide a small SQL migration to create a <code>circle_announcements</code> table and a simple approval column so moderators can review posts.</div>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const form = document.getElementById('pulse-form');
+    const titleEl = document.getElementById('title');
+    const bodyEl = document.getElementById('body');
+    const nameEl = document.getElementById('display_name');
+  const statusEl = document.getElementById('form-status');
+
+    // Utilities
+    function showStatus(msg, timeout=4000){ statusEl.textContent = msg; if(timeout) setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, timeout); }
+
+    form.addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const title = (titleEl.value||'').trim();
+      const body = (bodyEl.value||'').trim();
+      const display_name = (nameEl.value||'').trim() || null;
+      if(!title && !body){ showStatus('Please enter a headline or details.'); return; }
+
+      const payload = { title, body, display_name };
+
+      // Try to insert into preferred tables in order
+      const candidates = ['circle_announcements','what_s_new','suggestions'];
+      let posted = false;
+      for(const t of candidates){
+        try{
+          const { data, error } = await supabase.from(t).insert([{ ...payload, approved: true }]).select();
+          if(!error){ posted = true; showStatus('Shared to circle.'); titleEl.value=''; bodyEl.value=''; nameEl.value=''; await refresh(); break; }
+          // If table doesn't exist/permission denied, continue to next
+        }catch(err){ console.warn('Insert attempt error for', t, err); }
+      }
+      for(const t of candidates){
+        try{
+          const { data, error } = await supabase.from(t).insert([{ ...payload, approved: true }]).select();
+          if(!error){ posted = true; showStatus('Shared to circle.'); titleEl.value=''; bodyEl.value=''; nameEl.value=''; break; }
+        }catch(err){ console.warn('Insert attempt error for', t, err); }
+      }
+
+      if(!posted){
+        // Fallback: store locally so user doesn't lose the content
+        const now = new Date().toISOString();
+        try{
+          const key = 'circle_pulse_local_announcements_v1';
+          const raw = localStorage.getItem(key);
+          const arr = raw ? JSON.parse(raw) : [];
+          arr.unshift({ id: 'local-'+Date.now(), title, body, display_name, created_at: now });
+          localStorage.setItem(key, JSON.stringify(arr.slice(0,50)));
+        }catch(e){ console.warn('local save failed', e); }
+        showStatus('Saved locally (table not available).');
+        titleEl.value=''; bodyEl.value=''; nameEl.value='';
+      }
+    });
+
+
+  </script>
+</body>
+</html>
