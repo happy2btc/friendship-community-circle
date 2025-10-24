@@ -185,7 +185,26 @@
 
           if (signUpError) throw signUpError;
 
-          // SIGN UP SUCCESS: Redirect to affirm page
+          // SIGN UP SUCCESS: enqueue welcome on server as a fallback, then redirect to affirm page
+          try {
+            // Replace <PROJECT> with your Supabase functions project subdomain
+            const funcUrl = 'https:/${PROJECT_REF}.functions.supabase.co/register-user';
+            // Fire-and-forget: don't block the user flow if the call fails
+            fetch(funcUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: signUpData.user?.id,
+                display_name: name || null,
+                email: email || null,
+                wallet_address: null
+              })
+            }).catch(e => console.warn('register-user fallback failed (non-fatal):', e));
+          } catch (e) {
+            console.warn('register-user fallback exception:', e);
+          }
+
+          // Redirect the user to the affirmation page
           window.location.href = 'affirm.html';
 
         } else {
