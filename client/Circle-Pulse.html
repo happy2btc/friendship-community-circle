@@ -33,8 +33,16 @@
   </style>
 </head>
 <body>
-  <a href="main-menu.html" aria-label="Back to Menu" style="position:fixed; top:16px; left:16px; z-index:1200; background:#2b6b4f; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.15);">🔙 Back to Menu</a>
+  <a href="main-menu.html" aria-label="Back to Menu" style="position:fixed; top:16px; right:16px; z-index:1200; background:#2b6b4f; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.15);">🔙 Back to Menu</a>
   <div class="wrap">
+    <!-- Page title (moved to top so it's visible immediately) -->
+    <header>
+      <div>
+  <h1 style="font-size:1.75rem; margin-bottom:6px;">Circle Pulse — <span style="font-weight:700; font-size:1.75rem;">What's Happening This Week</span></h1>
+    <div class="lead">Recent member activity that awarded points (most recent actions appear first).</div>
+      </div>
+    </header>
+
     <!-- Prominent visit banner (first thing on the page) -->
     <div class="visit-banner" id="visit-banner">
       <div>
@@ -50,12 +58,7 @@
         <div id="sync-status" class="small" style="color:rgba(255,255,255,0.9)"></div>
       </div>
     </div>
-    <header>
-      <div>
-        <h1>Activity Pulse</h1>
-        <div class="lead">Recent member activity that awarded points (most recent actions appear first).</div>
-      </div>
-    </header>
+    <!-- header removed (title moved above the banner) -->
 
     <!-- Posting form removed — this page now focuses on activity and site metrics -->
 
@@ -181,46 +184,43 @@
     if(syncBtn){
       syncBtn.addEventListener('click', async ()=>{
         try{
-          syncBtn.disabled = true; syncStatusEl.textContent = 'Syncing...';
+          syncBtn.disabled = true; syncStatusEl.textContent = 'Preparing export...';
           const arr = JSON.parse(localStorage.getItem(siteVisitsLocalKey) || '[]');
-          if(!arr || arr.length === 0){ syncStatusEl.textContent = 'No local visits to sync.'; syncBtn.disabled = false; return; }
+          if(!arr || arr.length === 0){ syncStatusEl.textContent = 'No local visits to export.'; syncBtn.disabled = false; return; }
 
-          // Call Edge Function via Supabase client functions.invoke
-          const payload = { type: 'sync-visits', visits: arr };
-          let res;
-          try{
-            res = await supabase.functions.invoke('record-point-event', { body: payload });
-          }catch(e){
-            console.error('functions.invoke error', e);
-            syncStatusEl.textContent = 'Sync failed (network).'; syncBtn.disabled = false; return;
-          }
+          // Edge Function removed — offer the local visits as a download so an admin can import them manually
+          const blob = new Blob([JSON.stringify(arr, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'site_visits_local_export.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
 
-          if(res.error){
-            console.error('sync response error', res.error);
-            syncStatusEl.textContent = 'Sync failed: '+(res.error.message||res.error); syncBtn.disabled = false; return;
-          }
-
-          // On success clear local fallback and refresh counts
-          localStorage.removeItem(siteVisitsLocalKey);
-          syncStatusEl.textContent = 'Synced '+(arr.length)+' visits.';
-          await loadVisitCounts();
+          syncStatusEl.textContent = 'Exported '+(arr.length)+' visits.';
         }catch(err){
-          console.error('sync error', err);
-          syncStatusEl.textContent = 'Sync failed.';
-        }finally{ syncBtn.disabled = false; setTimeout(()=>{ syncStatusEl.textContent=''; }, 4000); }
+          console.error('export error', err);
+          syncStatusEl.textContent = 'Export failed.';
+        }finally{ syncBtn.disabled = false; setTimeout(()=>{ syncStatusEl.textContent=''; }, 5000); }
       });
     }
 
 
-    // Activity feed rendering + loading (member_point_events)
+  // Activity feed rendering + loading (aggregated from canonical tables)
     const activityContainer = document.getElementById('activity-feed');
 
     function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+    let currentItems = [];
+
     function renderActivities(items){
+      // accept optional items, otherwise render the current in-memory list
+      const list = items || currentItems || [];
       activityContainer.innerHTML = '';
-      if(!items || items.length === 0){ activityContainer.innerHTML = '<div class="empty">No recent activity.</div>'; return; }
-      for(const it of items){
+      if(!list || list.length === 0){ activityContainer.innerHTML = '<div class="empty">No recent activity.</div>'; return; }
+      for(const it of list){
         const el = document.createElement('div'); el.className = 'ann';
         el.innerHTML = `<div class="activity-item"><div class="activity-left"><div style="font-weight:700">${escapeHtml(it.action || 'Action')}</div><div style="margin-top:6px">${escapeHtml(it.meta || '')}</div></div><div class="activity-right"><div>${escapeHtml(it.display_name || 'Member')}</div><div class="meta">${it.points ? '+'+escapeHtml(String(it.points))+' pts' : ''}${it.created_at ? ' • '+escapeHtml(new Date(it.created_at).toLocaleString()) : ''}</div></div></div>`;
         activityContainer.appendChild(el);
@@ -230,21 +230,79 @@
     async function loadActivities(){
       activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
       try{
-        const { data, error } = await supabase
-          .from('member_point_events')
-          .select('id,display_name,action,meta,points,created_at')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        if(error){
-          console.warn('member_point_events load error', error.message);
-          const local = JSON.parse(localStorage.getItem('member_point_events_local') || '[]');
+        // Load recent actions from the canonical activity tables
+        // We'll fetch recent rows from several tables and normalize them into a single feed.
+        const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, profilesRes] = await Promise.all([
+          supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(50),
+          supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(50),
+          supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(50),
+          supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(50),
+          supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(50),
+          supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(50),
+          supabase.from('writers_wall').select('author_id,created_at,points').order('created_at',{ascending:false}).limit(50),
+          supabase.from('profiles').select('id,full_name')
+        ]);
+
+        // If any main query errors, fall back to local cached events
+        if (votesRes.error || suggRes.error || commentsRes.error) {
+          console.warn('one or more activity queries failed', votesRes.error, suggRes.error, commentsRes.error);
+          const local = JSON.parse(localStorage.getItem('activities_local') || '[]');
           renderActivities(local);
           return;
         }
-        renderActivities(data || []);
-      }catch(e){
+
+        // Map profiles for display names
+        const idToName = {};
+        (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
+
+        const items = [];
+
+        (votesRes.data || []).forEach(v => {
+          if(!v || !v.voter_id) return;
+          items.push({ display_name: idToName[v.voter_id] || 'Member', action: 'Voted', meta: '', points: 1, created_at: v.created_at });
+        });
+
+        (suggRes.data || []).forEach(s => {
+          if(!s || !s.author_id) return;
+          const meta = s.title ? `Suggestion: ${s.title}` : 'Submitted a suggestion';
+          items.push({ display_name: idToName[s.author_id] || 'Member', action: 'Suggested', meta, points: 1, created_at: s.created_at });
+        });
+
+        (commentsRes.data || []).forEach(c => {
+          if(!c || !c.author_id) return;
+          const meta = c.reply_text ? c.reply_text.slice(0,120) : 'Commented';
+          items.push({ display_name: idToName[c.author_id] || 'Member', action: 'Commented', meta, points: 1, created_at: c.created_at });
+        });
+
+        (celebrRes.data || []).forEach(c => {
+          if(!c || !c.user_id) return;
+          items.push({ display_name: idToName[c.user_id] || 'Member', action: "Posted on Celebration Wall", meta: '', points: 5, created_at: c.created_at });
+        });
+
+        (eventsRes.data || []).forEach(e => {
+          if(!e || !e.created_by) return;
+          items.push({ display_name: idToName[e.created_by] || 'Member', action: 'Created event', meta: '', points: 5, created_at: e.created_at });
+        });
+
+        (groupProjRes.data || []).forEach(gp => {
+          if(!gp || !gp.proposer_id) return;
+          items.push({ display_name: idToName[gp.proposer_id] || 'Member', action: 'Proposed a project', meta: '', points: 5, created_at: gp.created_at });
+        });
+
+        (writersRes.data || []).forEach(w => {
+          if(!w || !w.author_id) return;
+          items.push({ display_name: idToName[w.author_id] || 'Member', action: 'Wrote for Writers Wall', meta: '', points: w.points || 0, created_at: w.created_at });
+        });
+
+        // Sort by created_at desc and limit to 50
+        items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        const recent = items.slice(0,50);
+        currentItems = recent.slice();
+        renderActivities(currentItems);
+        }catch(e){
         console.error('loadActivities error', e);
-        const local = JSON.parse(localStorage.getItem('member_point_events_local') || '[]');
+        const local = JSON.parse(localStorage.getItem('activities_local') || '[]');
+        currentItems = local;
         renderActivities(local);
       }
     }
@@ -252,8 +310,85 @@
     // After successful post, refresh activities (keeps activity feed fresh)
     async function refreshActivities(){ await loadActivities(); }
 
-    // Initial load + periodic refresh
-    (async ()=>{ await loadActivities(); setInterval(()=>{ loadActivities().catch(()=>{}); }, 60_000); })();
+    // Handle realtime inserts (preferred) with a graceful fallback to polling.
+    function normalizeInsert(table, row){
+      if(!row) return null;
+      try{
+        switch(table){
+          case 'agreement_votes': return row.voter_id ? { display_name: row.voter_id, action: 'Voted', meta: '', points: 1, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'suggestions': return row.author_id ? { display_name: row.author_id, action: 'Suggested', meta: row.title ? `Suggestion: ${row.title}` : 'Submitted a suggestion', points:1, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'comments': return row.author_id ? { display_name: row.author_id, action: 'Commented', meta: row.reply_text ? row.reply_text.slice(0,120) : 'Commented', points:1, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'celebrations': return row.user_id ? { display_name: row.user_id, action: 'Posted on Celebration Wall', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'events': return row.created_by ? { display_name: row.created_by, action: 'Created event', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'group_projects': return row.proposer_id ? { display_name: row.proposer_id, action: 'Proposed a project', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'writers_wall': return row.author_id ? { display_name: row.author_id, action: 'Wrote for Writers Wall', meta:'', points: row.points || 0, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'site_visits': return { created_at: row.created_at || new Date().toISOString(), visit:true };
+          default: return null;
+        }
+      }catch(e){ return null; }
+    }
+
+    function handleRealtimeInsert(table, row){
+      const item = normalizeInsert(table, row);
+      if(!item) return;
+      // site_visits updates update the banner counts
+      if(table === 'site_visits'){
+        // fast-path: try to increment banners, otherwise reload counts
+        try{
+          const todayEl = document.getElementById('visits-today-banner');
+          const weekEl = document.getElementById('visits-week-banner');
+          if(todayEl && weekEl && item.created_at){
+            // simple increment (best-effort); also schedule a full reload shortly
+            if(!isNaN(Number(todayEl.textContent))) todayEl.textContent = String(Number(todayEl.textContent) + 1);
+            if(!isNaN(Number(weekEl.textContent))) weekEl.textContent = String(Number(weekEl.textContent) + 1);
+            setTimeout(loadVisitCounts, 5000);
+            return;
+          }
+        }catch(e){}
+        loadVisitCounts().catch(()=>{});
+        return;
+      }
+
+      // Avoid duplicates: compare created_at + display_name + action
+      const key = `${item.display_name}|${item.action}|${item.created_at}`;
+      if(currentItems.some(it => `${it.display_name}|${it.action}|${it.created_at}` === key)) return;
+      currentItems.unshift(item);
+      // keep size bounded
+      currentItems = currentItems.slice(0,50);
+      renderActivities(currentItems);
+    }
+
+    async function setupRealtime(){
+      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits'];
+      try{
+        // Preferred API (supabase-js v2+): channel with postgres_changes
+        if(typeof supabase.channel === 'function'){
+          const channel = supabase.channel('realtime-activity');
+          tables.forEach(table => {
+            channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table }, (payload)=>{
+              try{ handleRealtimeInsert(table, payload.new); }catch(e){ console.warn('realtime payload handling error', e); }
+            });
+          });
+          await channel.subscribe();
+          console.log('Realtime channel subscribed for activity tables');
+          return;
+        }
+      }catch(e){ console.warn('channel subscribe failed', e); }
+
+      // Fallback: older API using from().on()
+      try{
+        tables.forEach(table => {
+          try{
+            const sub = supabase.from(table).on('INSERT', payload => { try{ handleRealtimeInsert(table, payload.new); }catch(e){}}).subscribe();
+            // note: older SDKs return a subscription object; we don't need to store it here for simple pages
+          }catch(e){ /* ignore per-table subscription error */ }
+        });
+        console.log('Realtime fallback subscriptions registered');
+      }catch(e){ console.warn('realtime fallback failed', e); }
+    }
+
+    // Initial load + periodic refresh and realtime setup
+    (async ()=>{ await loadActivities(); await setupRealtime(); setInterval(()=>{ loadActivities().catch(()=>{}); }, 60_000); })();
 
     </script>
 </body>

@@ -1,8 +1,13 @@
-Record Point Event Edge Function
+Record Point Event Edge Function (deprecated recording)
 
 Purpose
 -------
-This Edge Function securely records a member point event into the `member_point_events` table using your Supabase service role key.
+This Edge Function previously recorded member point events into a dedicated table. That behavior has been deprecated: the Circle Pulse UI now aggregates recent activity directly from the canonical tables (agreement_votes, suggestions, comments, celebrations, events, group_projects, writers_wall, etc.).
+
+What this function now does
+--------------------------
+- map-visitor: upsert a mapping from a client-generated visitor_id to a `profile_id` and optionally update historic `site_visits` rows.
+- sync-visits: accept an array of local visit objects and insert them into `site_visits` in a single batch.
 
 How to deploy
 -------------
@@ -26,18 +31,19 @@ How to deploy
 
 Usage
 -----
-POST JSON to the function endpoint (returned by Supabase Functions after deploy):
+Supported request types (POST JSON with a `type` field):
+
+- Map a visitor to a profile (upsert):
 
 ```json
 {
-  "profile_id": "<uuid>",
-  "display_name": "Alice",
-  "action": "submitted-reflection",
-  "meta": { "refId": 123 },
-  "points": 5
-}
-```
+  "type": "map-visitor",
+  "visitor_id": "v-...",
+# record-point-event (deprecated)
 
-Security
---------
-This function uses the service role key and must be protected. Call it from your trusted backend or Cloudflare Worker; do not call it directly from untrusted client code.
+This function's code has been removed from the repository. It previously provided `map-visitor` and `sync-visits` utilities and also contained a deprecated `record-event` action.
+
+If you require the previous behaviors, reintroduce a new function with explicit intent and deployment instructions. The Circle Pulse UI now aggregates activity client-side and does not rely on server-side point-event recording.
+
+This README was shortened to reflect that the function is deprecated and its code removed from the source tree.
+{
