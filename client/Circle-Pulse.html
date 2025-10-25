@@ -226,7 +226,7 @@
         activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
         try{
           // Fetch from all activity tables in parallel
-          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, profilesRes] = await Promise.all([
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes] = await Promise.all([
             supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100),
@@ -234,8 +234,11 @@
             supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('profiles').select('id,full_name')
           ]);
+          // ...existing code...
+
 
           // Map profiles for display names
           const idToName = {};
@@ -297,6 +300,14 @@
             items.push({ display_name: display, action: 'Wrote for Writers Wall', meta: w.title || '', points: 1, created_at: w.created_at });
           });
 
+          // Now process event attendance after idToName is defined
+          (attendanceRes.data || []).forEach(a => {
+            if(!a || !a.user_id) return;
+            const t = new Date(a.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            items.push({ display_name: idToName[a.user_id] || 'Member', action: 'Attended an event', meta: '', points: 5, created_at: a.created_at });
+          });
+
           // Sort by created_at desc and limit to 50
           items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
           const recent = items.slice(0,50);
@@ -313,7 +324,11 @@
         const now = Date.now();
         const weekAgo = now - 7*24*60*60*1000;
         let t = null;
-        switch(table){
+  switch(table){
+          case 'event_attendance':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.user_id || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.user_id] || row.user_id, action: 'Attended an event', meta:'', points:5, created_at: row.created_at };
           case 'agreement_votes':
             t = row.created_at ? new Date(row.created_at).getTime() : null;
             if (!row.voter_id || t === null || t < weekAgo || t > now) return null;
@@ -355,7 +370,7 @@
           (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
         } catch(e) {}
 
-        const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall'];
+  const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','event_attendance'];
         try{
           if(typeof supabase.channel === 'function'){
             const channel = supabase.channel('realtime-activity');
