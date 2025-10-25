@@ -191,132 +191,225 @@
     const syncBtn = document.getElementById('sync-visits-btn');
     const syncStatusEl = document.getElementById('sync-status');
     if(syncBtn){
-      syncBtn.addEventListener('click', async ()=>{
-        try{
-          syncBtn.disabled = true; syncStatusEl.textContent = 'Preparing export...';
-          const arr = JSON.parse(localStorage.getItem(siteVisitsLocalKey) || '[]');
-          if(!arr || arr.length === 0){ syncStatusEl.textContent = 'No local visits to export.'; syncBtn.disabled = false; return; }
+      // --- AGGREGATE: Read from all activity tables and merge into a single feed ---
+      const activityContainer = document.getElementById('activity-feed');
+      let currentItems = [];
 
-          // Edge Function removed — offer the local visits as a download so an admin can import them manually
-          const blob = new Blob([JSON.stringify(arr, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'site_visits_local_export.json';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-
-          syncStatusEl.textContent = 'Exported '+(arr.length)+' visits.';
-        }catch(err){
-          console.error('export error', err);
-          syncStatusEl.textContent = 'Export failed.';
-        }finally{ syncBtn.disabled = false; setTimeout(()=>{ syncStatusEl.textContent=''; }, 5000); }
-      });
-    }
-
-
-  // Activity feed rendering + loading (aggregated from canonical tables)
-    const activityContainer = document.getElementById('activity-feed');
-
-    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-
-    let currentItems = [];
-
-    function renderActivities(items){
-      // accept optional items, otherwise render the current in-memory list
-      const list = items || currentItems || [];
-      activityContainer.innerHTML = '';
-      if(!list || list.length === 0){ activityContainer.innerHTML = '<div class="empty">No recent activity.</div>'; return; }
-      for(const it of list){
-        const el = document.createElement('div'); el.className = 'ann';
-        el.innerHTML = `<div class="activity-item"><div class="activity-left"><div style="font-weight:700">${escapeHtml(it.action || 'Action')}</div><div style="margin-top:6px">${escapeHtml(it.meta || '')}</div></div><div class="activity-right"><div>${escapeHtml(it.display_name || 'Member')}</div><div class="meta">${it.points ? '+'+escapeHtml(String(it.points))+' pts' : ''}${it.created_at ? ' • '+escapeHtml(new Date(it.created_at).toLocaleString()) : ''}</div></div></div>`;
-        activityContainer.appendChild(el);
+      function escapeHtml(s){
+        if(!s) return '';
+        return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
       }
-    }
 
-    async function loadActivities(){
-      activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
-      try{
-        // Load recent actions from the canonical activity tables
-        // We'll fetch recent rows from several tables and normalize them into a single feed.
-        const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, profilesRes] = await Promise.all([
-          supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(50),
-          supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(50),
-          supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(50),
-          supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(50),
-          supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(50),
-          supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(50),
-          supabase.from('writers_wall').select('author_id,created_at,points').order('created_at',{ascending:false}).limit(50),
-          supabase.from('profiles').select('id,full_name')
-        ]);
-
-        // If any main query errors, fall back to local cached events
-        if (votesRes.error || suggRes.error || commentsRes.error) {
-          console.warn('one or more activity queries failed', votesRes.error, suggRes.error, commentsRes.error);
-          const local = JSON.parse(localStorage.getItem('activities_local') || '[]');
-          renderActivities(local);
+      function renderActivities(items){
+        // Only show activities from the last 7 days
+        const now = Date.now();
+        const weekAgo = now - 7*24*60*60*1000;
+        const list = (items || currentItems || []).filter(it => {
+          if (!it.created_at) return false;
+          const t = new Date(it.created_at).getTime();
+          return t >= weekAgo && t <= now;
+        });
+        activityContainer.innerHTML = '';
+        if(!list.length){
+          activityContainer.innerHTML = '<div class="empty">No recent activity in the last 7 days.</div>';
           return;
         }
-
-        // Map profiles for display names
-        const idToName = {};
-        (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
-
-        const items = [];
-
-        (votesRes.data || []).forEach(v => {
-          if(!v || !v.voter_id) return;
-          items.push({ display_name: idToName[v.voter_id] || 'Member', action: 'Voted', meta: '', points: 1, created_at: v.created_at });
-        });
-
-        (suggRes.data || []).forEach(s => {
-          if(!s || !s.author_id) return;
-          const meta = s.title ? `Suggestion: ${s.title}` : 'Submitted a suggestion';
-          items.push({ display_name: idToName[s.author_id] || 'Member', action: 'Suggested', meta, points: 1, created_at: s.created_at });
-        });
-
-        (commentsRes.data || []).forEach(c => {
-          if(!c || !c.author_id) return;
-          const meta = c.reply_text ? c.reply_text.slice(0,120) : 'Commented';
-          items.push({ display_name: idToName[c.author_id] || 'Member', action: 'Commented', meta, points: 1, created_at: c.created_at });
-        });
-
-        (celebrRes.data || []).forEach(c => {
-          if(!c || !c.user_id) return;
-          items.push({ display_name: idToName[c.user_id] || 'Member', action: "Posted on Celebration Wall", meta: '', points: 5, created_at: c.created_at });
-        });
-
-        (eventsRes.data || []).forEach(e => {
-          if(!e || !e.created_by) return;
-          items.push({ display_name: idToName[e.created_by] || 'Member', action: 'Created event', meta: '', points: 5, created_at: e.created_at });
-        });
-
-        (groupProjRes.data || []).forEach(gp => {
-          if(!gp || !gp.proposer_id) return;
-          items.push({ display_name: idToName[gp.proposer_id] || 'Member', action: 'Proposed a project', meta: '', points: 5, created_at: gp.created_at });
-        });
-
-        (writersRes.data || []).forEach(w => {
-          if(!w) return;
-          // writers_wall may have either an author_id (linked profile) or an author_name (guest or deleted account).
-          const display = (w.author_id && idToName[w.author_id]) || w.author_name || (w.author_id || 'Member');
-          // Show writers wall activity as 1 point in the recent activity feed for consistency
-          items.push({ display_name: display, action: 'Wrote for Writers Wall', meta: w.title || '', points: 1, created_at: w.created_at });
-        });
-
-  // Sort by created_at desc and limit to 50
-  items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  const recent = items.slice(0,50);
-  currentItems = recent.slice();
-  renderActivities(currentItems);
-        }catch(e){
-        console.error('loadActivities error', e);
-        const local = JSON.parse(localStorage.getItem('activities_local') || '[]');
-  currentItems = local;
-  renderActivities(local);
+        for(const it of list){
+          const el = document.createElement('div');
+          el.className = 'ann';
+          el.innerHTML = `<div class="activity-item"><div class="activity-left"><div style="font-weight:700">${escapeHtml(it.action || 'Action')}</div><div style="margin-top:6px">${escapeHtml(it.meta || '')}</div></div><div class="activity-right"><div>${escapeHtml(it.display_name || 'Member')}</div><div class="meta">${it.points ? '+'+escapeHtml(String(it.points))+' pts' : ''}${it.created_at ? ' • '+escapeHtml(new Date(it.created_at).toLocaleString()) : ''}</div></div></div>`;
+          activityContainer.appendChild(el);
+        }
       }
+
+      async function loadActivities(){
+        activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
+        try{
+          // Fetch from all activity tables in parallel
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, profilesRes] = await Promise.all([
+            supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100),
+            supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100),
+            supabase.from('profiles').select('id,full_name')
+          ]);
+
+          // Map profiles for display names
+          const idToName = {};
+          (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
+
+          const now = Date.now();
+          const weekAgo = now - 7*24*60*60*1000;
+          const items = [];
+
+          (votesRes.data || []).forEach(v => {
+            if(!v || !v.voter_id) return;
+            const t = new Date(v.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            items.push({ display_name: idToName[v.voter_id] || 'Member', action: 'Voted', meta: '', points: 1, created_at: v.created_at });
+          });
+
+          (suggRes.data || []).forEach(s => {
+            if(!s || !s.author_id) return;
+            const t = new Date(s.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            const meta = s.title ? `Suggestion: ${s.title}` : 'Submitted a suggestion';
+            items.push({ display_name: idToName[s.author_id] || 'Member', action: 'Suggested', meta, points: 1, created_at: s.created_at });
+          });
+
+          (commentsRes.data || []).forEach(c => {
+            if(!c || !c.author_id) return;
+            const t = new Date(c.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            const meta = c.reply_text ? c.reply_text.slice(0,120) : 'Commented';
+            items.push({ display_name: idToName[c.author_id] || 'Member', action: 'Commented', meta, points: 1, created_at: c.created_at });
+          });
+
+          (celebrRes.data || []).forEach(c => {
+            if(!c || !c.user_id) return;
+            const t = new Date(c.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            items.push({ display_name: idToName[c.user_id] || 'Member', action: "Posted on Celebration Wall", meta: '', points: 5, created_at: c.created_at });
+          });
+
+          (eventsRes.data || []).forEach(e => {
+            if(!e || !e.created_by) return;
+            const t = new Date(e.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            items.push({ display_name: idToName[e.created_by] || 'Member', action: 'Created event', meta: '', points: 5, created_at: e.created_at });
+          });
+
+          (groupProjRes.data || []).forEach(gp => {
+            if(!gp || !gp.proposer_id) return;
+            const t = new Date(gp.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            items.push({ display_name: idToName[gp.proposer_id] || 'Member', action: 'Proposed a project', meta: '', points: 5, created_at: gp.created_at });
+          });
+
+          (writersRes.data || []).forEach(w => {
+            if(!w) return;
+            const t = new Date(w.created_at).getTime();
+            if (t < weekAgo || t > now) return;
+            const display = (w.author_id && idToName[w.author_id]) || w.author_name || (w.author_id || 'Member');
+            items.push({ display_name: display, action: 'Wrote for Writers Wall', meta: w.title || '', points: 1, created_at: w.created_at });
+          });
+
+          // Sort by created_at desc and limit to 50
+          items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+          const recent = items.slice(0,50);
+          currentItems = recent.slice();
+          renderActivities(currentItems);
+        }catch(e){
+          activityContainer.innerHTML = '<div class="empty">Failed to load activity.</div>';
+        }
+      }
+
+      // Normalize realtime insert for each table
+      function normalizeInsert(table, row, idToName) {
+        if(!row) return null;
+        const now = Date.now();
+        const weekAgo = now - 7*24*60*60*1000;
+        let t = null;
+        switch(table){
+          case 'agreement_votes':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.voter_id || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.voter_id] || row.voter_id, action: 'Voted', meta: '', points: 1, created_at: row.created_at };
+          case 'suggestions':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.author_id || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.author_id] || row.author_id, action: 'Suggested', meta: row.title ? `Suggestion: ${row.title}` : 'Submitted a suggestion', points:1, created_at: row.created_at };
+          case 'comments':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.author_id || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.author_id] || row.author_id, action: 'Commented', meta: row.reply_text ? row.reply_text.slice(0,120) : 'Commented', points:1, created_at: row.created_at };
+          case 'celebrations':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.user_id || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.user_id] || row.user_id, action: 'Posted on Celebration Wall', meta:'', points:5, created_at: row.created_at };
+          case 'events':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.created_by || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.created_by] || row.created_by, action: 'Created event', meta:'', points:5, created_at: row.created_at };
+          case 'group_projects':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.proposer_id || t === null || t < weekAgo || t > now) return null;
+            return { display_name: idToName[row.proposer_id] || row.proposer_id, action: 'Proposed a project', meta:'', points:5, created_at: row.created_at };
+          case 'writers_wall':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!(row.author_id || row.author_name) || t === null || t < weekAgo || t > now) return null;
+            return { display_name: (row.author_id && idToName[row.author_id]) || row.author_name || row.author_id, action: 'Wrote for Writers Wall', meta: row.title || '', points: 1, created_at: row.created_at };
+          default: return null;
+        }
+      }
+
+      // Setup realtime subscriptions for all tables
+      async function setupRealtime(){
+        // Fetch profiles for display names
+        let idToName = {};
+        try {
+          const profilesRes = await supabase.from('profiles').select('id,full_name');
+          (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
+        } catch(e) {}
+
+        const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall'];
+        try{
+          if(typeof supabase.channel === 'function'){
+            const channel = supabase.channel('realtime-activity');
+            tables.forEach(table => {
+              channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table }, (payload)=>{
+                try {
+                  const item = normalizeInsert(table, payload.new, idToName);
+                  if(!item) return;
+                  // Avoid duplicates
+                  const key = `${item.display_name}|${item.action}|${item.created_at}`;
+                  if(currentItems.some(it => `${it.display_name}|${it.action}|${it.created_at}` === key)) return;
+                  currentItems.unshift(item);
+                  // Remove activities older than 7 days
+                  const now = Date.now();
+                  const weekAgo = now - 7*24*60*60*1000;
+                  currentItems = currentItems.filter(it => {
+                    if (!it.created_at) return false;
+                    const t = new Date(it.created_at).getTime();
+                    return t >= weekAgo && t <= now;
+                  }).slice(0,50);
+                  renderActivities(currentItems);
+                } catch(e){ console.warn('realtime payload error', e); }
+              });
+            });
+            await channel.subscribe();
+            return;
+          }
+        }catch(e){ console.warn('realtime channel subscribe failed', e); }
+        // Fallback: older API
+        try{
+          tables.forEach(table => {
+            supabase.from(table).on('INSERT', payload => {
+              try {
+                const item = normalizeInsert(table, payload.new, idToName);
+                if(!item) return;
+                const key = `${item.display_name}|${item.action}|${item.created_at}`;
+                if(currentItems.some(it => `${it.display_name}|${it.action}|${it.created_at}` === key)) return;
+                currentItems.unshift(item);
+                currentItems = currentItems.slice(0,50);
+                renderActivities(currentItems);
+              } catch(e){}
+            }).subscribe();
+          });
+        }catch(e){ console.warn('realtime fallback failed', e); }
+      }
+
+      // Initial load + realtime setup + periodic refresh
+      (async ()=>{
+        await loadActivities();
+        await setupRealtime();
+        setInterval(()=>{ loadActivities().catch(()=>{}); }, 60_000);
+      })();
+
+      // ...existing code...
     }
 
     
