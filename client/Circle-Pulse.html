@@ -34,6 +34,8 @@
     @media (max-width:600px){
       body{padding:0.75rem}
   .back-to-menu{position:static; margin:10px 0 12px 0; box-shadow:none; float:right}
+      /* ensure header is pushed down on very small screens to avoid overlap */
+      header{margin-top:12px}
     }
   </style>
 </head>
@@ -74,6 +76,8 @@
         <div class="empty">Loading activity...</div>
       </div>
     </section>
+
+    
 
     <!-- footer removed per request -->
   </div>
@@ -295,22 +299,27 @@
         });
 
         (writersRes.data || []).forEach(w => {
-          if(!w || !w.author_id) return;
-          items.push({ display_name: idToName[w.author_id] || 'Member', action: 'Wrote for Writers Wall', meta: '', points: w.points || 0, created_at: w.created_at });
+          if(!w) return;
+          // writers_wall may have either an author_id (linked profile) or an author_name (guest or deleted account).
+          const display = (w.author_id && idToName[w.author_id]) || w.author_name || (w.author_id || 'Member');
+          // Show writers wall activity as 1 point in the recent activity feed for consistency
+          items.push({ display_name: display, action: 'Wrote for Writers Wall', meta: w.title || '', points: 1, created_at: w.created_at });
         });
 
-        // Sort by created_at desc and limit to 50
-        items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-        const recent = items.slice(0,50);
-        currentItems = recent.slice();
-        renderActivities(currentItems);
+  // Sort by created_at desc and limit to 50
+  items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const recent = items.slice(0,50);
+  currentItems = recent.slice();
+  renderActivities(currentItems);
         }catch(e){
         console.error('loadActivities error', e);
         const local = JSON.parse(localStorage.getItem('activities_local') || '[]');
-        currentItems = local;
-        renderActivities(local);
+  currentItems = local;
+  renderActivities(local);
       }
     }
+
+    
 
     // After successful post, refresh activities (keeps activity feed fresh)
     async function refreshActivities(){ await loadActivities(); }
@@ -326,7 +335,7 @@
           case 'celebrations': return row.user_id ? { display_name: row.user_id, action: 'Posted on Celebration Wall', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
           case 'events': return row.created_by ? { display_name: row.created_by, action: 'Created event', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
           case 'group_projects': return row.proposer_id ? { display_name: row.proposer_id, action: 'Proposed a project', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
-          case 'writers_wall': return row.author_id ? { display_name: row.author_id, action: 'Wrote for Writers Wall', meta:'', points: row.points || 0, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'writers_wall': return (row.author_id || row.author_name) ? { display_name: (row.author_id || row.author_name), action: 'Wrote for Writers Wall', meta: row.title || '', points: 1, created_at: row.created_at || new Date().toISOString() } : null;
           case 'site_visits': return { created_at: row.created_at || new Date().toISOString(), visit:true };
           default: return null;
         }
