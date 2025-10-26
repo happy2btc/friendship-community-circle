@@ -16,11 +16,11 @@
       background-size: cover;
       color:#111;
     }
-    .wrap{max-width:900px;margin:0 auto}
+  .wrap{max-width:900px;margin:0 auto;padding:0 1rem;}
     header{display:flex;gap:12px;align-items:center;margin-bottom:1rem}
     h1{margin:0;font-size:1.5rem}
     .lead{color:var(--muted);margin-top:0.25rem}
-    .card{background:var(--card);border:1px solid #eee;border-radius:10px;padding:1rem;margin-bottom:1rem;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+  .card{background:var(--card);border:1px solid #eee;border-radius:10px;padding:1rem;margin-bottom:1rem;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
     form{display:grid;gap:8px}
     input,textarea,select{padding:10px;border-radius:6px;border:1px solid #ddd;font-size:1rem}
     button{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700}
@@ -40,10 +40,21 @@
     /* Back to Menu: fixed on wider screens, inline/static on small screens to avoid overlap */
     .back-to-menu{position:fixed; top:16px; right:16px; z-index:1200; background:#2b6b4f; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.15);}
     @media (max-width:600px){
-      body{padding:0.75rem}
-  .back-to-menu{position:static; margin:10px 0 12px 0; box-shadow:none; float:right}
-      /* ensure header is pushed down on very small screens to avoid overlap */
-      header{margin-top:12px}
+      body{
+        padding:0.5rem;
+        background-size: contain;
+        background-attachment: scroll;
+      }
+      .wrap{padding:0 0.25rem;}
+      .card{padding:0.5rem;}
+      .visit-banner{
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        text-align: left;
+      }
+      header{margin-top:12px; flex-direction:column; align-items:flex-start;}
+      .back-to-menu{position:static; margin:10px 0 12px 0; box-shadow:none; float:right}
     }
   </style>
 </head>
