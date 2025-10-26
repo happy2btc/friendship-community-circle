@@ -24,8 +24,12 @@
       <label for="content">Content</label>
       <textarea id="content" required></textarea>
 
-      <label for="image">Image (optional)</label>
-      <input type="file" id="image" accept="image/*">
+
+  <label for="image">Image (optional)</label>
+  <input type="file" id="image" accept="image/*">
+
+  <label for="video">Video (optional)</label>
+  <input type="file" id="video" accept="video/*">
 
       <button type="submit">Submit Post</button>
     </form>
@@ -66,7 +70,9 @@
       const title = document.getElementById('title').value;
       const content = document.getElementById('content').value;
       const imageFile = document.getElementById('image').files[0];
-      let imageUrl = null;
+
+  let imageUrl = null;
+  let videoUrl = null;
 
       try {
         // 1. Handle image upload
@@ -75,20 +81,33 @@
           const { error: uploadError } = await supabase.storage
             .from('blog-images')
             .upload(filePath, imageFile);
-
           if (uploadError) {
             throw new Error(`Image upload failed: ${uploadError.message}`);
           }
           imageUrl = filePath;
         }
 
-        // 2. Insert blog post into the database
+        // 2. Handle video upload
+        const videoFile = document.getElementById('video').files[0];
+        if (videoFile) {
+          const videoPath = `blog/${circleId}/${user.id}/${Date.now()}_${videoFile.name}`;
+          const { error: videoUploadError } = await supabase.storage
+            .from('blog-videos')
+            .upload(videoPath, videoFile);
+          if (videoUploadError) {
+            throw new Error(`Video upload failed: ${videoUploadError.message}`);
+          }
+          videoUrl = videoPath;
+        }
+
+        // 3. Insert blog post into the database
         const { error: dbError } = await supabase.from('blog_posts').insert({
           circle_id: circleId,
           user_id: user.id,
           title: title,
           content: content,
-          image_url: imageUrl
+          image_url: imageUrl,
+          video_url: videoUrl
         });
 
         if (dbError) {
