@@ -104,7 +104,8 @@
             Celebration Wall Posts = 5 points per post<br>
             Projects Proposed = 5 points per proposal<br>
             Support Responses = 5 points per response<br>
-            Writer's Post = 1 point per 1000 words
+            Writer's Post = 1 point per 1000 words<br>
+            <span style="color:#4a7c59;font-weight:bold;">Videos Posted = 5 points per video</span>
         </div>
     </div>
     <h1>Community Member Activities</h1>
@@ -129,6 +130,24 @@
                         breakdown[row.author_id].writer_posts = (breakdown[row.author_id].writer_posts || 0) + 1;
                         breakdown[row.author_id].writer_points = (breakdown[row.author_id].writer_points || 0) + (row.points || 0);
                     }
+                });
+            }
+
+            // Community Videos: tally videos posted per user (5 points each)
+            const { data: memberVideos } = await supabase
+                .from('member_video')
+                .select('user_id');
+            if (memberVideos) {
+                const videosByUser = {};
+                memberVideos.forEach(row => {
+                    if (row.user_id && row.user_id !== builderId) {
+                        videosByUser[row.user_id] = (videosByUser[row.user_id] || 0) + 1;
+                    }
+                });
+                Object.entries(videosByUser).forEach(([userId, count]) => {
+                    breakdown[userId] = breakdown[userId] || { votes: 0, suggestions: 0, comments: 0, wants: 0, offers: 0, passion: 0, projects: 0, profile: 0, circles_created: 0, members_added: 0, celebrations_posted: 0, help_hours: 0, help_points: 0, help_hours_recent: 0, support_responses: 0, events_created: 0, events_attended: 0, projects_proposed: 0, writer_posts: 0, writer_points: 0, videos_posted: 0 };
+                    breakdown[userId].videos_posted = count;
+                    activity[userId] = (activity[userId] || 0) + (count * 5);
                 });
             }
             // Count help given (5 points per hour)
@@ -406,6 +425,7 @@
                                 Passion: ${m.breakdown.passion || 0}<br>
                                 Projects & Struggles: ${m.breakdown.projects || 0}<br>
                                 <span style="color:#4a7c59;font-weight:bold;">Writer's Posts: ${m.breakdown.writer_posts || 0}</span><br>
+                                <span style="color:#4a7c59;font-weight:bold;">Videos Posted: ${m.breakdown.videos_posted || 0}</span><br>
                                 Help Given: ${m.breakdown.help_hours_recent || 0}<br>
                                 Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                                 Circles Created: ${m.breakdown.circles_created || 0}<br>
@@ -437,6 +457,7 @@
                             Offers: ${m.breakdown.offers || 0}<br>
                             Passion: ${m.breakdown.passion || 0}<br>
                             Projects & Struggles: ${m.breakdown.projects || 0}<br>
+                            <span style="color:#4a7c59;font-weight:bold;">Videos Posted: ${m.breakdown.videos_posted || 0}</span><br>
                             Help Given: ${m.breakdown.help_hours_recent || 0}<br>
                             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
                             Circles Created: ${m.breakdown.circles_created || 0}<br>
