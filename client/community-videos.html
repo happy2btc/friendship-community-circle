@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Videos</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .back-to-menu-btn {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 1000;
+      background: #6b4f1d;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 1em;
+      box-shadow: 0 2px 8px #0002;
+      transition: background 0.2s;
+    }
+    .back-to-menu-btn:hover {
+      background: #2e8b57;
+    }
+    @media (max-width: 700px) {
+      .back-to-menu-btn {
+        top: 8px;
+        right: 8px;
+        padding: 8px 12px;
+        font-size: 0.95em;
+      }
+    }
+  </style>
+  <style>
+    body { font-family: sans-serif; background: #f8f8fa; margin: 0; }
+    .container { max-width: 600px; margin: 2em auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; padding: 2em; }
+    h1 { text-align: center; }
+    .video-list { margin-top: 2em; }
+    .video-item { margin-bottom: 2em; border-bottom: 1px solid #eee; padding-bottom: 1em; }
+    .video-meta { font-size: 0.9em; color: #666; margin-bottom: 0.5em; }
+    video { width: 100%; max-height: 320px; border-radius: 8px; }
+    .upload-form { margin-top: 2em; }
+    label { display: block; margin-bottom: 0.5em; }
+    input, textarea, button { width: 100%; margin-bottom: 1em; padding: 0.5em; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #4a90e2; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+    button:disabled { background: #aaa; }
+    @media (max-width: 700px) {
+      .container { padding: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <a href="main-menu.html" class="back-to-menu-btn">Back to Main Menu</a>
+  <div class="container">
+    <h1>Community Videos</h1>
+    <form class="upload-form" id="uploadForm">
+      <label for="videoFile">Upload Video</label>
+      <input type="file" id="videoFile" accept="video/*" required>
+      <label for="caption">Caption (optional)</label>
+      <textarea id="caption" maxlength="200" placeholder="Say something about your video..."></textarea>
+      <button type="submit">Post Video</button>
+      <div id="uploadStatus"></div>
+    </form>
+    <div class="video-list" id="videoList"></div>
+  </div>
+  <script type="module">
+    import { supabase } from './lib/supabase.js';
+    const uploadForm = document.getElementById('uploadForm');
+    const videoList = document.getElementById('videoList');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    async function fetchVideos() {
+      const { data, error } = await supabase
+        .from('member_video')
+        .select('id, user_id, video_url, caption, created_at')
+        .order('created_at', { ascending: false });
+      if (error) {
+        videoList.innerHTML = '<p>Error loading videos.</p>';
+        return;
+      }
+      videoList.innerHTML = data.map(v => `
+        <div class="video-item">
+          <div class="video-meta">Posted by <b>${v.user_id}</b> on ${new Date(v.created_at).toLocaleString()}</div>
+          <video src="${v.video_url}" controls></video>
+          ${v.caption ? `<div class="video-meta">${v.caption}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = document.getElementById('videoFile').files[0];
+      const caption = document.getElementById('caption').value;
+      if (!file) return;
+      uploadStatus.textContent = 'Uploading...';
+      const user = supabase.auth.user();
+      if (!user) {
+        uploadStatus.textContent = 'You must be logged in.';
+        return;
+      }
+      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('member-videos')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) {
+        uploadStatus.textContent = 'Upload failed: ' + uploadError.message;
+        return;
+      }
+      const { publicURL } = supabase.storage.from('member-videos').getPublicUrl(filePath).data;
+      const { error: insertError } = await supabase
+        .from('member_video')
+        .insert([{ user_id: user.id, video_url: publicURL, caption }]);
+      if (insertError) {
+        uploadStatus.textContent = 'Database error: ' + insertError.message;
+        return;
+      }
+      uploadStatus.textContent = 'Video posted!';
+      uploadForm.reset();
+      fetchVideos();
+    });
+
+    fetchVideos();
+  </script>
+</body>
+</html>
