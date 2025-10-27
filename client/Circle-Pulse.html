@@ -245,7 +245,7 @@
         activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
         try{
           // Fetch from all activity tables in parallel
-          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes] = await Promise.all([
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes] = await Promise.all([
             supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100),
@@ -254,18 +254,36 @@
             supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('profiles').select('id,full_name')
+            supabase.from('profiles').select('id,full_name'),
+            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100)
           ]);
+        // ...existing code...
+        // Map profiles for display names
+        const idToName = {};
+        (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
+
+        const now = Date.now();
+        const weekAgo = now - 7*24*60*60*1000;
+        const items = [];
+
+        // Add member video activities before other activities
+        (videosRes.data || []).forEach(v => {
+          if(!v || !v.user_id) return;
+          const t = new Date(v.created_at).getTime();
+          if (t < weekAgo || t > now) return;
+          items.push({
+            display_name: idToName[v.user_id] || 'Member',
+            action: 'Posted a video',
+            meta: v.caption ? `Video: ${v.caption}` : 'Video posted',
+            points: 5,
+            created_at: v.created_at
+          });
+        });
           // ...existing code...
 
 
           // Map profiles for display names
-          const idToName = {};
-          (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
 
-          const now = Date.now();
-          const weekAgo = now - 7*24*60*60*1000;
-          const items = [];
 
           (votesRes.data || []).forEach(v => {
             if(!v || !v.voter_id) return;
