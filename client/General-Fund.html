@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Community General Fund</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f7faf7; color: #222; margin: 0; padding: 2rem; }
+    .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 2rem; }
+    h1, h2 { color: #2e7d32; text-align: center; }
+    .fund-balance { font-size: 2rem; color: #2e7d32; text-align: center; margin: 1.5rem 0; }
+    .donate-btn { display: block; margin: 1.5rem auto; background: #3d95ce; color: #fff; font-size: 1.1rem; padding: 12px 28px; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; text-align: center; }
+    .aid-form { margin: 2rem 0; padding: 1rem; background: #f1f8e9; border-radius: 8px; }
+    .aid-form label { display: block; margin: 0.5rem 0 0.2rem; }
+    .aid-form input, .aid-form textarea { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 1rem; }
+    .aid-form button { background: #2e7d32; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .back-link { display: block; text-align: center; margin-top: 2rem; color: #2e7d32; text-decoration: none; }
+    .venmo-info { text-align: center; margin: 1rem 0; }
+    .venmo-qr { display: block; margin: 0.5rem auto; max-width: 180px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌱 Community General Fund</h1>
+    <div class="fund-balance">
+      Current Fund Balance: <span id="fund-balance">$0.00</span>
+    </div>
+    <h2>Donate to the Fund</h2>
+    <div class="venmo-info">
+      <p>Send your donation via Venmo:</p>
+      <a class="donate-btn" href="https://venmo.com/your-venmo-username" target="_blank">Donate with Venmo</a>
+      <!-- Optional: Add a QR code for Venmo -->
+      <img class="venmo-qr" src="/public/venmo-qr.png" alt="Venmo QR Code" />
+      <p style="font-size:0.95rem;color:#666;">(Scan QR code or click the button above)</p>
+    </div>
+    <h2>Request Aid</h2>
+    <form class="aid-form" id="aid-request-form">
+      <label for="member-name">Your Name</label>
+      <input type="text" id="member-name" name="member-name" required />
+      <label for="aid-amount">Amount Requested (USD)</label>
+      <input type="number" id="aid-amount" name="aid-amount" min="1" step="any" required />
+      <label for="aid-purpose">Purpose</label>
+      <textarea id="aid-purpose" name="aid-purpose" rows="3" required></textarea>
+      <button type="submit">Submit Aid Request</button>
+    </form>
+    <a class="back-link" href="main-menu.html">← Back to Menu</a>
+  </div>
+  <script type="module">
+    // Placeholder: Fetch and display fund balance (replace with real backend call)
+    document.getElementById('fund-balance').textContent = '$1,250.00';
+    // Placeholder: Handle aid request form submission
+    document.getElementById('aid-request-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Your aid request has been submitted for community review.');
+      this.reset();
+    });
+  </script>
+</body>
+</html>
