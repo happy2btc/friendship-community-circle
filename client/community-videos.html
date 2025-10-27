@@ -95,7 +95,7 @@
       const caption = document.getElementById('caption').value;
       if (!file) return;
       uploadStatus.textContent = 'Uploading...';
-      const user = supabase.auth.user();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         uploadStatus.textContent = 'You must be logged in.';
         return;
@@ -108,7 +108,12 @@
         uploadStatus.textContent = 'Upload failed: ' + uploadError.message;
         return;
       }
-      const { publicURL } = supabase.storage.from('member-videos').getPublicUrl(filePath).data;
+      const { data: urlData } = supabase.storage.from('member-videos').getPublicUrl(filePath);
+      const publicURL = urlData?.publicUrl;
+      if (!publicURL) {
+        uploadStatus.textContent = 'Could not get public URL for uploaded video.';
+        return;
+      }
       const { error: insertError } = await supabase
         .from('member_video')
         .insert([{ user_id: user.id, video_url: publicURL, caption }]);
