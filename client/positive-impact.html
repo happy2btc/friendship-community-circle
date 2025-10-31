@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Positive Community Impact</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2e7d32;
+    }
+    form {
+      display: grid;
+      gap: 1rem;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #2e7d32;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #276628;
+    }
+    .back-to-menu {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 1000;
+      background: #2e7d32;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .back-to-menu:hover {
+      background: #276628;
+    }
+  </style>
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    (async () => {
+      const { data: members, error } = await supabase.from('profiles').select('id, full_name');
+      const contributorField = document.getElementById('contributor');
+      if (error) {
+        console.error('Error fetching members:', error);
+        return;
+      }
+      members.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+      members.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.id;
+        option.textContent = member.full_name;
+        contributorField.appendChild(option);
+      });
+    })();
+  </script>
+</head>
+<body>
+  <a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
+  <div class="container">
+    <h1>Positive Community Impact</h1>
+    <form id="pci-form">
+      <label for="contributor">Contributor Name</label>
+      <select id="contributor" name="contributor" required>
+      </select>
+
+      <label for="type">Type of Contribution</label>
+      <select id="type" name="type" required>
+        <option value="time">Time Shared</option>
+        <option value="item">Item Donated</option>
+        <option value="money">Money Donated</option>
+      </select>
+
+      <label for="details">Details</label>
+      <textarea id="details" name="details" rows="3" required></textarea>
+
+      <label for="points">Points Awarded</label>
+      <input type="number" id="points" name="points" readonly>
+
+      <button type="submit">Submit Contribution</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('pci-form');
+    const typeField = document.getElementById('type');
+    const pointsField = document.getElementById('points');
+
+    // Enhanced point calculation logic
+    typeField.addEventListener('change', () => {
+      const type = typeField.value;
+      let points = 0;
+      if (type === 'time') {
+        const hours = prompt('Enter the number of hours contributed:');
+        points = parseInt(hours, 10) * 5; // 1 hour = 5 points
+      } else if (type === 'item') {
+        const utility = prompt('Rate the utility of the item (1-5):');
+        const effort = prompt('Rate the effort to acquire the item (1-5):');
+        points = parseInt(utility, 10) * parseInt(effort, 10) * 2; // Utility x Effort x 2
+      } else if (type === 'money') {
+        const amount = prompt('Enter the amount donated:');
+        points = parseInt(amount, 10) / 10; // $10 = 1 point
+      }
+      pointsField.value = points;
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const contributor = form.contributor.value;
+      const type = form.type.value;
+      const details = form.details.value;
+      const points = parseInt(form.points.value, 10);
+
+      // Simulate saving to database
+      console.log({ contributor, type, details, points });
+      alert('Contribution submitted successfully!');
+      form.reset();
+    });
+  </script>
+</body>
+</html>

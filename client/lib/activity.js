@@ -46,7 +46,8 @@ export function aggregateActivities({ votes, suggestions, comments, offerings, c
                 profile: 0,
                 circles_created: 0,
                 members_added: 0,
-                celebrations_posted: 0
+                celebrations_posted: 0,
+                item_points: 0
             };
         }
     }
@@ -136,6 +137,13 @@ export function aggregateActivities({ votes, suggestions, comments, offerings, c
             breakdown[c.user_id].celebrations_posted += 1;
         }
     });
+    // Item donations
+    contributions?.forEach(con => {
+        if (con.user_id !== builderId && con.type === 'item') {
+            initBreakdown(con.user_id);
+            breakdown[con.user_id].item_points = (breakdown[con.user_id].item_points || 0) + con.points;
+        }
+    });
 
     // Calculate total for each user
     const activity = {};
@@ -152,7 +160,8 @@ export function aggregateActivities({ votes, suggestions, comments, offerings, c
                 (breakdown[id].profile || 0) * 5 +
                 (breakdown[id].circles_created || 0) * 10 +
                 (breakdown[id].members_added || 0) * 2 +
-                (breakdown[id].celebrations_posted || 0) * 5;
+                (breakdown[id].celebrations_posted || 0) * 5 +
+                (breakdown[id].item_points || 0) * 3;
         }
     });
     return { activity, breakdown };
@@ -175,7 +184,8 @@ export async function getMemberActivities() {
                 profile: 0,
                 circles_created: 0,
                 members_added: 0,
-                celebrations_posted: 0
+                celebrations_posted: 0,
+                item_points: 0
             };
         }
     }
@@ -275,6 +285,13 @@ export async function getMemberActivities() {
             breakdown[userId].celebrations_posted += 1;
         }
     });
+    // Item donations
+    raw.contributions?.forEach(con => {
+        if (con.user_id !== builderId && con.type === 'item') {
+            initBreakdown(con.user_id);
+            breakdown[con.user_id].item_points = (breakdown[con.user_id].item_points || 0) + con.points;
+        }
+    });
     // Get all involved user IDs
     const userIds = Object.keys(breakdown).filter(id => id && id !== 'null');
     if (userIds.length === 0) return [];
@@ -299,7 +316,8 @@ export async function getMemberActivities() {
             (b.profile || 0) * 5 +
             (b.circles_created || 0) * 10 +
             (b.members_added || 0) * 2 +
-            (b.celebrations_posted || 0) * 5;
+            (b.celebrations_posted || 0) * 5 +
+            (b.item_points || 0) * 3;
         return {
             id,
             profile: idToProfile[id] || { full_name: id, avatar_url: '', personal_story: '' },

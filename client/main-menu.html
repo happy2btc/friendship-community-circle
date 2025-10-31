@@ -110,6 +110,22 @@
         min-width: 0;
       }
     }
+    .back-to-menu {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 1000;
+    background: #2e8b57;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  .back-to-menu:hover {
+    background: #276628;
+  }
   </style>
 </head>
 <body>
@@ -183,6 +199,7 @@
         <a href="submit-help.html">Submit Help Given</a>
         <a href="help-given.html">Help Given</a>
         <a href="mutual-aid.html">Mutual Aid</a>
+        <a href="positive-impact.html">Positive Community Impact</a>
       </div>
     </div>
   </nav>
@@ -591,7 +608,7 @@
     const contribByUser = {};
     contributionsRes.data?.forEach(con => {
       if (con.user_id !== builderId) {
-        if (!contribByUser[con.user_id]) contribByUser[con.user_id] = [];
+        contribByUser[con.user_id] = contribByUser[con.user_id] || [];
         contribByUser[con.user_id].push(con);
       }
     });
@@ -621,52 +638,37 @@
         }
       }
     });
-    // Circles created: credit by created_by (profile id)
-    if (Array.isArray(circlesRes.data)) {
-      circlesRes.data.forEach(c => {
-        const creatorId = c && c.created_by;
-        if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
-          initBreakdown(creatorId);
-          breakdown[creatorId].circles_created += 1;
-        }
-      });
-    } else if (circlesRes.data && typeof circlesRes.data === 'object' && circlesRes.data.created_by) {
-      const creatorId = circlesRes.data.created_by;
-      if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
-        initBreakdown(creatorId);
-        breakdown[creatorId].circles_created += 1;
-      }
-    }
-    // Members added
-    membersRes.data?.forEach(m => {
-      const userId = m.added_by || m.user_id;
-      if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
-        initBreakdown(userId);
-        breakdown[userId].members_added += 1;
+    // Circles created
+    circlesRes.data?.forEach(c => {
+      if (c.created_by && c.created_by !== builderId) {
+        initBreakdown(c.created_by);
+        breakdown[c.created_by].circles_created = (breakdown[c.created_by].circles_created || 0) + 1;
       }
     });
-    // Celebration wall posts
+    membersData?.forEach(m => {
+      if (m.added_by && m.added_by !== builderId) {
+        initBreakdown(m.added_by);
+        breakdown[m.added_by].members_added = (breakdown[m.added_by].members_added || 0) + 1;
+      }
+    });
     celebrationsRes.data?.forEach(c => {
-      const userId = c.user_id || c.creator_id;
-      if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
-        initBreakdown(userId);
-        breakdown[userId].celebrations_posted += 1;
+      if (c.user_id && c.user_id !== builderId) {
+        initBreakdown(c.user_id);
+        breakdown[c.user_id].celebrations_posted = (breakdown[c.user_id].celebrations_posted || 0) + 1;
       }
     });
-    // Events created
     eventsRes.data?.forEach(e => {
       const creatorId = e.created_by;
-      if (creatorId && typeof creatorId === 'string' && creatorId.trim() !== '' && creatorId !== builderId) {
+      if (creatorId && creatorId !== builderId) {
         initBreakdown(creatorId);
-        breakdown[creatorId].events_created += 1;
+        breakdown[creatorId].events_created = (breakdown[creatorId].events_created || 0) + 1;
       }
     });
-    // Events attended
     attendanceRes.data?.forEach(a => {
       const userId = a.user_id;
-      if (userId && typeof userId === 'string' && userId.trim() !== '' && userId !== builderId) {
+      if (userId && userId !== builderId) {
         initBreakdown(userId);
-        breakdown[userId].events_attended += 1;
+        breakdown[userId].events_attended = (breakdown[userId].events_attended || 0) + 1;
       }
     });
     // Writer's Wall: tally posts and points per author
@@ -1103,5 +1105,6 @@
   }
   startNotificationPolling();
 </script>
+<a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
 </body>
 </html>
