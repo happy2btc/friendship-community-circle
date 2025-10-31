@@ -684,6 +684,25 @@
             }
         });
 
+        // --- Load and display member email contacts ---
+        async function loadMemberEmails() {
+            const { data: profiles, error } = await supabase.from('profiles').select('full_name, email');
+            if (error) {
+                console.error('Error fetching member emails:', error);
+                return;
+            }
+
+            const emailList = document.getElementById('email-list');
+            profiles.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+            profiles.forEach(profile => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${profile.full_name} - ${profile.email}`;
+                emailList.appendChild(listItem);
+            });
+        }
+
+        loadMemberEmails();
+
         loadProfile();
     </script>
 </body>

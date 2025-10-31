@@ -803,7 +803,7 @@
         initBreak(r.helper_id);
         breakdown[r.helper_id].help_hours = (breakdown[r.helper_id].help_hours || 0) + Number(r.hours || 0);
         breakdown[r.helper_id].help_points = (breakdown[r.helper_id].help_points || 0) + (Number(r.hours || 0) * 5);
-        activity[r.helper_id] = (activity[r.helper_id] || 0) + (Number(r.hours || 0) * 5);
+        activity[r.helper_id] = (activity[r_helper_id] || 0) + (Number(r.hours || 0) * 5);
       }
     });
 

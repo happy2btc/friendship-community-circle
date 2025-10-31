@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Contact List</title>
+    <script type="module" src="/lib/supabase.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2e8b57;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Member Email Contact List</h1>
+        <ul id="email-list">
+            <!-- Emails will be dynamically populated here -->
+        </ul>
+    </div>
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+
+        async function loadMemberEmails() {
+            const { data: profiles, error } = await supabase.from('profiles').select('full_name, email');
+            if (error) {
+                console.error('Error fetching member emails:', error);
+                return;
+            }
+
+            const emailList = document.getElementById('email-list');
+            profiles.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+            profiles.forEach(profile => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${profile.full_name} - ${profile.email}`;
+                emailList.appendChild(listItem);
+            });
+        }
+
+        loadMemberEmails();
+    </script>
+</body>
+</html>
