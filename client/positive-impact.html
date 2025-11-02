@@ -65,6 +65,8 @@
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
+    console.log('Supabase object:', supabase); // Debugging line to check if supabase is defined
+
     (async () => {
       const { data: members, error } = await supabase.from('profiles').select('id, full_name');
       const contributorField = document.getElementById('contributor');
@@ -80,35 +82,7 @@
         contributorField.appendChild(option);
       });
     })();
-  </script>
-</head>
-<body>
-  <a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
-  <div class="container">
-    <h1>Positive Community Impact</h1>
-    <form id="pci-form">
-      <label for="contributor">Contributor Name</label>
-      <select id="contributor" name="contributor" required>
-      </select>
 
-      <label for="type">Type of Contribution</label>
-      <select id="type" name="type" required>
-        <option value="time">Time Shared</option>
-        <option value="item">Item Donated</option>
-        <option value="money">Money Donated</option>
-      </select>
-
-      <label for="details">Details</label>
-      <textarea id="details" name="details" rows="3" required></textarea>
-
-      <label for="points">Points Awarded</label>
-      <input type="number" id="points" name="points" readonly>
-
-      <button type="submit">Submit Contribution</button>
-    </form>
-  </div>
-
-  <script>
     const form = document.getElementById('pci-form');
     const typeField = document.getElementById('type');
     const pointsField = document.getElementById('points');
@@ -139,11 +113,69 @@
       const details = form.details.value;
       const points = parseInt(form.points.value, 10);
 
-      // Simulate saving to database
-      console.log({ contributor, type, details, points });
-      alert('Contribution submitted successfully!');
-      form.reset();
+      // Insert contribution into the positive_impact table
+      const { error } = await supabase.from('positive_impact').insert([
+        {
+          contributor_id: contributor,
+          type: type,
+          details: details,
+          points_awarded: points,
+        },
+      ]);
+
+      if (error) {
+        console.error('Error saving contribution:', error);
+        alert('Failed to save contribution. Please try again.');
+      } else {
+        alert('Contribution submitted successfully!');
+        form.reset();
+      }
     });
   </script>
+</head>
+<body>
+  <a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
+  <div class="container">
+    <h1>Positive Community Impact</h1>
+    <form id="pci-form">
+      <label for="contributor">Contributor Name</label>
+      <select id="contributor" name="contributor" required>
+      </select>
+
+      <label for="type">Type of Contribution</label>
+      <select id="type" name="type" required>
+        <option value="time">Time Shared</option>
+        <option value="item">Item Donated</option>
+        <option value="money">Money Donated</option>
+      </select>
+
+      <label for="details">Details</label>
+      <textarea id="details" name="details" rows="3" required></textarea>
+
+      <label for="points">Points Awarded</label>
+      <input type="number" id="points" name="points" readonly>
+
+      <button type="submit">Submit Contribution</button>
+    </form>
+    <p style="font-size: 0.9em; color: #555; margin-top: 10px;">
+      <strong>Utility Rating:</strong>
+      <ul>
+        <li><strong>1:</strong> Low utility (e.g., decorative items, non-essential) - 2 points.</li>
+        <li><strong>2:</strong> Moderate utility (e.g., slightly useful, but not impactful) - 4 points.</li>
+        <li><strong>3:</strong> Average utility (e.g., useful for daily tasks) - 6 points.</li>
+        <li><strong>4:</strong> High utility (e.g., important for well-being or productivity) - 8 points.</li>
+        <li><strong>5:</strong> Essential utility (e.g., critical supplies, life-enhancing) - 10 points.</li>
+      </ul>
+      <strong>Effort Rating:</strong>
+      <ul>
+        <li><strong>1:</strong> Minimal effort (e.g., easily available, inexpensive) - Multiplier: x1.</li>
+        <li><strong>2:</strong> Low effort (e.g., requires some planning or cost) - Multiplier: x2.</li>
+        <li><strong>3:</strong> Moderate effort (e.g., requires time, moderate cost) - Multiplier: x3.</li>
+        <li><strong>4:</strong> High effort (e.g., significant time or cost) - Multiplier: x4.</li>
+        <li><strong>5:</strong> Exceptional effort (e.g., rare, expensive, or time-intensive) - Multiplier: x5.</li>
+      </ul>
+      <strong>Point Calculation:</strong> Utility points × Effort multiplier × 2.
+    </p>
+  </div>
 </body>
 </html>
