@@ -155,107 +155,54 @@
       <p>"Alone we can do so little; together we can do so much." - Helen Keller</p>
     </div>
 
-    <div class="stats-section">
-      <h2 style="color: #6b4f1d; margin-bottom: 1rem;">Community Help Impact</h2>
-      <div class="stats-grid" id="help-stats">
-        <div class="stat-item">
-          <span class="stat-number" id="total-helpers">0</span>
-          <span class="stat-label">Active Helpers</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number" id="total-hours">0</span>
-          <span class="stat-label">Help Hours Given</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number" id="total-requests">0</span>
-          <span class="stat-label">Requests Helped</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-number" id="categories-count">6</span>
-          <span class="stat-label">Help Categories</span>
-        </div>
-      </div>
-    </div>
-
     <div class="help-grid">
       <div class="help-card" onclick="window.location.href='help-request.html'">
         <span class="icon">📝</span>
         <h3>Request Help</h3>
-        <p>Need assistance with forms, applications, or understanding community processes? Submit a help request and our community helpers will assist you.</p>
+        <p>Need assistance with forms, applications, or understanding community processes? Submit a help request.</p>
         <button class="action-btn">Get Help Now</button>
       </div>
 
       <div class="help-card" onclick="window.location.href='helper-directory.html'">
         <span class="icon">👥</span>
         <h3>Helper Directory</h3>
-        <p>Meet our dedicated community helpers. Browse their specialties and connect with someone who can assist you with your specific needs.</p>
+        <p>Browse community helpers and their specialties. Connect with someone who can assist you.</p>
         <button class="action-btn">Find Helpers</button>
       </div>
 
       <div class="help-card" onclick="window.location.href='help-given.html'">
         <span class="icon">📊</span>
         <h3>Help History</h3>
-        <p>View all the wonderful help that has been given in our community. See how members are supporting each other and making a difference.</p>
+        <p>View help that has been given in our community. See how members are supporting each other.</p>
         <button class="action-btn secondary">View History</button>
       </div>
 
       <div class="help-card" onclick="window.location.href='submit-help.html'">
         <span class="icon">🤝</span>
         <h3>Record Help Given</h3>
-        <p>Have you helped someone in the community? Record your contribution to help build our collective impact tracking.</p>
+        <p>Have you helped someone in the community? Record your contribution to help build our collective impact.</p>
         <button class="action-btn secondary">Record Help</button>
       </div>
 
       <div class="help-card" onclick="window.location.href='help-resources.html'">
         <span class="icon">📚</span>
         <h3>Help Resources</h3>
-        <p>Access guides, templates, and resources to help you help others. Learn best practices for providing effective community assistance.</p>
+        <p>Access guides, templates, and resources to help you help others.</p>
         <button class="action-btn">View Resources</button>
       </div>
 
       <div class="help-card" onclick="window.location.href='help-categories.html'">
         <span class="icon">🏷️</span>
         <h3>Help Categories</h3>
-        <p>Explore different types of help available in our community, from administrative support to technical assistance and emotional guidance.</p>
+        <p>Explore different types of help available in our community.</p>
         <button class="action-btn secondary">Browse Categories</button>
       </div>
     </div>
 
-    <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e8dcc0;">
-      <p style="color: #8b6f47; font-style: italic;">
-        "The best way to find yourself is to lose yourself in the service of others." - Mahatma Gandhi
-      </p>
-      <p style="color: #6b4f1d; margin-top: 1rem;">
-        Every act of help strengthens our community bonds and creates ripples of positive change.
-      </p>
     </div>
-  </div>
 
   <script type="module">
-    import { supabase } from '/lib/supabase.js';
-
-    async function loadHelpStats() {
-      try {
-        // Get total helpers (unique helper_ids from help_given table)
-        const { data: helpRecords } = await supabase
-          .from('help_given')
-          .select('helper_id, hours');
-
-        if (helpRecords) {
-          const uniqueHelpers = new Set(helpRecords.map(record => record.helper_id));
-          document.getElementById('total-helpers').textContent = uniqueHelpers.size;
-
-          const totalHours = helpRecords.reduce((sum, record) => sum + (Number(record.hours) || 0), 0);
-          document.getElementById('total-hours').textContent = Math.round(totalHours);
-
-          document.getElementById('total-requests').textContent = helpRecords.length;
-        }
-      } catch (error) {
-        console.error('Error loading help stats:', error);
-      }
-    }
-
-    loadHelpStats();
+    // Help Center functionality can be added here as the community grows
   </script>
 </body>
 </html>

@@ -270,72 +270,7 @@
 
     // Sample helper data - in a real app, this would come from a database
     const sampleHelpers = [
-      {
-        id: 1,
-        name: "Sarah Johnson",
-        specialty: "Form Completion & Filing",
-        skills: ["Tax Forms", "Government Applications", "Documentation"],
-        experience: "5+ years",
-        help_count: 47,
-        description: "Specialized in helping with complex forms and bureaucratic processes. Patient and thorough with attention to detail.",
-        availability: "Weekends & Evenings",
-        contact_preference: "email"
-      },
-      {
-        id: 2,
-        name: "Marcus Chen",
-        specialty: "Technical Support",
-        skills: ["Computer Setup", "Software Troubleshooting", "Online Applications"],
-        experience: "8+ years",
-        help_count: 89,
-        description: "Tech enthusiast who loves solving digital puzzles. From basic computer setup to complex software issues.",
-        availability: "Flexible",
-        contact_preference: "chat"
-      },
-      {
-        id: 3,
-        name: "Elena Rodriguez",
-        specialty: "Translation Services",
-        skills: ["Spanish-English", "Document Translation", "Cultural Guidance"],
-        experience: "10+ years",
-        help_count: 156,
-        description: "Bilingual support for forms, applications, and communication. Understanding of cultural contexts and requirements.",
-        availability: "Weekdays",
-        contact_preference: "phone"
-      },
-      {
-        id: 4,
-        name: "David Thompson",
-        specialty: "Administrative Processes",
-        skills: ["Business Applications", "License Renewals", "Record Keeping"],
-        experience: "12+ years",
-        help_count: 203,
-        description: "Former administrative professional with extensive experience in business and government processes.",
-        availability: "Monday-Friday",
-        contact_preference: "email"
-      },
-      {
-        id: 5,
-        name: "Priya Patel",
-        specialty: "Guidance & Advice",
-        skills: ["Career Counseling", "Education Planning", "Life Transitions"],
-        experience: "7+ years",
-        help_count: 78,
-        description: "Support with life decisions, career planning, and navigating complex situations with empathy and wisdom.",
-        availability: "Evenings",
-        contact_preference: "in-person"
-      },
-      {
-        id: 6,
-        name: "James Wilson",
-        specialty: "Document Preparation",
-        skills: ["Resume Writing", "Cover Letters", "Personal Statements"],
-        experience: "6+ years",
-        help_count: 92,
-        description: "Help crafting compelling documents for applications, jobs, and personal milestones.",
-        availability: "Weekends",
-        contact_preference: "email"
-      }
+      // Helper data will be populated from your community database
     ];
 
     function renderHelpers(helpers) {
@@ -415,7 +350,7 @@
     // Initialize
     async function init() {
       // In a real app, fetch from database
-      // For now, use sample data
+      // For now, show empty state
       allHelpers = sampleHelpers;
       renderHelpers(allHelpers);
 
