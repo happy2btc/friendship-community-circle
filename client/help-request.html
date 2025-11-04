@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📝 Request Help</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .request-form {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.2em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-style: italic;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #6b4f1d;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e8dcc0;
+      border-radius: 6px;
+      font-size: 1em;
+      font-family: inherit;
+      transition: border-color 0.3s ease;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #6b4f1d;
+      box-shadow: 0 0 0 3px rgba(107, 79, 29, 0.1);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .urgency-options {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .urgency-option {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px;
+      border: 2px solid #e8dcc0;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #f8f5f0;
+    }
+    .urgency-option:hover {
+      border-color: #6b4f1d;
+      background: #fff;
+    }
+    .urgency-option.selected {
+      border-color: #2e8b57;
+      background: #f0f8f0;
+      color: #2e8b57;
+    }
+    .submit-btn {
+      background: linear-gradient(90deg, #2e8b57 0%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 16px 32px;
+      font-weight: bold;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .submit-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 0%, #2e8b57 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .status-message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 1rem;
+      display: none;
+    }
+    .status-message.success {
+      background: #f0f8f0;
+      color: #2e8b57;
+      border: 1px solid #2e8b57;
+    }
+    .status-message.error {
+      background: #fef0f0;
+      color: #d32f2f;
+      border: 1px solid #d32f2f;
+    }
+    .help-tips {
+      background: #f8f5f0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid #6b4f1d;
+    }
+    .help-tips h3 {
+      color: #6b4f1d;
+      margin-top: 0;
+    }
+    .help-tips ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    .help-tips li {
+      margin-bottom: 0.5rem;
+      color: #8b6f47;
+    }
+  </style>
+</head>
+<body>
+  <div class="request-form">
+    <a href="help-center.html" class="menu-btn">🔙 Back to Help Center</a>
+
+    <div class="header">
+      <h1>📝 Request Help</h1>
+      <p>Let our community support you with forms, applications, and administrative needs</p>
+    </div>
+
+    <div class="help-tips">
+      <h3>💡 Tips for Getting Help</h3>
+      <ul>
+        <li><strong>Be specific:</strong> Describe exactly what form or process you need help with</li>
+        <li><strong>Include details:</strong> Mention deadlines, specific requirements, or challenges you're facing</li>
+        <li><strong>Set expectations:</strong> Choose the right urgency level so helpers can prioritize appropriately</li>
+        <li><strong>Follow up:</strong> Once someone offers help, respond promptly to keep the momentum going</li>
+      </ul>
+    </div>
+
+    <form id="help-request-form">
+      <div class="form-group">
+        <label for="requester-name">Your Name *</label>
+        <input type="text" id="requester-name" name="requester_name" required
+               placeholder="Enter your full name">
+      </div>
+
+      <div class="form-group">
+        <label for="requester-email">Email Address *</label>
+        <input type="email" id="requester-email" name="requester_email" required
+               placeholder="your.email@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="help-category">Type of Help Needed *</label>
+        <select id="help-category" name="help_category" required>
+          <option value="">Select a category...</option>
+          <option value="forms">📋 Form Completion & Filing</option>
+          <option value="applications">📝 Applications & Registrations</option>
+          <option value="documentation">📄 Document Preparation</option>
+          <option value="technical">💻 Technical Support</option>
+          <option value="administrative">🏢 Administrative Processes</option>
+          <option value="guidance">🧭 Guidance & Advice</option>
+          <option value="translation">🌐 Translation Services</option>
+          <option value="other">❓ Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="help-title">Brief Title for Your Request *</label>
+        <input type="text" id="help-title" name="help_title" required
+               placeholder="e.g., Help with Tax Form 1040, Community Grant Application">
+      </div>
+
+      <div class="form-group">
+        <label>Urgency Level *</label>
+        <div class="urgency-options">
+          <div class="urgency-option" data-value="low">
+            <strong>🟢 Low</strong><br>
+            <small>Can wait 1-2 weeks</small>
+          </div>
+          <div class="urgency-option" data-value="medium">
+            <strong>🟡 Medium</strong><br>
+            <small>Need help within a week</small>
+          </div>
+          <div class="urgency-option" data-value="high">
+            <strong>🔴 High</strong><br>
+            <small>Urgent - deadline approaching</small>
+          </div>
+          <div class="urgency-option" data-value="critical">
+            <strong>🚨 Critical</strong><br>
+            <small>Immediate assistance needed</small>
+          </div>
+        </div>
+        <input type="hidden" id="urgency" name="urgency" required>
+      </div>
+
+      <div class="form-group">
+        <label for="help-description">Detailed Description *</label>
+        <textarea id="help-description" name="help_description" required
+                  placeholder="Please describe:
+• What specific form or process you need help with
+• What you've already tried
+• Any deadlines or time constraints
+• Specific questions you have
+• What outcome you're hoping for"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="preferred-contact">Preferred Contact Method</label>
+        <select id="preferred-contact" name="preferred_contact">
+          <option value="email">Email</option>
+          <option value="phone">Phone Call</option>
+          <option value="chat">Community Chat</option>
+          <option value="in-person">In-person Meeting</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="additional-info">Additional Information</label>
+        <textarea id="additional-info" name="additional_info"
+                  placeholder="Any other relevant details, links to forms, or special circumstances..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        🚀 Submit Help Request
+      </button>
+    </form>
+
+    <div id="status-message" class="status-message"></div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    // Handle urgency selection
+    document.querySelectorAll('.urgency-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.urgency-option').forEach(opt => opt.classList.remove('selected'));
+        this.classList.add('selected');
+        document.getElementById('urgency').value = this.dataset.value;
+      });
+    });
+
+    // Handle form submission
+    document.getElementById('help-request-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submit-btn');
+      const statusMessage = document.getElementById('status-message');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const formData = new FormData(this);
+        const requestData = {
+          requester_name: formData.get('requester_name'),
+          requester_email: formData.get('requester_email'),
+          help_category: formData.get('help_category'),
+          help_title: formData.get('help_title'),
+          urgency: formData.get('urgency'),
+          help_description: formData.get('help_description'),
+          preferred_contact: formData.get('preferred_contact'),
+          additional_info: formData.get('additional_info'),
+          status: 'open',
+          created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+          .from('help_requests')
+          .insert([requestData]);
+
+        if (error) throw error;
+
+        statusMessage.className = 'status-message success';
+        statusMessage.textContent = '✅ Your help request has been submitted successfully! Community helpers will reach out to you soon.';
+        statusMessage.style.display = 'block';
+
+        // Reset form
+        this.reset();
+        document.querySelectorAll('.urgency-option').forEach(opt => opt.classList.remove('selected'));
+        document.getElementById('urgency').value = '';
+
+        // Scroll to status message
+        statusMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      } catch (error) {
+        console.error('Error submitting help request:', error);
+        statusMessage.className = 'status-message error';
+        statusMessage.textContent = `❌ Error submitting request: ${error.message}`;
+        statusMessage.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🚀 Submit Help Request';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Help Resources</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .resources {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.2em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-style: italic;
+    }
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .resource-card {
+      background: linear-gradient(135deg, #f8f5f0 0%, #fff 100%);
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .resource-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-color: #6b4f1d;
+    }
+    .resource-card h3 {
+      color: #6b4f1d;
+      margin-bottom: 0.5rem;
+      font-size: 1.2em;
+    }
+    .resource-card p {
+      color: #666;
+      margin-bottom: 1rem;
+      font-size: 0.95em;
+    }
+    .resource-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .resource-tag {
+      background: #e8dcc0;
+      color: #6b4f1d;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    .resource-link {
+      background: linear-gradient(90deg, #2e8b57 0%, #6b4f1d 100%);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    .resource-link:hover {
+      background: linear-gradient(90deg, #6b4f1d 0%, #2e8b57 100%);
+      transform: scale(1.05);
+    }
+    .guide-section {
+      background: #f8f5f0;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid #6b4f1d;
+    }
+    .guide-section h2 {
+      color: #6b4f1d;
+      margin-bottom: 1rem;
+      font-size: 1.5em;
+    }
+    .guide-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .guide-item {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 6px;
+      border: 1px solid #e8dcc0;
+    }
+    .guide-item h4 {
+      color: #2e8b57;
+      margin-bottom: 0.5rem;
+    }
+    .guide-item ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    .guide-item li {
+      margin-bottom: 0.5rem;
+      color: #666;
+      font-size: 0.9em;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .download-section {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, #f0f8f0 0%, #fff 100%);
+      border-radius: 8px;
+      border: 2px solid #2e8b57;
+    }
+    .download-section h3 {
+      color: #2e8b57;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="resources">
+    <a href="help-center.html" class="menu-btn">🔙 Back to Help Center</a>
+
+    <div class="header">
+      <h1>📚 Help Resources</h1>
+      <p>Guides, templates, and tools to help you help others effectively</p>
+    </div>
+
+    <div class="resource-grid">
+      <div class="resource-card">
+        <h3>📋 Form Assistance Guide</h3>
+        <p>Comprehensive guide for helping with government and administrative forms</p>
+        <div class="resource-tags">
+          <span class="resource-tag">Forms</span>
+          <span class="resource-tag">Government</span>
+          <span class="resource-tag">Beginners</span>
+        </div>
+        <a href="#form-guide" class="resource-link">📖 Read Guide</a>
+      </div>
+
+      <div class="resource-card">
+        <h3>💻 Technical Support Checklist</h3>
+        <p>Step-by-step checklist for providing effective technical assistance</p>
+        <div class="resource-tags">
+          <span class="resource-tag">Technology</span>
+          <span class="resource-tag">Checklist</span>
+          <span class="resource-tag">Troubleshooting</span>
+        </div>
+        <a href="#tech-checklist" class="resource-link">📋 View Checklist</a>
+      </div>
+
+      <div class="resource-card">
+        <h3>🗣️ Communication Best Practices</h3>
+        <p>How to communicate effectively when helping others</p>
+        <div class="resource-tags">
+          <span class="resource-tag">Communication</span>
+          <span class="resource-tag">Empathy</span>
+          <span class="resource-tag">Support</span>
+        </div>
+        <a href="#communication-guide" class="resource-link">💬 Learn More</a>
+      </div>
+
+      <div class="resource-card">
+        <h3>📄 Document Templates</h3>
+        <p>Ready-to-use templates for common helping scenarios</p>
+        <div class="resource-tags">
+          <span class="resource-tag">Templates</span>
+          <span class="resource-tag">Documents</span>
+          <span class="resource-tag">Resources</span>
+        </div>
+        <a href="#templates" class="resource-link">📝 View Templates</a>
+      </div>
+
+      <div class="resource-card">
+        <h3>🌐 Translation Resources</h3>
+        <p>Tools and tips for providing translation assistance</p>
+        <div class="resource-tags">
+          <span class="resource-tag">Translation</span>
+          <span class="resource-tag">Multilingual</span>
+          <span class="resource-tag">Cultural</span>
+        </div>
+        <a href="#translation-resources" class="resource-link">🌍 Explore</a>
+      </div>
+
+      <div class="resource-card">
+        <h3>🎯 Goal Setting Framework</h3>
+        <p>Framework for setting and achieving helping goals</p>
+        <div class="resource-tags">
+          <span class="resource-tag">Planning</span>
+          <span class="resource-tag">Goals</span>
+          <span class="resource-tag">Strategy</span>
+        </div>
+        <a href="#goal-framework" class="resource-link">🎯 Get Framework</a>
+      </div>
+    </div>
+
+    <div id="form-guide" class="guide-section">
+      <h2>📋 Form Assistance Guide</h2>
+      <div class="guide-content">
+        <div class="guide-item">
+          <h4>Before You Begin</h4>
+          <ul>
+            <li>Verify the form's authenticity and current version</li>
+            <li>Check for any prerequisites or required documents</li>
+            <li>Understand the person's eligibility and situation</li>
+            <li>Review deadlines and processing times</li>
+          </ul>
+        </div>
+        <div class="guide-item">
+          <h4>During Assistance</h4>
+          <ul>
+            <li>Read each question carefully together</li>
+            <li>Explain technical terms in simple language</li>
+            <li>Double-check all information for accuracy</li>
+            <li>Take breaks if the process becomes overwhelming</li>
+          </ul>
+        </div>
+        <div class="guide-item">
+          <h4>After Completion</h4>
+          <ul>
+            <li>Review the completed form together</li>
+            <li>Make copies for records</li>
+            <li>Explain next steps and what to expect</li>
+            <li>Provide contact information for follow-up questions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="tech-checklist" class="guide-section">
+      <h2>💻 Technical Support Checklist</h2>
+      <div class="guide-content">
+        <div class="guide-item">
+          <h4>Initial Assessment</h4>
+          <ul>
+            <li>What's the problem? When did it start?</li>
+            <li>What were you doing when it occurred?</li>
+            <li>Have you tried any troubleshooting steps?</li>
+            <li>What device/software/version are you using?</li>
+          </ul>
+        </div>
+        <div class="guide-item">
+          <h4>Basic Troubleshooting</h4>
+          <ul>
+            <li>Restart the device/application</li>
+            <li>Check internet connection</li>
+            <li>Clear cache and cookies</li>
+            <li>Update software and drivers</li>
+          </ul>
+        </div>
+        <div class="guide-item">
+          <h4>Advanced Steps</h4>
+          <ul>
+            <li>Run antivirus/malware scans</li>
+            <li>Check system resources (disk space, memory)</li>
+            <li>Test with different browsers/devices</li>
+            <li>Consult official documentation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="communication-guide" class="guide-section">
+      <h2>🗣️ Communication Best Practices</h2>
+      <div class="guide-content">
+        <div class="guide-item">
+          <h4>Active Listening</h4>
+          <ul>
+            <li>Give your full attention</li>
+            <li>Ask clarifying questions</li>
+            <li>Paraphrase to show understanding</li>
+            <li>Avoid interrupting</li>
+          </ul>
+        </div>
+        <div class="guide-item">
+          <h4>Empathetic Response</h4>
+          <ul>
+            <li>Acknowledge feelings</li>
+            <li>Show genuine concern</li>
+            <li>Use supportive language</li>
+            <li>Respect privacy and confidentiality</li>
+          </ul>
+        </div>
+        <div class="guide-item">
+          <h4>Clear Communication</h4>
+          <ul>
+            <li>Use simple, jargon-free language</li>
+            <li>Break down complex information</li>
+            <li>Confirm understanding</li>
+            <li>Provide written summaries when helpful</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="download-section">
+      <h3>📥 Downloadable Resources</h3>
+      <p>Get printable checklists, templates, and reference guides to use in your helping work.</p>
+      <button class="menu-btn" onclick="alert('Download functionality would be implemented here - PDFs, checklists, and templates would be available for download.')">
+        📥 Download Resource Pack
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
