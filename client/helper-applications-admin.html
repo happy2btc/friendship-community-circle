@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👥 Helper Applications Admin</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .admin-panel {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.2em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-style: italic;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #f8f5f0 0%, #fff 100%);
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #2e8b57;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      color: #8b6f47;
+      font-size: 0.9em;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #f8f5f0;
+      border-radius: 8px;
+    }
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .filter-group label {
+      display: block;
+      font-weight: bold;
+      color: #6b4f1d;
+      margin-bottom: 0.5rem;
+    }
+    .filter-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #e8dcc0;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    .applications-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .application-card {
+      background: #fff;
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .application-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: #6b4f1d;
+    }
+    .application-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .applicant-info h3 {
+      margin: 0 0 0.5rem 0;
+      color: #6b4f1d;
+    }
+    .applicant-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-approved {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .status-rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status-contacted {
+      background: #d4edda;
+      color: #155724;
+    }
+    .application-content {
+      margin-bottom: 1rem;
+    }
+    .skills-section {
+      margin-bottom: 1rem;
+    }
+    .skills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .skill-tag {
+      background: #e8dcc0;
+      color: #6b4f1d;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    .application-text {
+      background: #f8f5f0;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+    .application-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9em;
+    }
+    .btn-approve {
+      background: #28a745;
+      color: #fff;
+    }
+    .btn-approve:hover {
+      background: #218838;
+    }
+    .btn-reject {
+      background: #dc3545;
+      color: #fff;
+    }
+    .btn-reject:hover {
+      background: #c82333;
+    }
+    .btn-contact {
+      background: #17a2b8;
+      color: #fff;
+    }
+    .btn-contact:hover {
+      background: #138496;
+    }
+    .btn-email {
+      background: #6b4f1d;
+      color: #fff;
+    }
+    .btn-email:hover {
+      background: #5a3f15;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #8b6f47;
+    }
+    .no-applications {
+      text-align: center;
+      padding: 3rem;
+      color: #8b6f47;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-panel">
+    <a href="main-menu.html" class="menu-btn">🔙 Back to Menu</a>
+
+    <div class="header">
+      <h1>👥 Helper Applications Admin</h1>
+      <p>Review and manage helper applications from your community</p>
+    </div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <span class="stat-number" id="total-apps">0</span>
+        <span class="stat-label">Total Applications</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="pending-apps">0</span>
+        <span class="stat-label">Pending Review</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="approved-apps">0</span>
+        <span class="stat-label">Approved</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="contacted-apps">0</span>
+        <span class="stat-label">Contacted</span>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label for="status-filter">Filter by Status</label>
+        <select id="status-filter">
+          <option value="">All Applications</option>
+          <option value="pending">Pending Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="contacted">Contacted</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="skill-filter">Filter by Skills</label>
+        <select id="skill-filter">
+          <option value="">All Skills</option>
+          <option value="forms">Form Assistance</option>
+          <option value="technical">Technical Help</option>
+          <option value="administrative">Administrative</option>
+          <option value="guidance">Guidance & Advice</option>
+          <option value="translation">Translation</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="sort-filter">Sort By</label>
+        <select id="sort-filter">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name">Name (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="applications-container">
+      <div class="loading">Loading applications...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    let allApplications = [];
+
+    function renderStats(applications) {
+      const total = applications.length;
+      const pending = applications.filter(app => app.status === 'pending').length;
+      const approved = applications.filter(app => app.status === 'approved').length;
+      const contacted = applications.filter(app => app.status === 'contacted').length;
+
+      document.getElementById('total-apps').textContent = total;
+      document.getElementById('pending-apps').textContent = pending;
+      document.getElementById('approved-apps').textContent = approved;
+      document.getElementById('contacted-apps').textContent = contacted;
+    }
+
+    function renderApplications(applications) {
+      const container = document.getElementById('applications-container');
+
+      if (applications.length === 0) {
+        container.innerHTML = '<div class="no-applications">No applications found matching your filters.</div>';
+        return;
+      }
+
+      container.innerHTML = '<div class="applications-grid">' +
+        applications.map(app => `
+          <div class="application-card" data-id="${app.id}">
+            <div class="application-header">
+              <div class="applicant-info">
+                <h3>${app.helper_name}</h3>
+                <div class="applicant-details">
+                  <div class="detail-item">📧 ${app.helper_email}</div>
+                  ${app.helper_phone ? `<div class="detail-item">📱 ${app.helper_phone}</div>` : ''}
+                  <div class="detail-item">📅 ${new Date(app.created_at).toLocaleDateString()}</div>
+                </div>
+              </div>
+              <div class="status-badge status-${app.status}">${app.status}</div>
+            </div>
+
+            <div class="application-content">
+              <div class="skills-section">
+                <strong>Skills:</strong>
+                <div class="skills-list">
+                  ${app.helper_skills.split(', ').map(skill =>
+                    `<span class="skill-tag">${skill.trim()}</span>`
+                  ).join('')}
+                </div>
+              </div>
+
+              ${app.experience ? `<div><strong>Experience:</strong> ${app.experience}</div>` : ''}
+              ${app.availability ? `<div><strong>Availability:</strong> ${app.availability}</div>` : ''}
+
+              ${app.background ? `
+                <div class="application-text">
+                  <strong>Background:</strong><br>
+                  ${app.background}
+                </div>
+              ` : ''}
+
+              ${app.motivation ? `
+                <div class="application-text">
+                  <strong>Motivation:</strong><br>
+                  ${app.motivation}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="application-actions">
+              <button class="action-btn btn-email" onclick="window.location.href='mailto:${app.helper_email}?subject=Helper Application Review'">
+                📧 Email
+              </button>
+              ${app.status === 'pending' ? `
+                <button class="action-btn btn-approve" onclick="updateStatus('${app.id}', 'approved')">
+                  ✅ Approve
+                </button>
+                <button class="action-btn btn-contact" onclick="updateStatus('${app.id}', 'contacted')">
+                  📞 Contact
+                </button>
+                <button class="action-btn btn-reject" onclick="updateStatus('${app.id}', 'rejected')">
+                  ❌ Reject
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `).join('') +
+      '</div>';
+    }
+
+    async function updateStatus(applicationId, newStatus) {
+      try {
+        const { error } = await supabase
+          .from('helper_applications')
+          .update({
+            status: newStatus,
+            reviewed_at: new Date().toISOString()
+          })
+          .eq('id', applicationId);
+
+        if (error) throw error;
+
+        // Refresh the applications list
+        await loadApplications();
+      } catch (error) {
+        console.error('Error updating application status:', error);
+        alert('Error updating application status: ' + error.message);
+      }
+    }
+
+    function filterApplications() {
+      const statusFilter = document.getElementById('status-filter').value;
+      const skillFilter = document.getElementById('skill-filter').value;
+      const sortFilter = document.getElementById('sort-filter').value;
+
+      let filtered = allApplications.filter(app => {
+        const matchesStatus = !statusFilter || app.status === statusFilter;
+        const matchesSkill = !skillFilter || app.helper_skills.toLowerCase().includes(skillFilter.toLowerCase());
+        return matchesStatus && matchesSkill;
+      });
+
+      // Sort applications
+      filtered.sort((a, b) => {
+        switch (sortFilter) {
+          case 'oldest':
+            return new Date(a.created_at) - new Date(b.created_at);
+          case 'name':
+            return a.helper_name.localeCompare(b.helper_name);
+          case 'newest':
+          default:
+            return new Date(b.created_at) - new Date(a.created_at);
+        }
+      });
+
+      renderApplications(filtered);
+    }
+
+    async function loadApplications() {
+      try {
+        const { data: applications, error } = await supabase
+          .from('helper_applications')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        allApplications = applications || [];
+        renderStats(allApplications);
+        renderApplications(allApplications);
+      } catch (error) {
+        console.error('Error loading applications:', error);
+        document.getElementById('applications-container').innerHTML =
+          '<div class="no-applications">Error loading applications: ' + error.message + '</div>';
+      }
+    }
+
+    // Make updateStatus function global so onclick can access it
+    window.updateStatus = updateStatus;
+
+    // Initialize
+    async function init() {
+      await loadApplications();
+
+      // Add event listeners for filters
+      document.getElementById('status-filter').addEventListener('change', filterApplications);
+      document.getElementById('skill-filter').addEventListener('change', filterApplications);
+      document.getElementById('sort-filter').addEventListener('change', filterApplications);
+    }
+
+    init();
+  </script>
+</body>
+</html>
