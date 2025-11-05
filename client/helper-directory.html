@@ -229,6 +229,7 @@
           <option value="administrative">🏢 Administrative Processes</option>
           <option value="guidance">🧭 Guidance & Advice</option>
           <option value="translation">🌐 Translation Services</option>
+          <option value="general">🤝 General Support</option>
         </select>
       </div>
 
@@ -307,7 +308,7 @@
             ${helper.skills.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
           </div>
 
-          <a href="mailto:helper${helper.id}@community.org?subject=Help Request - ${helper.specialty}"
+          <a href="mailto:${helper.email}?subject=Help Request - ${helper.specialty}"
              class="contact-btn">
             📧 Contact ${helper.name.split(' ')[0]}
           </a>
@@ -322,7 +323,8 @@
 
       let filtered = allHelpers.filter(helper => {
         const matchesCategory = !categoryFilter ||
-          helper.specialty.toLowerCase().includes(categoryFilter.replace('-', ' '));
+          helper.specialty.toLowerCase().includes(categoryFilter.replace('-', ' ')) ||
+          (categoryFilter === 'general' && helper.specialty === 'General Support');
         const matchesSearch = !searchFilter ||
           helper.name.toLowerCase().includes(searchFilter) ||
           helper.skills.some(skill => skill.toLowerCase().includes(searchFilter)) ||
@@ -349,15 +351,67 @@
 
     // Initialize
     async function init() {
-      // In a real app, fetch from database
-      // For now, show empty state
-      allHelpers = sampleHelpers;
-      renderHelpers(allHelpers);
+      try {
+        // Load approved helpers from database
+        const { data: helpers, error } = await supabase
+          .from('helper_applications')
+          .select('*')
+          .eq('status', 'approved')
+          .order('created_at', { ascending: false });
 
-      // Add event listeners for filters
-      document.getElementById('category-filter').addEventListener('change', filterHelpers);
-      document.getElementById('search-filter').addEventListener('input', filterHelpers);
-      document.getElementById('sort-filter').addEventListener('change', filterHelpers);
+        if (error) {
+          console.error('Error loading helpers:', error);
+          // Fall back to sample data if there's an error
+          allHelpers = sampleHelpers;
+        } else {
+          // Transform database data to match the expected format
+          allHelpers = helpers.map(helper => ({
+            id: helper.id,
+            name: helper.helper_name,
+            specialty: mapSkillsToSpecialty(helper.helper_skills),
+            experience: helper.experience ? 'Experienced' : 'New Helper',
+            help_count: 0, // We'll track this separately
+            availability: helper.availability || 'Flexible',
+            description: helper.motivation || 'Dedicated community helper ready to assist.',
+            skills: helper.helper_skills.split(',').map(skill => skill.trim()),
+            email: helper.helper_email,
+            phone: helper.helper_phone
+          }));
+        }
+
+        renderHelpers(allHelpers);
+
+        // Add event listeners for filters
+        document.getElementById('category-filter').addEventListener('change', filterHelpers);
+        document.getElementById('search-filter').addEventListener('input', filterHelpers);
+        document.getElementById('sort-filter').addEventListener('change', filterHelpers);
+      } catch (error) {
+        console.error('Error initializing helper directory:', error);
+        allHelpers = sampleHelpers;
+        renderHelpers(allHelpers);
+      }
+    }
+
+    // Helper function to map skills to specialty categories
+    function mapSkillsToSpecialty(skills) {
+      const skillList = skills.toLowerCase();
+      if (skillList.includes('form') || skillList.includes('filing')) {
+        return 'Form Completion & Filing';
+      } else if (skillList.includes('application') || skillList.includes('registration')) {
+        return 'Applications & Registrations';
+      } else if (skillList.includes('document')) {
+        return 'Document Preparation';
+      } else if (skillList.includes('technical') || skillList.includes('computer')) {
+        return 'Technical Support';
+      } else if (skillList.includes('administrative')) {
+        return 'Administrative Processes';
+      } else if (skillList.includes('guidance') || skillList.includes('advice')) {
+        return 'Guidance & Advice';
+      } else if (skillList.includes('translation') || skillList.includes('language')) {
+        return 'Translation Services';
+      } else {
+        return 'General Support';
+      }
     }
 
     init();
