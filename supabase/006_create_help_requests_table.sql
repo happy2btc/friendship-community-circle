@@ -28,14 +28,17 @@ ALTER TABLE help_requests ENABLE ROW LEVEL SECURITY;
 
 -- Policies for help_requests table
 -- Allow anyone to insert (create help requests)
+DROP POLICY IF EXISTS "Anyone can create help requests" ON help_requests;
 CREATE POLICY "Anyone can create help requests" ON help_requests
     FOR INSERT WITH CHECK (true);
 
 -- Allow authenticated users to view all requests (for helpers)
+DROP POLICY IF EXISTS "Authenticated users can view help requests" ON help_requests;
 CREATE POLICY "Authenticated users can view help requests" ON help_requests
     FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Allow authenticated users to update requests (for status updates)
+DROP POLICY IF EXISTS "Authenticated users can update help requests" ON help_requests;
 CREATE POLICY "Authenticated users can update help requests" ON help_requests
     FOR UPDATE USING (auth.role() = 'authenticated');
 

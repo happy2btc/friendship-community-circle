@@ -28,14 +28,17 @@ ALTER TABLE helper_applications ENABLE ROW LEVEL SECURITY;
 
 -- Policies for helper_applications table
 -- Allow anyone to insert (create helper applications)
+DROP POLICY IF EXISTS "Anyone can submit helper applications" ON helper_applications;
 CREATE POLICY "Anyone can submit helper applications" ON helper_applications
     FOR INSERT WITH CHECK (true);
 
 -- Allow authenticated users to view applications (for admin review)
+DROP POLICY IF EXISTS "Authenticated users can view helper applications" ON helper_applications;
 CREATE POLICY "Authenticated users can view helper applications" ON helper_applications
     FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Allow authenticated users to update applications (for status updates)
+DROP POLICY IF EXISTS "Authenticated users can update helper applications" ON helper_applications;
 CREATE POLICY "Authenticated users can update helper applications" ON helper_applications
     FOR UPDATE USING (auth.role() = 'authenticated');
 

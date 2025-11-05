@@ -22,14 +22,17 @@ ALTER TABLE help_offers ENABLE ROW LEVEL SECURITY;
 
 -- Policies for help_offers table
 -- Allow anyone to insert (create help offers)
+DROP POLICY IF EXISTS "Anyone can submit help offers" ON help_offers;
 CREATE POLICY "Anyone can submit help offers" ON help_offers
     FOR INSERT WITH CHECK (true);
 
 -- Allow authenticated users to view offers (for request owners and admins)
+DROP POLICY IF EXISTS "Authenticated users can view help offers" ON help_offers;
 CREATE POLICY "Authenticated users can view help offers" ON help_offers
     FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Allow authenticated users to update offers (for status updates)
+DROP POLICY IF EXISTS "Authenticated users can update help offers" ON help_offers;
 CREATE POLICY "Authenticated users can update help offers" ON help_offers
     FOR UPDATE USING (auth.role() = 'authenticated');
 
