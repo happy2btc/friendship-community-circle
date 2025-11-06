@@ -281,6 +281,39 @@
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
+    // Handle URL parameters for pre-selecting category
+    function handleUrlParameters() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const category = urlParams.get('category');
+
+      if (category) {
+        const categorySelect = document.getElementById('help-category');
+        // Map URL category to form value
+        const categoryMapping = {
+          'forms': 'Form Completion & Filing',
+          'applications': 'Applications & Registrations',
+          'documents': 'Document Preparation',
+          'technical': 'Technical Support',
+          'administrative': 'Administrative Processes',
+          'guidance': 'Guidance & Advice',
+          'translation': 'Translation Services',
+          'general': 'General Support'
+        };
+
+        const formValue = categoryMapping[category] || category;
+        categorySelect.value = formValue;
+
+        // Add a note about the pre-selected category
+        const categoryGroup = categorySelect.closest('.form-group');
+        const note = document.createElement('p');
+        note.style.color = '#2e8b57';
+        note.style.fontSize = '0.9em';
+        note.style.marginTop = '0.5rem';
+        note.innerHTML = `💡 Category pre-selected from Help Categories page`;
+        categoryGroup.appendChild(note);
+      }
+    }
+
     // Handle urgency selection
     document.querySelectorAll('.urgency-option').forEach(option => {
       option.addEventListener('click', function() {
@@ -288,6 +321,11 @@
         this.classList.add('selected');
         document.getElementById('urgency').value = this.dataset.value;
       });
+    });
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      handleUrlParameters();
     });
 
     // Handle form submission

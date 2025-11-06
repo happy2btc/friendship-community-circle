@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏷️ Help Categories</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .categories-panel {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.2em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-style: italic;
+    }
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .category-card {
+      background: linear-gradient(135deg, #f8f5f0 0%, #fff 100%);
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .category-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-color: #6b4f1d;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .category-icon {
+      font-size: 2.5em;
+      margin-right: 1rem;
+      width: 60px;
+      text-align: center;
+    }
+    .category-info h3 {
+      color: #6b4f1d;
+      margin-bottom: 0.5rem;
+      font-size: 1.3em;
+    }
+    .category-description {
+      color: #8b6f47;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .category-examples {
+      background: #fff8e7;
+      border-left: 3px solid #d4af37;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+    }
+    .category-examples strong {
+      color: #6b4f1d;
+    }
+    .category-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      background: linear-gradient(90deg, #2e8b57 0%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 0.9em;
+    }
+    .action-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 0%, #2e8b57 100%);
+      transform: scale(1.05);
+    }
+    .action-btn.secondary {
+      background: linear-gradient(90deg, #8b6f47 0%, #d4af37 100%);
+    }
+    .action-btn.secondary:hover {
+      background: linear-gradient(90deg, #d4af37 0%, #8b6f47 100%);
+    }
+    .stats-section {
+      background: #f8f5f0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border-left: 4px solid #6b4f1d;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #2e8b57;
+      display: block;
+    }
+    .stat-label {
+      color: #8b6f47;
+      font-size: 0.9em;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+  </style>
+</head>
+<body>
+  <div class="categories-panel">
+    <a href="help-center.html" class="menu-btn">🔙 Back to Help Center</a>
+
+    <div class="header">
+      <h1>🏷️ Help Categories</h1>
+      <p>Discover the different types of help available in our community</p>
+    </div>
+
+    <div class="categories-grid">
+      <div class="category-card" onclick="window.location.href='help-request.html?category=forms'">
+        <div class="category-header">
+          <span class="category-icon">📋</span>
+          <div class="category-info">
+            <h3>Form Completion & Filing</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Help with filling out forms, applications, and official paperwork for government services, benefits, and community programs.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Tax forms, benefit applications, registration forms, permit applications
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=forms" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=forms" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=applications'">
+        <div class="category-header">
+          <span class="category-icon">📝</span>
+          <div class="category-info">
+            <h3>Applications & Registrations</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Assistance with applying for programs, registering for services, or completing enrollment processes.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Program enrollment, service registration, membership applications, certification processes
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=applications" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=applications" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=documents'">
+        <div class="category-header">
+          <span class="category-icon">📄</span>
+          <div class="category-info">
+            <h3>Document Preparation</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Help with preparing, organizing, and reviewing important documents and paperwork.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Resume writing, letter drafting, document review, record organization
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=documents" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=documents" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=technical'">
+        <div class="category-header">
+          <span class="category-icon">💻</span>
+          <div class="category-info">
+            <h3>Technical Support</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Computer, device, and online service assistance for community members who need digital help.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Computer setup, software help, online applications, device troubleshooting
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=technical" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=technical" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=administrative'">
+        <div class="category-header">
+          <span class="category-icon">🏢</span>
+          <div class="category-info">
+            <h3>Administrative Processes</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Guidance through administrative procedures, understanding requirements, and navigating systems.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Process guidance, requirement explanation, system navigation, procedural help
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=administrative" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=administrative" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=guidance'">
+        <div class="category-header">
+          <span class="category-icon">🧭</span>
+          <div class="category-info">
+            <h3>Guidance & Advice</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          General advice, guidance, and support for understanding options and making informed decisions.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Decision guidance, option explanation, general advice, informational support
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=guidance" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=guidance" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=translation'">
+        <div class="category-header">
+          <span class="category-icon">🌐</span>
+          <div class="category-info">
+            <h3>Translation Services</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Help with translating documents, forms, and communications between different languages.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Document translation, form translation, communication assistance, language support
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=translation" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=translation" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+
+      <div class="category-card" onclick="window.location.href='help-request.html?category=general'">
+        <div class="category-header">
+          <span class="category-icon">🤝</span>
+          <div class="category-info">
+            <h3>General Support</h3>
+          </div>
+        </div>
+        <div class="category-description">
+          Any other type of help or support that community members might need. Our helpers are here for you.
+        </div>
+        <div class="category-examples">
+          <strong>Examples:</strong> Emotional support, general assistance, community connections, miscellaneous help
+        </div>
+        <div class="category-actions">
+          <a href="help-request.html?category=general" class="action-btn">Request Help</a>
+          <a href="helper-directory.html?category=general" class="action-btn secondary">Find Helpers</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-section">
+      <h3 style="color: #6b4f1d; margin-bottom: 1rem;">📊 Community Help Statistics</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-number" id="total-helpers">0</span>
+          <span class="stat-label">Active Helpers</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="total-requests">0</span>
+          <span class="stat-label">Help Requests</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="completed-help">0</span>
+          <span class="stat-label">Help Completed</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="categories-covered">8</span>
+          <span class="stat-label">Categories</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function loadStats() {
+      try {
+        // Load helper count
+        const { count: helperCount, error: helperError } = await supabase
+          .from('helper_applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'approved');
+
+        if (!helperError) {
+          document.getElementById('total-helpers').textContent = helperCount || 0;
+        }
+
+        // Load request count
+        const { count: requestCount, error: requestError } = await supabase
+          .from('help_requests')
+          .select('*', { count: 'exact', head: true });
+
+        if (!requestError) {
+          document.getElementById('total-requests').textContent = requestCount || 0;
+        }
+
+        // Load completed help count (this would need a completed_offers or similar table)
+        // For now, we'll show a placeholder
+        document.getElementById('completed-help').textContent = '0';
+
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Load stats when page loads
+    loadStats();
+  </script>
+</body>
+</html>

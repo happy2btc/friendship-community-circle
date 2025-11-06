@@ -349,6 +349,27 @@
       renderHelpers(filtered);
     }
 
+    // Handle URL parameters for pre-filtering
+    function handleUrlParameters() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const category = urlParams.get('category');
+
+      if (category) {
+        const categorySelect = document.getElementById('category-filter');
+        categorySelect.value = category;
+
+        // Add a note about the pre-selected filter
+        const filtersDiv = document.querySelector('.filters');
+        const note = document.createElement('p');
+        note.style.color = '#2e8b57';
+        note.style.fontSize = '0.9em';
+        note.style.marginTop = '0.5rem';
+        note.style.textAlign = 'center';
+        note.innerHTML = `💡 Filter pre-selected from Help Categories page`;
+        filtersDiv.appendChild(note);
+      }
+    }
+
     // Initialize
     async function init() {
       try {
@@ -380,6 +401,9 @@
         }
 
         renderHelpers(allHelpers);
+
+        // Handle URL parameters for pre-filtering
+        handleUrlParameters();
 
         // Add event listeners for filters
         document.getElementById('category-filter').addEventListener('change', filterHelpers);
