@@ -24,19 +24,27 @@ async function testParticipantsTable() {
   console.log('Data:', participants);
   console.log('Error:', participantsError);
 
-  // Test inserting a record (don't actually insert, just test)
-  console.log('Table structure test passed:', !participantsError);
+  // Test the new query approach
+  console.log('Testing new query approach...');
+  const { data: participantsData, error: participantsDataError } = await supabase
+    .from('group_project_participants')
+    .select('user_id, joined_at')
+    .limit(1);
 
-  // Check profiles table
-  const { data: profiles, error: profilesError } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('id', userData.user.id)
-    .single();
+  console.log('Participants data query:', participantsData, participantsDataError);
 
-  console.log('Profiles test:');
-  console.log('Profile data:', profiles);
-  console.log('Profile error:', profilesError);
+  if (participantsData && participantsData.length > 0) {
+    const participant = participantsData[0];
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', participant.user_id)
+      .single();
+
+    console.log('Profile lookup result:', { participant, profile, profileError });
+  }
+
+  console.log('Table structure test passed:', !participantsError && !profilesError);
 }
 
 // Run the test
