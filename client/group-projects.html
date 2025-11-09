@@ -795,7 +795,10 @@
           if (project) {
             const { error: updateError } = await supabase
               .from('group_projects')
-              .update({ num_participants: (project.num_participants || 0) + 1 })
+              .update({
+                num_participants: (project.num_participants || 0) + 1,
+                updated_at: new Date().toISOString()
+              })
               .eq('id', projectId);
 
             if (updateError) {
@@ -804,7 +807,7 @@
           }
 
           alert('Successfully joined the project! 🎉\n\nAs a member you can:\n• Participate in project discussions\n• Contribute to project updates\n• Connect with other members\n• Access project resources\n• Help drive the project forward!');
-          // Reload projects to show updated participant count
+          // Reload projects to show updated participant count and member status
           await loadProjects();
 
         } catch (error) {
@@ -832,7 +835,7 @@
             return;
           }
 
-          // Get all participants
+          // Get all participants with their profile information
           const { data: participants } = await supabase
             .from('group_project_participants')
             .select(`
