@@ -208,6 +208,30 @@
       color: #fff;
     }
 
+    .joined-btn {
+      background: #4caf50 !important;
+      color: #fff !important;
+      cursor: default !important;
+    }
+
+    .joined-btn:hover {
+      background: #4caf50 !important;
+    }
+
+    .view-participants-btn {
+      background: #6b4f1d;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+
+    .view-participants-btn:hover {
+      background: #8c6f4e;
+    }
+
     .update-btn {
       background: #ffc107;
       color: #333;
@@ -381,6 +405,25 @@
         font-size: 1.3em;
       }
 
+      /* Mobile info section */
+      body > div:first-of-type {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      body > div:first-of-type h3 {
+        font-size: 1em;
+      }
+
+      body > div:first-of-type ul {
+        padding-left: 1rem;
+      }
+
+      .project-card {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
       .menu-button {
         padding: 10px 14px;
         font-size: 0.9em;
@@ -399,11 +442,28 @@
         padding: 6px 12px;
         font-size: 0.8em;
       }
+
+      .view-participants-btn {
+        padding: 6px 12px;
+        font-size: 0.8em;
+      }
     }
   </style>
 </head>
 <body>
   <h1>🌐 Group Projects</h1>
+  <div style="background:#f0f8f0;border:2px solid #2e8b57;border-radius:10px;padding:1rem;margin-bottom:1.5rem;">
+    <h3 style="color:#2e8b57;margin-top:0;">🤝 Join Community Projects</h3>
+    <p style="margin-bottom:0.5rem;"><strong>What you get when you join:</strong></p>
+    <ul style="margin:0;padding-left:1.5rem;">
+      <li>📝 Participate in project discussions and planning</li>
+      <li>👥 Connect with like-minded community members</li>
+      <li>🎯 Contribute to meaningful community initiatives</li>
+      <li>📊 Track project progress and milestones</li>
+      <li>🏆 Help create positive impact in your community</li>
+    </ul>
+    <p style="margin-top:0.5rem;font-size:0.9em;color:#666;"><em>Use the "👥 View Members" button to see who's already participating!</em></p>
+  </div>
   <a href="main-menu.html" class="menu-button" id="back-to-menu-btn" style="margin-bottom:2rem;">🔙 Return to Menu</a>
   <div style="margin-bottom:1.5rem;">
     <label for="circle-filter" style="font-weight:bold;color:#2e8b57;">Filter by Circle:</label>
@@ -502,10 +562,27 @@
       const projectsCards = document.getElementById('projects-cards');
       projectsCards.innerHTML = '';
 
+      // Get current user to check participation status
+      const { data: userData } = await supabase.auth.getUser();
+      const currentUserId = userData?.user?.id;
+
       for (const project of projects || []) {
         const circleName = circles.find(c => c.id === project.circle_id)?.name || 'Unknown';
         const proposerName = profiles[project.proposer_id] || 'Unknown';
         const date = project.entered_at ? new Date(project.entered_at).toLocaleDateString() : '';
+
+        // Check if current user is a participant
+        let isParticipant = false;
+        if (currentUserId) {
+          const { data: participation } = await supabase
+            .from('group_project_participants')
+            .select('*')
+            .eq('project_id', project.id)
+            .eq('user_id', currentUserId)
+            .single();
+          isParticipant = !!participation;
+        }
+
         let galleryHtml = '';
         // Fetch all images from the bucket folder for this project (by project.id)
         let imageUrls = [];
@@ -526,15 +603,18 @@
           `;
         }
 
-        // Table row (desktop)
+        // Desktop table row
+        const joinButtonText = isParticipant ? '✅ Joined' : 'Join';
+        const joinButtonClass = isParticipant ? 'joined-btn' : 'join-btn';
         projectsTbody.innerHTML += `
           <tr>
             <td>${circleName}</td>
             <td>${project.name}</td>
             <td>${project.description || ''}
               <div style="margin-top:10px;">
-                <button class="join-btn" data-project="${project.id}" style="background:#1976d2;color:#fff;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;margin-right:8px;">Join</button>
+                <button class="${joinButtonClass}" data-project="${project.id}" ${isParticipant ? 'disabled' : ''} style="background:#1976d2;color:#fff;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;margin-right:8px;">${joinButtonText}</button>
                 <button class="update-btn" data-project="${project.id}" style="background:#ffc107;color:#333;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;">Update</button>
+                <button class="view-participants-btn" data-project="${project.id}" style="background:#6b4f1d;color:#fff;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;margin-left:8px;">👥 View Members</button>
               </div>
               <div class="comments-section" data-project="${project.id}" style="margin-top:12px;background:#f4f8fb;padding:8px 10px;border-radius:6px;">
                 <div class="comments-list" id="comments-list-${project.id}"></div>
@@ -554,6 +634,8 @@
         `;
 
         // Mobile card
+        const mobileJoinButtonText = isParticipant ? '✅ Member' : 'Join Project';
+        const mobileJoinButtonClass = isParticipant ? 'joined-btn' : 'join-btn';
         const cardHtml = `
           <div class="project-card">
             <h3>${project.name}</h3>
@@ -566,8 +648,9 @@
             </div>
             <div class="project-description">${project.description || ''}</div>
             <div class="project-actions">
-              <button class="join-btn" data-project="${project.id}">Join Project</button>
+              <button class="${mobileJoinButtonClass}" data-project="${project.id}" ${isParticipant ? 'disabled' : ''}>${mobileJoinButtonText}</button>
               <button class="update-btn" data-project="${project.id}">Update</button>
+              <button class="view-participants-btn" data-project="${project.id}">👥 Members</button>
             </div>
             ${galleryHtml ? `<div style="margin-bottom:1rem;">${galleryHtml}</div>` : ''}
             <div class="comments-section" data-project="${project.id}">
@@ -630,11 +713,152 @@
     document.querySelectorAll('.join-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const projectId = btn.getAttribute('data-project');
-        // Save join to supabase (assumes group_project_participants table exists)
-        await supabase.from('group_project_participants').insert([{ project_id: projectId }]);
-        alert('You have joined this project!');
+
+        // Get current user info
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData || !userData.user) {
+          alert('Please log in to join projects.');
+          return;
+        }
+
+        const userId = userData.user.id;
+
+        try {
+          // Check if user is already a participant
+          const { data: existingParticipant } = await supabase
+            .from('group_project_participants')
+            .select('*')
+            .eq('project_id', projectId)
+            .eq('user_id', userId)
+            .single();
+
+          if (existingParticipant) {
+            alert('You are already a participant in this project!');
+            return;
+          }
+
+          // Add user as participant
+          const { error: insertError } = await supabase
+            .from('group_project_participants')
+            .insert([{
+              project_id: projectId,
+              user_id: userId,
+              joined_at: new Date().toISOString()
+            }]);
+
+          if (insertError) {
+            console.error('Error joining project:', insertError);
+            alert('Failed to join project. Please try again.');
+            return;
+          }
+
+          // Update participant count in the project
+          const { data: project } = await supabase
+            .from('group_projects')
+            .select('num_participants')
+            .eq('id', projectId)
+            .single();
+
+          if (project) {
+            const { error: updateError } = await supabase
+              .from('group_projects')
+              .update({ num_participants: (project.num_participants || 0) + 1 })
+              .eq('id', projectId);
+
+            if (updateError) {
+              console.warn('Could not update participant count:', updateError);
+            }
+          }
+
+          alert('Successfully joined the project! 🎉\n\nAs a member you can:\n• Participate in project discussions\n• Contribute to project updates\n• Connect with other members\n• Access project resources\n• Help drive the project forward!');
+          // Reload projects to show updated participant count
+          await loadProjects();
+
+        } catch (error) {
+          console.error('Error joining project:', error);
+          alert('An error occurred. Please try again.');
+        }
       });
     });
+
+    // View Participants button
+    document.querySelectorAll('.view-participants-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const projectId = btn.getAttribute('data-project');
+
+        try {
+          // Get project details
+          const { data: project } = await supabase
+            .from('group_projects')
+            .select('*')
+            .eq('id', projectId)
+            .single();
+
+          if (!project) {
+            alert('Project not found.');
+            return;
+          }
+
+          // Get all participants
+          const { data: participants } = await supabase
+            .from('group_project_participants')
+            .select(`
+              user_id,
+              joined_at,
+              profiles:user_id (
+                full_name
+              )
+            `)
+            .eq('project_id', projectId)
+            .order('joined_at', { ascending: true });
+
+          // Create participants modal
+          const modalHtml = `
+            <div id="participants-modal" style="position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;">
+              <div style="background:#fff;padding:2rem;border-radius:10px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+                <h3 style="margin-top:0;color:#2e8b57;">${project.name} - Members</h3>
+                <p style="color:#666;margin-bottom:1rem;">${participants?.length || 0} participant(s)</p>
+
+                ${participants && participants.length > 0 ? `
+                  <div style="margin-bottom:1rem;">
+                    ${participants.map(p => `
+                      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-bottom:1px solid #eee;">
+                        <span style="font-weight:bold;color:#2e8b57;">${p.profiles?.full_name || 'Anonymous Member'}</span>
+                        <span style="font-size:0.9em;color:#666;">Joined ${new Date(p.joined_at).toLocaleDateString()}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : `
+                  <p style="color:#666;text-align:center;padding:2rem;">No participants yet. Be the first to join!</p>
+                `}
+
+                <div style="text-align:right;">
+                  <button id="close-participants-modal" style="background:#6b4f1d;color:#fff;border:none;border-radius:5px;padding:8px 16px;cursor:pointer;">Close</button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+          // Close modal functionality
+          document.getElementById('close-participants-modal').addEventListener('click', () => {
+            document.getElementById('participants-modal').remove();
+          });
+
+          document.getElementById('participants-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'participants-modal') {
+              document.getElementById('participants-modal').remove();
+            }
+          });
+
+        } catch (error) {
+          console.error('Error loading participants:', error);
+          alert('Failed to load participants. Please try again.');
+        }
+      });
+    });
+
     // Update button
     document.querySelectorAll('.update-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
