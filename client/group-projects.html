@@ -144,6 +144,75 @@
       margin-bottom: 1rem;
     }
 
+    /* Mobile Card Layout */
+    .projects-cards {
+      display: none;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .project-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #eee;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-left: 4px solid #2e8b57;
+    }
+
+    .project-card h3 {
+      color: #2e8b57;
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1em;
+    }
+
+    .project-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .project-meta span {
+      background: #f0f8f0;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .project-description {
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .project-actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9em;
+      cursor: pointer;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .join-btn {
+      background: #1976d2;
+      color: #fff;
+    }
+
+    .update-btn {
+      background: #ffc107;
+      color: #333;
+    }
+
     /* Mobile Responsive Styles */
     @media (max-width: 768px) {
       body {
@@ -164,21 +233,13 @@
         max-width: 300px;
       }
 
+      /* Hide table, show cards on mobile */
       .projects-table {
-        font-size: 0.9em;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        white-space: nowrap;
+        display: none;
       }
 
-      .projects-table th,
-      .projects-table td {
-        padding: 8px 6px;
-        min-width: 120px;
-      }
-
-      .projects-table th {
-        font-size: 0.85em;
+      .projects-cards {
+        display: block;
       }
 
       .project-form {
@@ -192,6 +253,7 @@
         font-size: 16px; /* Prevents zoom on iOS */
         padding: 10px;
         margin-bottom: 0.75rem;
+        width: 100%;
       }
 
       .project-form button {
@@ -212,22 +274,17 @@
         font-size: 1em;
       }
 
-      .join-btn,
-      .update-btn {
-        padding: 6px 12px;
-        font-size: 0.9em;
-        margin-right: 4px;
-        margin-bottom: 4px;
-      }
-
       .comments-section {
-        padding: 6px 8px;
-        margin-top: 8px;
+        padding: 8px 10px;
+        margin-top: 12px;
+        background: #f4f8fb;
+        border-radius: 6px;
       }
 
       .comment-form {
         flex-direction: column;
         gap: 8px;
+        margin-top: 8px;
       }
 
       .comment-input,
@@ -235,35 +292,68 @@
         width: 100%;
         padding: 8px;
         font-size: 16px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+      .comment-form button {
+        padding: 8px 16px;
+        background: #2e8b57;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        width: 100%;
+      }
+
+      .project-thumbnails {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
       }
 
       .project-thumbnails img {
-        width: 40px;
-        height: 40px;
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px #ccc;
+        cursor: pointer;
       }
 
       /* Gallery modal mobile adjustments */
       #gallery-modal {
         padding: 20px;
+        align-items: flex-start;
+        padding-top: 60px;
       }
 
       #gallery-content {
         max-width: 95vw;
-        max-height: 95vh;
+        max-height: 80vh;
       }
 
       #gallery-prev,
       #gallery-next {
-        width: 36px;
-        height: 36px;
-        font-size: 1.5em;
-        left: -50px;
-        right: -50px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2em;
+        top: 40%;
+      }
+
+      #gallery-prev {
+        left: 10px;
+      }
+
+      #gallery-next {
+        right: 10px;
       }
 
       #gallery-images img {
         max-width: 90vw;
-        max-height: 60vh;
+        max-height: 70vh;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px #222;
       }
 
       /* Filter dropdown mobile */
@@ -291,46 +381,23 @@
         font-size: 1.3em;
       }
 
-      .projects-table th,
-      .projects-table td {
-        padding: 6px 4px;
-        min-width: 100px;
-        font-size: 0.8em;
-      }
-
-      .projects-table th {
-        font-size: 0.75em;
-      }
-
       .menu-button {
         padding: 10px 14px;
         font-size: 0.9em;
+      }
+
+      .project-card {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
       }
 
       .project-form {
         padding: 0.75rem;
       }
 
-      .project-form input,
-      .project-form textarea,
-      .project-form select {
-        padding: 8px;
-        margin-bottom: 0.5rem;
-      }
-
-      .join-btn,
-      .update-btn {
-        padding: 4px 8px;
+      .project-actions button {
+        padding: 6px 12px;
         font-size: 0.8em;
-      }
-
-      .comments-section {
-        padding: 4px 6px;
-      }
-
-      .comment-input,
-      .display-name-input {
-        padding: 6px;
       }
     }
   </style>
@@ -385,6 +452,11 @@
       <!-- Projects will be loaded here -->
     </tbody>
   </table>
+
+  <!-- Mobile Cards Container -->
+  <div class="projects-cards" id="projects-cards">
+    <!-- Project cards will be loaded here -->
+  </div>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
   const showFormBtn = document.getElementById('show-form-btn');
@@ -427,6 +499,9 @@
       }
       const { data: projects } = await query;
       projectsTbody.innerHTML = '';
+      const projectsCards = document.getElementById('projects-cards');
+      projectsCards.innerHTML = '';
+
       for (const project of projects || []) {
         const circleName = circles.find(c => c.id === project.circle_id)?.name || 'Unknown';
         const proposerName = profiles[project.proposer_id] || 'Unknown';
@@ -446,11 +521,12 @@
         if (imageUrls.length > 0) {
           galleryHtml = `
             <div class="project-thumbnails" style="display:flex;gap:6px;flex-wrap:wrap;cursor:pointer;" data-images='${JSON.stringify(imageUrls)}'>
-              ${imageUrls.map(url => `<img src="${url}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;box-shadow:0 1px 4px #ccc;" loading="lazy" />`).join('')}
+              ${imageUrls.map(url => `<img src="${url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;box-shadow:0 1px 4px #ccc;" loading="lazy" />`).join('')}
             </div>
           `;
         }
-        // Comment section, join, and update buttons
+
+        // Table row (desktop)
         projectsTbody.innerHTML += `
           <tr>
             <td>${circleName}</td>
@@ -476,6 +552,35 @@
             <td>${galleryHtml}</td>
           </tr>
         `;
+
+        // Mobile card
+        const cardHtml = `
+          <div class="project-card">
+            <h3>${project.name}</h3>
+            <div class="project-meta">
+              <span>Circle: ${circleName}</span>
+              <span>By: ${proposerName}</span>
+              <span>Date: ${date}</span>
+              <span>Participants: ${project.num_participants || 0}</span>
+              <span class="status ${project.status}">${project.status}</span>
+            </div>
+            <div class="project-description">${project.description || ''}</div>
+            <div class="project-actions">
+              <button class="join-btn" data-project="${project.id}">Join Project</button>
+              <button class="update-btn" data-project="${project.id}">Update</button>
+            </div>
+            ${galleryHtml ? `<div style="margin-bottom:1rem;">${galleryHtml}</div>` : ''}
+            <div class="comments-section" data-project="${project.id}">
+              <div class="comments-list" id="comments-list-mobile-${project.id}"></div>
+              <form class="comment-form" data-project="${project.id}">
+                <input type="text" class="comment-input" placeholder="Add a comment..." required />
+                <input type="text" class="display-name-input" placeholder="Display name (optional)" />
+                <button type="submit">Post Comment</button>
+              </form>
+            </div>
+          </div>
+        `;
+        projectsCards.innerHTML += cardHtml;
   // Gallery modal HTML
   const galleryModalHtml = `
     <div id="gallery-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
@@ -558,18 +663,25 @@
     let query = supabase.from('group_project_comments').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
     if (!viewerIsAdmin) query = query.eq('approved', true);
     const { data: comments } = await query;
-    const list = document.getElementById('comments-list-' + projectId);
-    if (!list) return;
-    list.innerHTML = '';
-    (comments || []).forEach(c => {
-      const name = c.author_name || c.display_name || 'Member';
-      const approvedBadge = c.approved ? '' : '<span style="color:#856404;margin-left:6px;font-size:0.9em">(pending)</span>';
-      const approveButton = viewerIsAdmin && !c.approved ? ` <button data-comment="${c.id}" data-project="${projectId}" class="approve-comment-btn" style="margin-left:8px;padding:2px 6px;border-radius:4px;background:#28a745;color:#fff;border:none;cursor:pointer;">Approve</button>` : '';
-      const row = document.createElement('div');
-      row.style.marginBottom = '6px';
-      row.innerHTML = `<span style="color:#1976d2;font-weight:bold;">${escapeHtml(name)}:</span> ${escapeHtml(c.comment)} ${approvedBadge} ${approveButton}`;
-      list.appendChild(row);
+
+    // Load comments for both desktop table and mobile cards
+    const desktopList = document.getElementById('comments-list-' + projectId);
+    const mobileList = document.getElementById('comments-list-mobile-' + projectId);
+
+    [desktopList, mobileList].forEach(list => {
+      if (!list) return;
+      list.innerHTML = '';
+      (comments || []).forEach(c => {
+        const name = c.author_name || c.display_name || 'Member';
+        const approvedBadge = c.approved ? '' : '<span style="color:#856404;margin-left:6px;font-size:0.9em">(pending)</span>';
+        const approveButton = viewerIsAdmin && !c.approved ? ` <button data-comment="${c.id}" data-project="${projectId}" class="approve-comment-btn" style="margin-left:8px;padding:2px 6px;border-radius:4px;background:#28a745;color:#fff;border:none;cursor:pointer;">Approve</button>` : '';
+        const row = document.createElement('div');
+        row.style.marginBottom = '6px';
+        row.innerHTML = `<span style="color:#1976d2;font-weight:bold;">${escapeHtml(name)}:</span> ${escapeHtml(c.comment)} ${approvedBadge} ${approveButton}`;
+        list.appendChild(row);
+      });
     });
+
     // Wire approve buttons
     document.querySelectorAll('.approve-comment-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
