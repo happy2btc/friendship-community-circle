@@ -7,7 +7,8 @@ CREATE TABLE group_projects (
     name TEXT NOT NULL,
     description TEXT,
     num_participants INTEGER DEFAULT 0,
-    status TEXT CHECK (status IN ('pending', 'started', 'in process', 'completed')) DEFAULT 'pending'
+    status TEXT CHECK (status IN ('pending', 'started', 'in process', 'completed')) DEFAULT 'pending',
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 -- Index for faster lookup by circle

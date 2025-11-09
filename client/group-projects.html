@@ -1053,14 +1053,18 @@
             };
 
             try {
-              const { error: updateError } = await supabase
+              console.log('Updating project:', projectId, 'with data:', updateData);
+
+              const { data: updateResult, error: updateError } = await supabase
                 .from('group_projects')
                 .update(updateData)
                 .eq('id', projectId);
 
+              console.log('Update result:', { updateResult, updateError });
+
               if (updateError) {
                 console.error('Error updating project:', updateError);
-                alert('Failed to update project. Please try again.');
+                alert('Failed to update project: ' + updateError.message);
                 return;
               }
 
@@ -1069,8 +1073,8 @@
               await loadProjects(); // Refresh the display
 
             } catch (error) {
-              console.error('Error updating project:', error);
-              alert('An error occurred. Please try again.');
+              console.error('Exception during project update:', error);
+              alert('An error occurred: ' + error.message);
             }
           });
 
