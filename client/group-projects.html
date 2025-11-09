@@ -127,11 +127,16 @@
       margin-bottom: 1rem;
     }
 
-    /* Mobile Card Layout */
+    /* Card Layout - Default view */
     .projects-cards {
-      display: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
       width: 100%;
       max-width: 600px;
+    }
+    .projects-table {
+      display: none; /* Hide table by default */
     }
 
     .project-card {
@@ -263,13 +268,14 @@
         max-width: 300px;
       }
 
-      /* Hide table, show cards on mobile */
-      .projects-table {
-        display: none;
+      /* Mobile optimizations for cards */
+      .project-card {
+        padding: 1rem;
       }
 
-      .projects-cards {
-        display: block;
+      .project-actions {
+        flex-direction: column;
+        gap: 0.5rem;
       }
 
       .project-form {
@@ -506,6 +512,7 @@
     <select id="circle-filter" style="margin-left:1rem;padding:6px 12px;border-radius:6px;border:1px solid #ccc;"></select>
   </div> 
   <button class="add-project-btn" id="show-form-btn">➕ Add New Project</button>
+  <button class="add-project-btn" id="toggle-view-btn" style="background:#6b4f1d;margin-left:1rem;">📋 Table View</button>
   <form class="project-form" id="project-form">
     <div class="error" id="form-error"></div>
     <div class="success" id="form-success"></div>
@@ -743,7 +750,16 @@
           author_name = display_name;
         }
         // Insert with moderation flag: approved = false by default
-        await supabase.from('group_project_comments').insert([{ project_id: projectId, comment, author_name, user_id, display_name, approved: false }]);
+        console.log('Inserting comment:', { project_id: projectId, comment, author_name, user_id, display_name });
+        const { data: insertResult, error: insertError } = await supabase.from('group_project_comments').insert([{ project_id: projectId, comment, author_name, user_id, display_name, approved: false }]);
+        console.log('Comment insert result:', { insertResult, insertError });
+
+        if (insertError) {
+          console.error('Failed to insert comment:', insertError);
+          alert('Failed to post comment: ' + insertError.message);
+          return;
+        }
+
         input.value = '';
         if (displayNameInput) displayNameInput.value = '';
         loadComments(projectId);
@@ -1079,11 +1095,14 @@
     // Load comments for each project
     document.querySelectorAll('.comments-section').forEach(sec => {
       const projectId = sec.getAttribute('data-project');
+      console.log('Found comments section for project:', projectId);
       loadComments(projectId);
     });
   }, 0);
 
   async function loadComments(projectId) {
+    console.log('Loading comments for project:', projectId);
+
     // Determine if current viewer is admin (so they can see pending comments)
     const { data: userData } = await supabase.auth.getUser();
     let viewerIsAdmin = false;
@@ -1092,17 +1111,27 @@
       const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', uid).single();
       if (profile && profile.is_admin) viewerIsAdmin = true;
     }
+
+    console.log('User is admin:', viewerIsAdmin);
+
     // If viewer is admin, fetch all comments for management; otherwise fetch only approved ones
     let query = supabase.from('group_project_comments').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
     if (!viewerIsAdmin) query = query.eq('approved', true);
-    const { data: comments } = await query;
+    const { data: comments, error } = await query;
+
+    console.log('Comments query result:', { comments, error, count: comments ? comments.length : 0 });
 
     // Load comments for both desktop table and mobile cards
     const desktopList = document.getElementById('comments-list-' + projectId);
     const mobileList = document.getElementById('comments-list-mobile-' + projectId);
 
+    console.log('Comment list elements:', { desktopList, mobileList });
+
     [desktopList, mobileList].forEach(list => {
-      if (!list) return;
+      if (!list) {
+        console.log('List element not found');
+        return;
+      }
       list.innerHTML = '';
       (comments || []).forEach(c => {
         const name = c.author_name || c.display_name || 'Member';
@@ -1113,6 +1142,7 @@
         row.innerHTML = `<span style="color:#1976d2;font-weight:bold;">${escapeHtml(name)}:</span> ${escapeHtml(c.comment)} ${approvedBadge} ${approveButton}`;
         list.appendChild(row);
       });
+      console.log('Added', (comments || []).length, 'comments to list');
     });
 
     // Wire approve buttons
@@ -1184,6 +1214,25 @@
       projectForm.style.display = 'none';
       formError.textContent = '';
       formSuccess.textContent = '';
+    });
+
+    // View toggle functionality
+    const toggleViewBtn = document.getElementById('toggle-view-btn');
+    const projectsTable = document.getElementById('projects-table');
+    const projectsCards = document.getElementById('projects-cards');
+    let isCardView = true; // Start with card view
+
+    toggleViewBtn.addEventListener('click', () => {
+      isCardView = !isCardView;
+      if (isCardView) {
+        projectsTable.style.display = 'none';
+        projectsCards.style.display = 'flex';
+        toggleViewBtn.textContent = '📋 Table View';
+      } else {
+        projectsTable.style.display = 'table';
+        projectsCards.style.display = 'none';
+        toggleViewBtn.textContent = '📄 Card View';
+      }
     });
 
     projectForm.addEventListener('submit', async (e) => {

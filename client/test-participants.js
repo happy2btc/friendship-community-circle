@@ -1,51 +1,97 @@
-// Test script to check group_project_participants table
+// Test script to check group_project_participants table and comments
 // Run this in browser console on the group-projects page
 
-async function testParticipantsTable() {
-  console.log('=== Testing Participants Table ===');
+async function testCommentsTable() {
+  console.log('=== Testing Comments Table ===');
 
-  // Check if user is logged in
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  console.log('User data:', userData);
-  console.log('User error:', userError);
+  try {
+    // Try to query the comments table
+    const { data: comments, error } = await supabase
+      .from('group_project_comments')
+      .select('*')
+      .limit(1);
 
-  if (!userData?.user) {
-    console.log('❌ User not logged in!');
-    return;
+    if (error) {
+      console.log('❌ Comments table does not exist or has issues');
+      console.log('Error:', error.message);
+      return false;
+    } else {
+      console.log('✅ Comments table exists!');
+      console.log('Sample data:', comments);
+      return true;
+    }
+  } catch (err) {
+    console.log('❌ Error testing comments table:', err);
+    return false;
   }
+}
 
-  // Test selecting from participants table
-  const { data: participants, error: participantsError } = await supabase
-    .from('group_project_participants')
-    .select('*')
-    .limit(5);
+async function createCommentsTable() {
+  console.log('=== Creating Comments Table ===');
 
-  console.log('Participants table test:');
-  console.log('Data:', participants);
-  console.log('Error:', participantsError);
+  try {
+    // This won't work with standard Supabase client, but let's try
+    console.log('Note: Table creation requires Supabase dashboard access');
+    console.log('Please create the table manually in your Supabase dashboard with this SQL:');
 
-  // Test the new query approach
-  console.log('Testing new query approach...');
-  const { data: participantsData, error: participantsDataError } = await supabase
-    .from('group_project_participants')
-    .select('user_id, joined_at')
-    .limit(1);
+    const sql = `
+CREATE TABLE group_project_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES group_projects(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  author_name TEXT,
+  display_name TEXT,
+  comment TEXT NOT NULL,
+  approved BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
 
-  console.log('Participants data query:', participantsData, participantsDataError);
+-- Indexes
+CREATE INDEX idx_group_project_comments_project_id ON group_project_comments(project_id);
+CREATE INDEX idx_group_project_comments_approved ON group_project_comments(approved);
+CREATE INDEX idx_group_project_comments_created_at ON group_project_comments(created_at);
 
-  if (participantsData && participantsData.length > 0) {
-    const participant = participantsData[0];
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', participant.user_id)
-      .single();
+-- Enable RLS
+ALTER TABLE group_project_comments ENABLE ROW LEVEL SECURITY;
 
-    console.log('Profile lookup result:', { participant, profile, profileError });
+-- Policies
+CREATE POLICY "Users can view approved comments" ON group_project_comments
+  FOR SELECT USING (approved = true);
+
+CREATE POLICY "Users can insert comments" ON group_project_comments
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all comments" ON group_project_comments
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can update comments" ON group_project_comments
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.is_admin = true
+    )
+  );
+    `;
+
+    console.log(sql);
+    return sql;
+  } catch (err) {
+    console.log('❌ Error:', err);
   }
-
-  console.log('Table structure test passed:', !participantsError && !profilesError);
 }
 
 // Run the test
+testCommentsTable().then(tableExists => {
+  if (!tableExists) {
+    createCommentsTable();
+  }
+});
 testParticipantsTable();
