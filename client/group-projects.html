@@ -485,6 +485,9 @@
 </head>
 <body>
   <h1>🌐 Group Projects</h1>
+  <div id="auth-status" style="background:#fff3cd;border:1px solid #ffeeba;border-radius:5px;padding:8px 12px;margin-bottom:1rem;font-size:0.9em;color:#856404;display:none;">
+    ⚠️ You are not logged in. Please log in to join projects and view members.
+  </div>
   <div style="background:#f0f8f0;border:2px solid #2e8b57;border-radius:10px;padding:1rem;margin-bottom:1.5rem;">
     <h3 style="color:#2e8b57;margin-top:0;">🤝 Join Community Projects</h3>
     <p style="margin-bottom:0.5rem;"><strong>What you get when you join:</strong></p>
@@ -607,12 +610,16 @@
         // Check if current user is a participant
         let isParticipant = false;
         if (currentUserId) {
-          const { data: participation } = await supabase
+          console.log('Checking participation for user:', currentUserId, 'project:', project.id); // Debug log
+          const { data: participation, error: participationError } = await supabase
             .from('group_project_participants')
             .select('*')
             .eq('project_id', project.id)
             .eq('user_id', currentUserId)
             .single();
+
+          console.log('Participation check result:', participation); // Debug log
+          console.log('Participation check error:', participationError); // Debug log
           isParticipant = !!participation;
         }
 
@@ -749,12 +756,15 @@
 
         // Get current user info
         const { data: userData } = await supabase.auth.getUser();
+        console.log('Current user data:', userData); // Debug log
+
         if (!userData || !userData.user) {
           alert('Please log in to join projects.');
           return;
         }
 
         const userId = userData.user.id;
+        console.log('User ID:', userId); // Debug log
 
         try {
           // Check if user is already a participant
@@ -771,13 +781,17 @@
           }
 
           // Add user as participant
-          const { error: insertError } = await supabase
+          console.log('Inserting participant record for project:', projectId, 'user:', userId); // Debug log
+          const { error: insertError, data: insertData } = await supabase
             .from('group_project_participants')
             .insert([{
               project_id: projectId,
               user_id: userId,
               joined_at: new Date().toISOString()
             }]);
+
+          console.log('Insert result:', insertData); // Debug log
+          console.log('Insert error:', insertError); // Debug log
 
           if (insertError) {
             console.error('Error joining project:', insertError);
@@ -806,7 +820,7 @@
             }
           }
 
-          alert('Successfully joined the project! 🎉\n\nAs a member you can:\n• Participate in project discussions\n• Contribute to project updates\n• Connect with other members\n• Access project resources\n• Help drive the project forward!');
+          alert(`Successfully joined the project! 🎉\n\nAs a member you can:\n• Participate in project discussions\n• Contribute to project updates\n• Connect with other members\n• Access project resources\n• Help drive the project forward!\n\nDebug: Joined as user ${userId}`);
           // Reload projects to show updated participant count and member status
           await loadProjects();
 
@@ -822,6 +836,13 @@
       btn.addEventListener('click', async () => {
         const projectId = btn.getAttribute('data-project');
 
+        // Check if user is logged in first
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) {
+          alert('Please log in to view project members.');
+          return;
+        }
+
         try {
           // Get project details
           const { data: project } = await supabase
@@ -836,7 +857,8 @@
           }
 
           // Get all participants with their profile information
-          const { data: participants } = await supabase
+          console.log('Fetching participants for project:', projectId); // Debug log
+          const { data: participants, error: participantsError } = await supabase
             .from('group_project_participants')
             .select(`
               user_id,
@@ -847,6 +869,9 @@
             `)
             .eq('project_id', projectId)
             .order('joined_at', { ascending: true });
+
+          console.log('Participants data:', participants); // Debug log
+          console.log('Participants error:', participantsError); // Debug log
 
           // Create participants modal
           const modalHtml = `
@@ -1195,6 +1220,15 @@
     await loadCircles();
     await loadProfiles();
     await loadProjects();
+
+    // Check auth status and show/hide warning
+    const { data: userData } = await supabase.auth.getUser();
+    const authStatus = document.getElementById('auth-status');
+    if (userData?.user) {
+      authStatus.style.display = 'none';
+    } else {
+      authStatus.style.display = 'block';
+    }
     circleFilter.addEventListener('change', async (e) => {
       selectedCircleId = circleFilter.value;
       await loadProjects();
