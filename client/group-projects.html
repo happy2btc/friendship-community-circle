@@ -544,6 +544,7 @@
         <th>Circle</th>
         <th>Project Name</th>
         <th>Description</th>
+        <th>Comments</th>
         <th>Proposer</th>
         <th>Date Entered</th>
         <th>Participants</th>
@@ -663,7 +664,9 @@
                 <button class="update-btn" data-project="${project.id}" style="background:#ffc107;color:#333;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;">Update</button>
                 <button class="view-participants-btn" data-project="${project.id}" style="background:#6b4f1d;color:#fff;border:none;border-radius:5px;padding:4px 10px;cursor:pointer;margin-left:8px;">👥 View Members</button>
               </div>
-              <div class="comments-section" data-project="${project.id}" style="margin-top:12px;background:#f4f8fb;padding:8px 10px;border-radius:6px;">
+            </td>
+            <td>
+              <div class="comments-section" data-project="${project.id}" style="background:#f4f8fb;padding:8px 10px;border-radius:6px;">
                 <div class="comments-list" id="comments-list-${project.id}"></div>
                 <form class="comment-form" data-project="${project.id}" style="margin-top:8px;display:flex;gap:6px;align-items:center;">
                   <input type="text" class="comment-input" placeholder="Add a comment..." style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #ccc;" required />
@@ -699,15 +702,15 @@
               <button class="update-btn" data-project="${project.id}">Update</button>
               <button class="view-participants-btn" data-project="${project.id}">👥 Members</button>
             </div>
-            ${galleryHtml ? `<div style="margin-bottom:1rem;">${galleryHtml}</div>` : ''}
-            <div class="comments-section" data-project="${project.id}">
+            <div class="comments-section" data-project="${project.id}" style="margin-top:1rem;background:#f4f8fb;padding:8px 10px;border-radius:6px;">
               <div class="comments-list" id="comments-list-mobile-${project.id}"></div>
-              <form class="comment-form" data-project="${project.id}">
-                <input type="text" class="comment-input" placeholder="Add a comment..." required />
-                <input type="text" class="display-name-input" placeholder="Display name (optional)" />
-                <button type="submit">Post Comment</button>
+              <form class="comment-form" data-project="${project.id}" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+                <input type="text" class="comment-input" placeholder="Add a comment..." required style="padding:6px 8px;border-radius:4px;border:1px solid #ccc;" />
+                <input type="text" class="display-name-input" placeholder="Display name (optional)" style="padding:6px 8px;border-radius:4px;border:1px solid #ccc;" />
+                <button type="submit" style="background:#2e8b57;color:#fff;border:none;border-radius:4px;padding:6px 12px;">Post Comment</button>
               </form>
             </div>
+            ${galleryHtml ? `<div style="margin-top:1rem;">${galleryHtml}</div>` : ''}
           </div>
         `;
         projectsCards.innerHTML += cardHtml;
