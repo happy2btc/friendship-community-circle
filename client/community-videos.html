@@ -64,6 +64,10 @@
       <div id="uploadStatus"></div>
     </form>
     <div class="video-list" id="videoList"></div>
+    <div style="margin-top:2em;padding:1em;background:#f0f8ff;border-radius:8px;text-align:center;">
+      <button onclick="checkStorageBucket()" style="padding:8px 16px;background:#17a2b8;color:white;border:none;border-radius:4px;cursor:pointer;">Check Storage Bucket</button>
+      <p style="margin-top:0.5em;font-size:0.9em;color:#666;">Debug: Check what video files are in storage</p>
+    </div>
   </div>
   <script type="module">
     import { supabase } from './lib/supabase.js';
@@ -71,22 +75,100 @@
     const videoList = document.getElementById('videoList');
     const uploadStatus = document.getElementById('uploadStatus');
 
+    let profiles = {};
+
+    async function loadProfiles() {
+      const { data } = await supabase.from('profiles').select('id, full_name');
+      profiles = {};
+      (data || []).forEach(p => { profiles[p.id] = p.full_name; });
+    }
+
+    function handleVideoError(videoElement, videoUrl) {
+      console.error('Video failed to load:', videoUrl);
+      videoElement.style.display = 'none';
+      const errorDiv = document.createElement('div');
+      errorDiv.style.color = '#d9534f';
+      errorDiv.style.padding = '10px';
+      errorDiv.style.border = '1px solid #d9534f';
+      errorDiv.style.borderRadius = '4px';
+      errorDiv.style.backgroundColor = '#f2dede';
+      errorDiv.innerHTML = `
+        <strong>Video Error:</strong> Unable to load video<br>
+        <small>URL: ${videoUrl}</small><br>
+        <button onclick="retryVideo(this, '${videoUrl}')" style="margin-top:5px;padding:4px 8px;background:#d9534f;color:white;border:none;border-radius:3px;cursor:pointer;">Retry</button>
+        <button onclick="testVideoUrl('${videoUrl}')" style="margin-top:5px;margin-left:5px;padding:4px 8px;background:#5bc0de;color:white;border:none;border-radius:3px;cursor:pointer;">Test URL</button>
+      `;
+      videoElement.parentNode.insertBefore(errorDiv, videoElement.nextSibling);
+    }
+
+    function retryVideo(button, videoUrl) {
+      const videoElement = button.parentNode.previousElementSibling;
+      videoElement.style.display = 'block';
+      videoElement.load();
+      button.parentNode.remove();
+    }
+
+    async function testVideoUrl(videoUrl) {
+      try {
+        const response = await fetch(videoUrl, { method: 'HEAD' });
+        console.log('Video URL test result:', response.status, response.statusText);
+        alert(`Video URL test: ${response.status} ${response.statusText}\nContent-Type: ${response.headers.get('content-type')}`);
+      } catch (error) {
+        console.error('Video URL test failed:', error);
+        alert('Video URL test failed: ' + error.message);
+      }
+    }
+
+    async function checkStorageBucket() {
+      try {
+        const { data, error } = await supabase.storage.from('member-videos').list();
+        if (error) {
+          console.error('Storage check error:', error);
+          alert('Storage check failed: ' + error.message);
+        } else {
+          console.log('Files in member-videos bucket:', data);
+          alert(`Found ${data.length} files in storage bucket:\n${data.map(f => f.name).join('\n')}`);
+        }
+      } catch (error) {
+        console.error('Storage check failed:', error);
+        alert('Storage check failed: ' + error.message);
+      }
+    }
+
+    // Make functions available globally
+    window.checkStorageBucket = checkStorageBucket;
+
     async function fetchVideos() {
       const { data, error } = await supabase
         .from('member_video')
         .select('id, user_id, video_url, caption, created_at')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to last 50 videos for performance
       if (error) {
         videoList.innerHTML = '<p>Error loading videos.</p>';
+        console.error('Error fetching videos:', error);
+        return;
+      }
+      console.log('Fetched videos:', data); // Debug log
+      if (!data || data.length === 0) {
+        videoList.innerHTML = '<p>No videos posted yet. Be the first to share a video!</p>';
         return;
       }
       videoList.innerHTML = data.map(v => `
         <div class="video-item">
-          <div class="video-meta">Posted by <b>${v.user_id}</b> on ${new Date(v.created_at).toLocaleString()}</div>
-          <video src="${v.video_url}" controls></video>
+          <div class="video-meta">Posted by <b>${profiles[v.user_id] || v.user_id}</b> on ${new Date(v.created_at).toLocaleString()}</div>
+          <video src="${v.video_url}" controls preload="metadata" style="max-width:100%;border-radius:8px;" onerror="handleVideoError(this, '${v.video_url}')" onloadstart="console.log('Video started loading:', '${v.video_url}')"></video>
           ${v.caption ? `<div class="video-meta">${v.caption}</div>` : ''}
+          <div class="video-debug" style="font-size:0.8em;color:#999;margin-top:4px;">URL: ${v.video_url.substring(0, 50)}...</div>
         </div>
       `).join('');
+      // Add a count display
+      const countDiv = document.createElement('div');
+      countDiv.style.textAlign = 'center';
+      countDiv.style.marginBottom = '1em';
+      countDiv.style.color = '#666';
+      countDiv.textContent = `Showing ${data.length} video${data.length !== 1 ? 's' : ''}`;
+      videoList.insertBefore(countDiv, videoList.firstChild);
     }
 
     uploadForm.addEventListener('submit', async (e) => {
@@ -110,6 +192,7 @@
       }
       const { data: urlData } = supabase.storage.from('member-videos').getPublicUrl(filePath);
       const publicURL = urlData?.publicUrl;
+      console.log('Generated public URL:', publicURL);
       if (!publicURL) {
         uploadStatus.textContent = 'Could not get public URL for uploaded video.';
         return;
@@ -123,9 +206,11 @@
       }
       uploadStatus.textContent = 'Video posted!';
       uploadForm.reset();
+      await loadProfiles();
       fetchVideos();
     });
 
+    await loadProfiles();
     fetchVideos();
   </script>
 </body>
