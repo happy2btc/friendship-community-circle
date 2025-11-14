@@ -414,10 +414,12 @@ async function loadCircle() {
               .single();
             chatMessages.innerHTML += `
               <div style="margin-bottom:1em;">
-                <img src="${profile?.avatar_url || 'default-avatar.png'}" width="24" height="24" style="vertical-align:middle;border-radius:50%;">
+                <img src="${profile?.avatar_url || 'default-avatar.png'}" width="24" height="24" style="vertical-align:middle;border-radius:50%;margin-right:8px;">
                 <strong>${profile?.full_name || 'Unknown'}:</strong>
                 <span>${msg.message}</span>
-                <small style="color:#888;">${new Date(msg.created_at).toLocaleTimeString()}</small>
+                <div style="color:#666;font-size:0.8em;margin-top:2px;">
+                  ${new Date(msg.created_at).toLocaleDateString()} at ${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
               </div>
             `;
           }

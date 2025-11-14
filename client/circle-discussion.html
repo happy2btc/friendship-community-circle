@@ -101,7 +101,9 @@
       repliesList.innerHTML = replies.map(r =>
         `<div class="reply-card">
           <span class="reply-author">${idToName[r.author_id] || 'Unknown'}</span>
-          <span class="reply-date">${new Date(r.created_at).toLocaleString()}</span>
+          <div style="color:#666;font-size:0.8em;margin:4px 0;">
+            ${new Date(r.created_at).toLocaleDateString()} at ${new Date(r.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </div>
           <div>${r.reply_text}</div>
         </div>`
       ).join('');
