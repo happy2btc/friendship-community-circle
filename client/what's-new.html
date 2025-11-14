@@ -109,31 +109,23 @@
         }
       } catch (e) { console.warn('Prune static cards failed', e); }
       // Fetch from all actual tables, including events
-  let agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes, discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes, suggestionsRes, eventsRes, whatsNewRes, supportRequestsRes, memberVideoRes;
+  let agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes;
       try {
-        [agreementsRes, celebrationsRes, circlesRes, commentsRes, contributionsRes,
-          discussionsRes, groupProjectsRes, memberOfferingsRes, skillSharesRes,
-          suggestionsRes, eventsRes, whatsNewRes, supportRequestsRes, memberVideoRes] = await Promise.all([
+        [agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes] = await Promise.all([
           supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', cutoff),
-          supabase.from('celebrations').select('id, created_at, description').gte('created_at', cutoff),
           supabase.from('circles').select('id, created_at, name, description').gte('created_at', cutoff),
           supabase.from('comments').select('id, created_at, content').gte('created_at', cutoff),
-          supabase.from('contributions').select('id, created_at, project, challenge, help, collab, skills, urgency, contact').gte('created_at', cutoff),
           supabase.from('discussions').select('id, created_at, title, description').gte('created_at', cutoff),
           supabase.from('group_projects').select('id, created_at, name').gte('created_at', cutoff),
-          supabase.from('member_offerings').select('id, created_at, want, give, passion').gte('created_at', cutoff),
-          supabase.from('skill_shares').select('id, created_at, skill_name, skill_description').gte('created_at', cutoff),
           supabase.from('suggestions').select('id, created_at, description').gte('created_at', cutoff),
           supabase.from('events').select('id, title, description, start_time, end_time, location, zoom_link, timezone, created_at').gte('created_at', cutoff),
-          supabase.from("what's_new").select('id, type, title, description, link, created_at, created_by').gte('created_at', cutoff),
-          supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', cutoff),
-          supabase.from('member_video').select('id, user_id, video_url, created_at').gte('created_at', cutoff)
+          supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', cutoff)
         ]);
       } catch (e) {
         console.error('Failed fetching whats-new data:', e);
         // fall back to empty responses so feed can render static cards
-        agreementsRes = celebrationsRes = circlesRes = commentsRes = contributionsRes = { data: [] };
-        discussionsRes = groupProjectsRes = memberOfferingsRes = skillSharesRes = suggestionsRes = eventsRes = whatsNewRes = supportRequestsRes = memberVideoRes = { data: [] };
+        agreementsRes = circlesRes = commentsRes = { data: [] };
+        discussionsRes = groupProjectsRes = suggestionsRes = eventsRes = supportRequestsRes = { data: [] };
       }
 
 
@@ -148,25 +140,8 @@
 
   console.log('Group Projects response:', groupProjectsRes);
   if (groupProjectsRes.error) console.error('Group Projects error:', groupProjectsRes.error);
-  console.log('Member Video response:', memberVideoRes);
-  if (memberVideoRes && memberVideoRes.error) console.error('Member Video error:', memberVideoRes.error);
 
   const allNews = [];
-      // Videos Posted
-      if (memberVideoRes && Array.isArray(memberVideoRes.data)) {
-        memberVideoRes.data.forEach(v => {
-          allNews.push({
-            type: 'Video Posted',
-            id: v.id,
-            title: 'New Community Video',
-            description: 'A new video was posted to the Community Videos page.' + (v.video_url ? `<br><a href="community-videos.html#video-${v.id}">Watch Video</a>` : ''),
-            created_at: v.created_at,
-            user_id: v.user_id
-          });
-        });
-      } else {
-        console.warn('No member_video data found or not an array:', memberVideoRes);
-      }
       // Events (calendar)
       eventsRes.data?.forEach(ev => {
         allNews.push({
@@ -191,16 +166,6 @@
           created_at: ag.created_at
         });
       });
-      // Celebrations
-      celebrationsRes.data?.forEach(c => {
-        allNews.push({
-          type: 'Celebration',
-          title: 'New Celebration',
-          description: c.description || '',
-          created_at: c.created_at || new Date().toISOString(),
-          id: c.id
-        });
-      });
       // Circles
       circlesRes.data?.forEach(c => {
         allNews.push({
@@ -212,16 +177,6 @@
         });
       });
       // Comments removed from news feed
-      // Contributions
-      contributionsRes.data?.forEach(con => {
-        allNews.push({
-          type: 'Contribution',
-          id: con.id,
-          title: con.project || 'New Contribution',
-          description: [con.challenge, con.help, con.collab, con.skills, con.urgency, con.contact].filter(Boolean).join(' | '),
-          created_at: con.created_at
-        });
-      });
       // Discussions
       discussionsRes.data?.forEach(d => {
         allNews.push({
@@ -242,26 +197,7 @@
           created_at: gp.created_at || new Date().toISOString()
         });
       });
-      // Member Offerings
-      memberOfferingsRes.data?.forEach(mo => {
-        allNews.push({
-          type: 'Member Offering',
-          id: mo.id,
-          title: mo.want || mo.give || 'New Offering',
-          description: mo.passion || '',
-          created_at: mo.created_at
-        });
-      });
-      // Skill Shares
-      skillSharesRes.data?.forEach(ss => {
-        allNews.push({
-          type: 'Skill Share',
-          id: ss.id,
-          title: ss.skill_name || 'New Skill Share',
-          description: ss.skill_description || '',
-          created_at: ss.created_at
-        });
-      });
+      // Skill Shares removed
       // Suggestions
       // Show suggestions as discussions
       suggestionsRes.data?.forEach(sg => {
@@ -374,7 +310,7 @@
     // Realtime subscriptions to refresh the feed when key tables change
     (function subscribeRealtime() {
       try {
-        const tables = ['celebrations','group_projects','events','suggestions','agreements','member_offerings','skill_shares','contributions','support_requests','member_video'];
+        const tables = ['group_projects','events','suggestions','agreements','support_requests'];
         tables.forEach(t => {
           try {
             supabase.from(t).on('*', payload => {

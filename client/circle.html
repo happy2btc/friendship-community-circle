@@ -77,7 +77,6 @@
       <!-- Future tabs: <button class="tab-btn" data-tab="activities">Activities</button> <button class="tab-btn" data-tab="projects">Projects</button> <button class="tab-btn" data-tab="resources">Resources</button> <button class="tab-btn" data-tab="links">Links</button> -->
     </div>
     <div id="tab-content" style="margin-top:2em;"></div>
-
   <div id="projects-tab-content" style="display:none;"></div>
   </div>
   <a href="main-menu.html" class="menu-button">🔙 Return to Main Menu</a>
@@ -138,6 +137,7 @@ async function checkCircleAccess() {
     window.location.href = `login.html?redirect=circle.html?id=${circleId}`;
     return false;
   }
+
   const { data: membership } = await supabase
     .from('circle_members')
     .select('id')
@@ -148,6 +148,12 @@ async function checkCircleAccess() {
     document.body.innerHTML = '<h2>Access denied: You are not a member of this circle.</h2>';
     return false;
   }
+
+  // Update last read time for this circle
+  const lastReadTimes = JSON.parse(localStorage.getItem(`circleLastRead_${userId}`) || '{}');
+  lastReadTimes[circleId] = new Date().toISOString();
+  localStorage.setItem(`circleLastRead_${userId}`, JSON.stringify(lastReadTimes));
+
   return true;
 }
 
