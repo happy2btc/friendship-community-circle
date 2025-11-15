@@ -65,7 +65,7 @@
           supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', cutoff),
           supabase.from('member_offerings').select('id, created_at, title, description').gte('created_at', cutoff),
           supabase.from('skill_shares').select('id, created_at, title, description').gte('created_at', cutoff),
-          supabase.from('member_video').select('id, created_at, title, description').gte('created_at', cutoff),
+          supabase.from('member_video').select('id, created_at, caption, video_url').gte('created_at', cutoff),
           supabase.from('contributions').select('id, created_at, title, description').gte('created_at', cutoff)
         ]);
       } catch (e) {
@@ -192,8 +192,8 @@
         allNews.push({
           type: 'Member Video',
           id: mv.id,
-          title: mv.title || 'New Member Video',
-          description: mv.description || '',
+          title: mv.caption || 'New Member Video',
+          description: mv.video_url ? `Video: ${mv.video_url}` : '',
           created_at: mv.created_at
         });
       });
