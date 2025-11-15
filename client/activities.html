@@ -429,41 +429,7 @@
                 return;
             }
 
-                container.innerHTML += members.map(m => `
-                    <div class="member-card">
-                        <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
-                        <div class="member-info">
-                            <h2>${m.profile.full_name || m.id}</h2>
-                            <div class="activity-breakdown">
-                                <strong>All-Time Activities:</strong><br>
-                                Votes: ${m.breakdown.votes || 0}<br>
-                                Suggestions: ${m.breakdown.suggestions || 0}<br>
-                                Comments: ${m.breakdown.comments || 0}<br>
-                                Wants: ${m.breakdown.wants || 0}<br>
-                                Offers: ${m.breakdown.offers || 0}<br>
-                                Passion: ${m.breakdown.passion || 0}<br>
-                                Projects & Struggles: ${m.breakdown.projects || 0}<br>
-                                <span style="color:#4a7c59;font-weight:bold;">Writer's Posts: ${m.breakdown.writer_posts || 0}</span><br>
-                                <span style="color:#4a7c59;font-weight:bold;">Videos Posted: ${m.breakdown.videos_posted || 0}</span><br>
-                                Help Given: ${m.breakdown.help_hours_recent || 0}<br>
-                                Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
-                                Circles Created: ${m.breakdown.circles_created || 0}<br>
-                                Events Created: ${m.breakdown.events_created || 0}<br>
-                                Events Attended: ${m.breakdown.events_attended || 0}<br>
-                                Members Added: ${m.breakdown.members_added || 0}<br>
-                                Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
-                                Projects Proposed: ${m.breakdown.projects_proposed || 0}<br>
-                                Support Responses: ${m.breakdown.support_responses || 0}<br>
-                                Positive Impact: ${m.breakdown.positive_impact || 0}<br>
-                                <strong>Total:</strong> ${m.total}
-                            </div>
-                            <div class="personal-story">${m.profile.personal_story || ''}</div>
-                        </div>
-                    </div>
-                `).join('');
-
-            // Always display all members with activity, even if profile is 'Unknown'
-            container.innerHTML += members.map(m => `
+            container.innerHTML = members.map(m => `
                 <div class="member-card">
                     <img src="${m.profile.avatar_url || 'default-avatar.png'}" alt="Profile Picture">
                     <div class="member-info">
@@ -477,6 +443,7 @@
                             Offers: ${m.breakdown.offers || 0}<br>
                             Passion: ${m.breakdown.passion || 0}<br>
                             Projects & Struggles: ${m.breakdown.projects || 0}<br>
+                            <span style="color:#4a7c59;font-weight:bold;">Writer's Posts: ${m.breakdown.writer_posts || 0}</span><br>
                             <span style="color:#4a7c59;font-weight:bold;">Videos Posted: ${m.breakdown.videos_posted || 0}</span><br>
                             Help Given: ${m.breakdown.help_hours_recent || 0}<br>
                             Profile Completed: ${m.breakdown.profile ? "✔️" : "—"}<br>
@@ -486,6 +453,7 @@
                             Members Added: ${m.breakdown.members_added || 0}<br>
                             Celebration Wall Posts: ${m.breakdown.celebrations_posted || 0}<br>
                             Projects Proposed: ${m.breakdown.projects_proposed || 0}<br>
+                            Support Responses: ${m.breakdown.support_responses || 0}<br>
                             Positive Impact: ${m.breakdown.positive_impact || 0}<br>
                             <strong>Total:</strong> ${m.total}
                         </div>
