@@ -19,35 +19,6 @@
 <body>
   <div class="container">
     <h1>What's New</h1>
-    <div class="news-card">
-      <div>
-        <span class="news-type">Group Project</span>
-        <span class="news-date">October 7, 2025</span>
-      </div>
-      <div class="news-title">Coven Community Yurt</div>
-      <div>New group project launched: The Coven Community Yurt. Join the effort to create a welcoming, shared space for all!</div>
-      <a href="group-projects.html">See all projects</a>
-    </div>
-    <div class="news-card">
-      <div>
-        <span class="news-type">New Feature</span>
-        <span class="news-date">September 30, 2025</span>
-      </div>
-      <div class="news-title">Circle Blogs are Here!</div>
-      <div>You can now create and read blog posts within your circles. Share your thoughts, ideas, and updates with your community.</div>
-      <a href="circle-list.html">Go to your circles to check it out!</a>
-    </div>
-    <div class="news-card">
-      <div>
-        <span class="news-type">New Feature</span>
-        <span class="news-date">September 30, 2025</span>
-      </div>
-      <div class="news-title">Profile Images and Galleries</div>
-      <div>You can now upload a profile image and create a gallery of images on your profile page.</div>
-      <a href="profile.html">Go to your profile to try it out!</a>
-    </div>
-  <!-- Featured latest celebration -->
-  <div id="featured-celebration" style="margin-top:1.5em;"></div>
 
   <div class="news-list" id="news-list"></div>
   <a href="main-menu.html" id="back-to-menu" style="position: fixed; top: 0; left: 0; width: 100%; background: #1976d2; color: #fff; z-index: 1000; padding: 16px 0; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.12); font-weight: bold; border-radius: 0 0 12px 12px; box-sizing: border-box; font-size: 1.15em; letter-spacing: 0.5px;">&larr; Back to Menu</a>
@@ -57,34 +28,6 @@
 
     import { supabase } from '/lib/supabase.js';
     async function loadWhatsNew() {
-      // Load the single latest celebration and render a featured block
-      try {
-        const latestRes = await supabase
-          .from('celebrations')
-          .select('id, headline, story, created_at')
-          .order('created_at', { ascending: false })
-          .limit(1);
-        const latest = latestRes.data && latestRes.data[0];
-        const feat = document.getElementById('featured-celebration');
-        if (latest) {
-          const excerpt = latest.story && latest.story.length > 220 ? latest.story.slice(0,220) + '...' : (latest.story || '');
-          feat.innerHTML = `
-            <div class="news-card" style="border:2px solid #ffd54f;background:#fffbea;">
-              <div>
-                <span class="news-type">Featured Celebration</span>
-                <span class="news-date">${new Date(latest.created_at).toLocaleString()}</span>
-              </div>
-              <div class="news-title">${latest.headline || 'A New Celebration'}</div>
-              <div>${excerpt}</div>
-              <div style="margin-top:0.5em;"><a href="celebration-wall.html?id=${latest.id}">Read full story on the Celebration Wall</a></div>
-            </div>
-          `;
-        } else {
-          feat.innerHTML = '';
-        }
-      } catch (e) {
-        console.warn('Could not load featured celebration', e);
-      }
 
   // Ensure ISO format (YYYY-MM-DDTHH:mm:ssZ)
   // Use a 14-day window for recent items
@@ -108,24 +51,27 @@
           });
         }
       } catch (e) { console.warn('Prune static cards failed', e); }
-      // Fetch from all actual tables, including events
-  let agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes;
+      // Fetch from all actual tables, including events and new tables
+  let agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes, memberOfferingsRes, skillSharesRes, memberVideoRes, contributionsRes;
       try {
-        [agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes] = await Promise.all([
+        [agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes, memberOfferingsRes, skillSharesRes, memberVideoRes, contributionsRes] = await Promise.all([
           supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', cutoff),
           supabase.from('circles').select('id, created_at, name, description').gte('created_at', cutoff),
-          supabase.from('comments').select('id, created_at, content').gte('created_at', cutoff),
+          supabase.from('comments').select('id, created_at, content, project_id, discussion_id').gte('created_at', cutoff),
           supabase.from('discussions').select('id, created_at, title, description').gte('created_at', cutoff),
           supabase.from('group_projects').select('id, created_at, name').gte('created_at', cutoff),
           supabase.from('suggestions').select('id, created_at, description').gte('created_at', cutoff),
           supabase.from('events').select('id, title, description, start_time, end_time, location, zoom_link, timezone, created_at').gte('created_at', cutoff),
-          supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', cutoff)
+          supabase.from('support_requests').select('id, created_at, mission_title, mission_description').gte('created_at', cutoff),
+          supabase.from('member_offerings').select('id, created_at, title, description').gte('created_at', cutoff),
+          supabase.from('skill_shares').select('id, created_at, title, description').gte('created_at', cutoff),
+          supabase.from('member_video').select('id, created_at, title, description').gte('created_at', cutoff),
+          supabase.from('contributions').select('id, created_at, title, description').gte('created_at', cutoff)
         ]);
       } catch (e) {
         console.error('Failed fetching whats-new data:', e);
         // fall back to empty responses so feed can render static cards
-        agreementsRes = circlesRes = commentsRes = { data: [] };
-        discussionsRes = groupProjectsRes = suggestionsRes = eventsRes = supportRequestsRes = { data: [] };
+        agreementsRes = circlesRes = commentsRes = discussionsRes = groupProjectsRes = suggestionsRes = eventsRes = supportRequestsRes = memberOfferingsRes = skillSharesRes = memberVideoRes = contributionsRes = { data: [] };
       }
 
 
@@ -140,6 +86,14 @@
 
   console.log('Group Projects response:', groupProjectsRes);
   if (groupProjectsRes.error) console.error('Group Projects error:', groupProjectsRes.error);
+  console.log('Member Offerings response:', memberOfferingsRes);
+  if (memberOfferingsRes.error) console.error('Member Offerings error:', memberOfferingsRes.error);
+  console.log('Skill Shares response:', skillSharesRes);
+  if (skillSharesRes.error) console.error('Skill Shares error:', skillSharesRes.error);
+  console.log('Member Video response:', memberVideoRes);
+  if (memberVideoRes.error) console.error('Member Video error:', memberVideoRes.error);
+  console.log('Contributions response:', contributionsRes);
+  if (contributionsRes.error) console.error('Contributions error:', contributionsRes.error);
 
   const allNews = [];
       // Events (calendar)
@@ -176,7 +130,23 @@
           created_at: c.created_at
         });
       });
-      // Comments removed from news feed
+      // Comments - now added to news feed
+      commentsRes.data?.forEach(c => {
+        let link = '';
+        if (c.project_id) {
+          link = `group-projects.html?id=${c.project_id}`;
+        } else if (c.discussion_id) {
+          link = `discussions.html?id=${c.discussion_id}`;
+        }
+        allNews.push({
+          type: 'Comment',
+          id: c.id,
+          title: 'New Comment',
+          description: c.content || '',
+          created_at: c.created_at,
+          link: link
+        });
+      });
       // Discussions
       discussionsRes.data?.forEach(d => {
         allNews.push({
@@ -197,7 +167,46 @@
           created_at: gp.created_at || new Date().toISOString()
         });
       });
-      // Skill Shares removed
+      // Member Offerings
+      memberOfferingsRes.data?.forEach(mo => {
+        allNews.push({
+          type: 'Member Offering',
+          id: mo.id,
+          title: mo.title || 'New Member Offering',
+          description: mo.description || '',
+          created_at: mo.created_at
+        });
+      });
+      // Skill Shares
+      skillSharesRes.data?.forEach(ss => {
+        allNews.push({
+          type: 'Skill Share',
+          id: ss.id,
+          title: ss.title || 'New Skill Share',
+          description: ss.description || '',
+          created_at: ss.created_at
+        });
+      });
+      // Member Videos
+      memberVideoRes.data?.forEach(mv => {
+        allNews.push({
+          type: 'Member Video',
+          id: mv.id,
+          title: mv.title || 'New Member Video',
+          description: mv.description || '',
+          created_at: mv.created_at
+        });
+      });
+      // Contributions
+      contributionsRes.data?.forEach(cont => {
+        allNews.push({
+          type: 'Contribution',
+          id: cont.id,
+          title: cont.title || 'New Contribution',
+          description: cont.description || '',
+          created_at: cont.created_at
+        });
+      });
       // Suggestions
       // Show suggestions as discussions
       suggestionsRes.data?.forEach(sg => {
@@ -207,18 +216,6 @@
           title: 'New Discussion',
           description: sg.description || '',
           created_at: sg.created_at
-        });
-      });
-      // Whats New (manual entries)
-      whatsNewRes.data?.forEach(item => {
-        allNews.push({
-          type: item.type,
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          link: item.link,
-          created_at: item.created_at,
-          created_by: item.created_by
         });
       });
       // Support Requests
@@ -310,7 +307,7 @@
     // Realtime subscriptions to refresh the feed when key tables change
     (function subscribeRealtime() {
       try {
-        const tables = ['group_projects','events','suggestions','agreements','support_requests'];
+        const tables = ['group_projects','events','suggestions','agreements','support_requests','member_offerings','skill_shares','member_video','contributions','comments'];
         tables.forEach(t => {
           try {
             supabase.from(t).on('*', payload => {
