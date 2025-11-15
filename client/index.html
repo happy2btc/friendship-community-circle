@@ -1,256 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <title>Friendship Community Circle</title>
-  <style>
-    body {
-      font-family: Georgia, serif;
-      background-color: #f9f6f1;
-      color: #3b2f2f;
-      margin: 0;
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .main-title {
-      font-size: 2.5em;
-      font-weight: bold;
-      color: #6b4f1d;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    h2 {
-      color: #6b4f1d;
-      text-align: center;
-      font-size: 1.8em;
-      font-weight: normal;
-    }
-    form {
-      background-color: #fff;
-      border: 1px solid #d8bfa3;
-      border-radius: 12px;
-      padding: 30px;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    }
-    label {
-      display: block;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #2e8b57;
-      color: #fff;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 30px;
-      width: 100%;
-      font-size: 1.1em;
-    }
-    .form-status {
-      margin-top: 1rem;
-      text-align: center;
-      font-weight: bold;
-      min-height: 1.5em;
-    }
-    .toggle-button {
-      background-color: #2e8b57;
-      color: #fff;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-bottom: 25px;
-      width: 100%;
-      font-size: 1em;
-      font-weight: bold;
-    }
-    .forgot-link {
-      display: block;
-      text-align: center;
-      margin-top: 1em;
-      color: #2e8b57;
-      text-decoration: underline;
-      font-size: 1em;
-      font-weight: bold;
-    }
-    .forgot-link:hover {
-      color: #6b4f1d;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Welcome to the Community!</title>
+    <script type="module">
+        import { supabase } from '/lib/supabase.js';
+        
+        // Wait for DOM to be fully loaded before initializing
+        document.addEventListener('DOMContentLoaded', () => {
+            // Debug: Check if elements exist
+            console.log('Page loaded, checking elements...');
+            console.log('Welcome section:', document.querySelector('.welcome-section'));
+            console.log('Community description:', document.querySelector('.community-description'));
+            console.log('Sign-in form:', document.querySelector('.sign-in-form'));
+            console.log('Instructions:', document.querySelector('.instructions'));
+            
+            // Make sure elements are visible
+            const welcomeSection = document.querySelector('.welcome-section');
+            const communityDesc = document.querySelector('.community-description');
+            const signInForm = document.querySelector('.sign-in-form');
+            const instructions = document.querySelector('.instructions');
+            
+            if (welcomeSection) {
+                welcomeSection.style.display = 'block';
+                console.log('Welcome section made visible');
+            }
+            if (communityDesc) {
+                communityDesc.style.display = 'block';
+                console.log('Community description made visible');
+            }
+            if (signInForm) {
+                signInForm.style.display = 'block';
+                console.log('Sign-in form made visible');
+            }
+            if (instructions) {
+                instructions.style.display = 'block';
+                console.log('Instructions made visible');
+            }
+            
+            console.log('Elements visibility set');
+            console.log('Supabase loaded:', supabase);
+            
+            // Initialize sign-in functionality
+            initializeSignIn();
+        });
+        
+        function initializeSignIn() {
+            const signInBtn = document.getElementById('sign-in-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const signUpLink = document.getElementById('sign-up-link');
+            const confirmBtn = document.getElementById('confirm-btn');
+            
+            console.log('Sign-in button found:', signInBtn);
+            console.log('Email input found:', emailInput);
+            console.log('Password input found:', passwordInput);
+            console.log('Sign-up link found:', signUpLink);
+            
+            signInBtn.addEventListener('click', async () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                
+                console.log('Sign-in button clicked with email:', email);
+                
+                if (!email || !password) {
+                    alert('Please enter both email and password');
+                    return;
+                }
+                
+                signInBtn.disabled = true;
+                signInBtn.textContent = 'Signing In...';
+                
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+                    
+                    if (error) {
+                        alert('Sign in failed: ' + error.message);
+                    } else {
+                        // Redirect directly to main menu
+                        window.location.href = 'main-menu.html';
+                    }
+                } catch (error) {
+                    alert('Sign in error: ' + error.message);
+                } finally {
+                    signInBtn.disabled = false;
+                    signInBtn.textContent = 'Sign In';
+                }
+            });
+
+            // Handle sign up link (could redirect to a sign up page if needed)
+            signUpLink.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent the link from navigating
+                console.log('Sign-up link clicked');
+                
+                // Create a simple sign-up form
+                const signUpForm = document.createElement('div');
+                signUpForm.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                            <h3>Sign Up</h3>
+                            <input type="email" id="signup-email" placeholder="Email" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                            <input type="password" id="signup-password" placeholder="Password" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                            <input type="text" id="signup-inviter" placeholder="Who invited you?" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button id="submit-signup" style="flex: 1; background: #2e8b57; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Sign Up</button>
+                                <button id="cancel-signup" style="flex: 1; background: #ccc; color: black; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(signUpForm);
+                
+                // Handle form submission
+                document.getElementById('submit-signup').addEventListener('click', async () => {
+                    const email = document.getElementById('signup-email').value;
+                    const password = document.getElementById('signup-password').value;
+                    const inviter = document.getElementById('signup-inviter').value;
+                    
+                    if (!email || !password || !inviter) {
+                        alert('Please fill in all fields.');
+                        return;
+                    }
+                    
+                    try {
+                        const { data, error } = await supabase.auth.signUp({
+                            email: email,
+                            password: password,
+                            options: {
+                                data: {
+                                    inviter: inviter
+                                }
+                            }
+                        });
+                        
+                        if (error) {
+                            alert('Sign up failed: ' + error.message);
+                        } else {
+                            alert('Sign up successful! Please check your email to confirm your account.');
+                            document.body.removeChild(signUpForm);
+                        }
+                    } catch (error) {
+                        alert('Sign up error: ' + error.message);
+                    }
+                });
+                
+                // Handle cancel
+                document.getElementById('cancel-signup').addEventListener('click', () => {
+                    document.body.removeChild(signUpForm);
+                });
+            });
+
+            // Hide confirm button since sign-in is now on this page
+            if (confirmBtn) {
+                confirmBtn.style.display = 'none';
+            }
+        }
+    </script>
+    <style>
+        body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; margin: 40px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        h1 { color: #6b4f1d; text-align: center; margin-bottom: 30px; }
+        .welcome-section { text-align: center; margin-bottom: 30px; }
+        .community-description { text-align: left; margin: 2em auto; max-width: 600px; font-style: italic; color: #666; line-height: 1.6; }
+        .sign-in-form { text-align: left; margin: 2em auto; max-width: 400px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f9f9f9; }
+        .sign-in-form h2 { margin-top: 0; color: #6b4f1d; }
+        .sign-in-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .sign-in-form button { background: #2e8b57; color: #fff; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        .sign-in-form button:disabled { background: #ccc; }
+        .instructions { text-align: left; margin: 2em auto; max-width: 600px; line-height: 1.6; }
+        .instructions h3 { color: #6b4f1d; margin-top: 30px; }
+        button { background: #2e8b57; color: #fff; padding: 15px 30px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.2em; }
+        button:disabled { background: #ccc; }
+    </style>
 </head>
 <body>
-  <div class="main-title">The Friendship Community Circle</div>
-  <h2>🌿 Welcome to the Circle</h2>
-  
-  <form id="auth-form">
-    <!-- Button moved to the top of the form -->
-    <button type="button" id="toggle-register-btn" class="toggle-button">Register as a New User</button>
-
-    <div id="registration-fields" style="display: none;">
-  <label for="name">🪶 Your Name</label>
-  <input type="text" id="name" name="name">
-
-  <label for="invited-by">Who invited you?</label>
-  <input type="text" id="invited-by" name="invited-by" placeholder="Enter name or email of inviter">
-
-  <label for="phone">📱 Phone (optional)</label>
-  <input type="tel" id="phone" name="phone">
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Welcome to the Friendship Community Circle!</h1>
+            
+            <p class="community-description">
+                The Friendship Community Circle is a community of my friends. We gather as members, practice mutual support, encourage action, and award points for activities. There are activities ranging from profiles, forms about ways to exchange energy and service, 'suggestions, discussions and voting on agreements', to creating circles in circles. The goal is to have a network of small interconnected communities, like mycelium, to self-govern from a grass roots decentralized self-sovereign autonomous level. 
+                The purpose is to establish an environment of positive thought, good cheer, natural giving, non violent communication, and unconditional acceptance of what is and each other. 
+            </p>
+        </div>
+        
+        <div class="sign-in-form">
+            <h2>Sign In</h2>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button id="sign-in-btn">Sign In</button>
+            <p>Don't have an account? <a href="#" id="sign-up-link">Sign Up</a></p>
+        </div>
+        
+        <div class="instructions">
+            <h3>Getting Started</h3>
+            <p>Thank you for affirming our community values. Here's how to get started:</p>
+            <ul>
+                <li>🌐 <strong>Explore Circles:</strong> Join groups that match your interests.</li>
+                <li>🗓️ <strong>Events Calendar:</strong> Attend events and earn points for participation.</li>
+                <li>🧑‍🤝‍🧑 <strong>Profiles:</strong> Connect with other members and share your skills.</li>
+                <li>💬 <strong>Discussions:</strong> Start or join conversations on topics you care about.</li>
+                <li>🎉 <strong>Celebrations:</strong> Share and celebrate community milestones.</li>
+                <li>🏆 <strong>Points & Activities:</strong> Earn points for contributing and participating.</li>
+            </ul>
+            <p>Please take a moment to explore the menu and familiarize yourself with the features. If you have questions, reach out to a community guide or check the help section.</p>
+        </div>
+        
+        <button id="confirm-btn" style="display:none;">I have read and understand</button>
     </div>
-
-    <label for="email">📬 Email Address</label>
-    <input type="email" id="email" name="email" required>
-
-    <label for="password">🔑 Password</label>
-    <input type="password" id="password" name="password" required minlength="6">
-
-    <button type="submit" id="submit-button">Enter the Circle</button>
-    <div id="form-status"></div>
-    <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
-  </form>
-
-  <script type="module">
-    import { supabase } from './lib/supabase.js';
-
-    const authForm = document.getElementById('auth-form');
-    const formStatus = document.getElementById('form-status');
-    const registrationFields = document.getElementById('registration-fields');
-    const toggleBtn = document.getElementById('toggle-register-btn');
-    const submitBtn = document.getElementById('submit-button');
-    const nameInput = document.getElementById('name');
-
-    let isRegistering = false;
-
-    toggleBtn.addEventListener('click', () => {
-      isRegistering = !isRegistering; // Toggle the state
-
-      if (isRegistering) {
-        // Switch to Register mode
-        registrationFields.style.display = 'block';
-        nameInput.required = true; // Name is required for registration
-        submitBtn.textContent = 'Create Account';
-        toggleBtn.textContent = 'Login as Returning User';
-      } else {
-        // Switch to Login mode
-        registrationFields.style.display = 'none';
-        nameInput.required = false;
-        submitBtn.textContent = 'Enter the Circle';
-        toggleBtn.textContent = 'Register as a New User';
-      }
-      formStatus.textContent = ''; // Clear any previous status messages
-    });
-
-    authForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      submitBtn.disabled = true;
-      formStatus.textContent = 'Processing...';
-      formStatus.style.color = '#333';
-
-      const form = event.target;
-      const formData = new FormData(form);
-      const email = formData.get('email');
-      const password = formData.get('password');
-      
-      try {
-        if (isRegistering) {
-          // --- SIGN UP LOGIC ---
-          const name = formData.get('name');
-          const phone = formData.get('phone');
-          const invitedBy = formData.get('invited-by');
-
-          let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: { data: { full_name: name, phone: phone, invited_by: invitedBy } }
-          });
-
-          if (signUpError) throw signUpError;
-
-          // SIGN UP SUCCESS: enqueue welcome on server as a fallback, then redirect to affirm page
-          try {
-            // Compute functions URL from the Supabase URL so this works across projects
-            // e.g. supabaseUrl: https://project-ref.supabase.co -> functions URL: https://project-ref.functions.supabase.co
-            import('./lib/supabase.js').then(({ supabaseUrl }) => {
-              try {
-                const host = new URL(supabaseUrl).host; // e.g. project-ref.supabase.co
-                const projectRef = host.split('.supabase.co')[0];
-                const funcUrl = `https://${projectRef}.functions.supabase.co/register-user`;
-                // Fire-and-forget: don't block the user flow if the call fails
-                fetch(funcUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    user_id: signUpData.user?.id,
-                    display_name: name || null,
-                    email: email || null,
-                    wallet_address: null
-                  })
-                }).catch(e => console.warn('register-user fallback failed (non-fatal):', e));
-              } catch (err) {
-                console.warn('Could not compute functions URL for register-user fallback', err);
-              }
-            }).catch(e => console.warn('Failed to import supabaseUrl for fallback', e));
-          } catch (e) {
-            console.warn('register-user fallback exception:', e);
-          }
-
-          // Redirect the user to the affirmation page
-          window.location.href = 'affirm.html';
-
-        } else {
-          // --- LOGIN LOGIC ---
-          let { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-          });
-
-          if (loginError) throw loginError;
-
-          // LOGIN SUCCESS: Check if they have affirmed
-          const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('affirmation_text')
-              .eq('id', loginData.user.id)
-              .single();
-
-          if (profileError && profileError.code !== 'PGRST116') { // Ignore 'exact one row' error for new users
-            throw profileError;
-          }
-
-          if (profile && profile.affirmation_text) {
-              // They have affirmed, go to home page
-              window.location.href = 'main-menu.html';
-          } else {
-              // They have not affirmed, go to affirm page
-              window.location.href = 'affirm.html';
-          }
-        }
-      } catch (error) {
-        formStatus.textContent = `⚠️ Error: ${error.message}`;
-        formStatus.style.color = 'red';
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
-   </script>
 </body>
 </html>

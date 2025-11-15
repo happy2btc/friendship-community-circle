@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <title>Friendship Community Circle</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .main-title {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #6b4f1d;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #6b4f1d;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: normal;
+    }
+    form {
+      background-color: #fff;
+      border: 1px solid #d8bfa3;
+      border-radius: 12px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #2e8b57;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 30px;
+      width: 100%;
+      font-size: 1.1em;
+    }
+    .form-status {
+      margin-top: 1rem;
+      text-align: center;
+      font-weight: bold;
+      min-height: 1.5em;
+    }
+    .toggle-button {
+      background-color: #2e8b57;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 25px;
+      width: 100%;
+      font-size: 1em;
+      font-weight: bold;
+    }
+    .forgot-link {
+      display: block;
+      text-align: center;
+      margin-top: 1em;
+      color: #2e8b57;
+      text-decoration: underline;
+      font-size: 1em;
+      font-weight: bold;
+    }
+    .forgot-link:hover {
+      color: #6b4f1d;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-title">The Friendship Community Circle</div>
+  <h2>🌿 Welcome to the Circle</h2>
+  
+  <form id="auth-form">
+    <!-- Button moved to the top of the form -->
+    <button type="button" id="toggle-register-btn" class="toggle-button">Register as a New User</button>
+
+    <div id="registration-fields" style="display: none;">
+  <label for="name">🪶 Your Name</label>
+  <input type="text" id="name" name="name">
+
+  <label for="invited-by">Who invited you?</label>
+  <input type="text" id="invited-by" name="invited-by" placeholder="Enter name or email of inviter">
+
+  <label for="phone">📱 Phone (optional)</label>
+  <input type="tel" id="phone" name="phone">
+    </div>
+
+    <label for="email">📬 Email Address</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">🔑 Password</label>
+    <input type="password" id="password" name="password" required minlength="6">
+
+    <button type="submit" id="submit-button">Enter the Circle</button>
+    <div id="form-status"></div>
+    <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
+  </form>
+
+  <script type="module">
+    import { supabase } from './lib/supabase.js';
+
+    const authForm = document.getElementById('auth-form');
+    const formStatus = document.getElementById('form-status');
+    const registrationFields = document.getElementById('registration-fields');
+    const toggleBtn = document.getElementById('toggle-register-btn');
+    const submitBtn = document.getElementById('submit-button');
+    const nameInput = document.getElementById('name');
+
+    let isRegistering = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isRegistering = !isRegistering; // Toggle the state
+
+      if (isRegistering) {
+        // Switch to Register mode
+        registrationFields.style.display = 'block';
+        nameInput.required = true; // Name is required for registration
+        submitBtn.textContent = 'Create Account';
+        toggleBtn.textContent = 'Login as Returning User';
+      } else {
+        // Switch to Login mode
+        registrationFields.style.display = 'none';
+        nameInput.required = false;
+        submitBtn.textContent = 'Enter the Circle';
+        toggleBtn.textContent = 'Register as a New User';
+      }
+      formStatus.textContent = ''; // Clear any previous status messages
+    });
+
+    authForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      submitBtn.disabled = true;
+      formStatus.textContent = 'Processing...';
+      formStatus.style.color = '#333';
+
+      const form = event.target;
+      const formData = new FormData(form);
+      const email = formData.get('email');
+      const password = formData.get('password');
+      
+      try {
+        if (isRegistering) {
+          // --- SIGN UP LOGIC ---
+          const name = formData.get('name');
+          const phone = formData.get('phone');
+          const invitedBy = formData.get('invited-by');
+
+          let { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: { data: { full_name: name, phone: phone, invited_by: invitedBy } }
+          });
+
+          if (signUpError) throw signUpError;
+
+          // SIGN UP SUCCESS: enqueue welcome on server as a fallback, then redirect to affirm page
+          try {
+            // Compute functions URL from the Supabase URL so this works across projects
+            // e.g. supabaseUrl: https://project-ref.supabase.co -> functions URL: https://project-ref.functions.supabase.co
+            import('./lib/supabase.js').then(({ supabaseUrl }) => {
+              try {
+                const host = new URL(supabaseUrl).host; // e.g. project-ref.supabase.co
+                const projectRef = host.split('.supabase.co')[0];
+                const funcUrl = `https://${projectRef}.functions.supabase.co/register-user`;
+                // Fire-and-forget: don't block the user flow if the call fails
+                fetch(funcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    user_id: signUpData.user?.id,
+                    display_name: name || null,
+                    email: email || null,
+                    wallet_address: null
+                  })
+                }).catch(e => console.warn('register-user fallback failed (non-fatal):', e));
+              } catch (err) {
+                console.warn('Could not compute functions URL for register-user fallback', err);
+              }
+            }).catch(e => console.warn('Failed to import supabaseUrl for fallback', e));
+          } catch (e) {
+            console.warn('register-user fallback exception:', e);
+          }
+
+          // Redirect the user to the affirmation page
+          window.location.href = 'affirm.html';
+
+        } else {
+          // --- LOGIN LOGIC ---
+          let { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+          });
+
+          if (loginError) throw loginError;
+
+          // LOGIN SUCCESS: Check if they have affirmed
+          const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('affirmation_text')
+              .eq('id', loginData.user.id)
+              .single();
+
+          if (profileError && profileError.code !== 'PGRST116') { // Ignore 'exact one row' error for new users
+            throw profileError;
+          }
+
+          if (profile && profile.affirmation_text) {
+              // They have affirmed, go to home page
+              window.location.href = 'main-menu.html';
+          } else {
+              // They have not affirmed, go to affirm page
+              window.location.href = 'affirm.html';
+          }
+        }
+      } catch (error) {
+        formStatus.textContent = `⚠️ Error: ${error.message}`;
+        formStatus.style.color = 'red';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+   </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
+// Supabase configuration for production
 import { createClient } from '@supabase/supabase-js';
 
-export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://guykaykkefwabnuhqcyv.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1eWtheWtrZWZ3YWJudWhxY3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5OTc3MTgsImV4cCI6MjA3MTU3MzcxOH0.jr-d5JffuthCIuSpYKxcm_toYNE7L071-OBIHBOR2KI';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
