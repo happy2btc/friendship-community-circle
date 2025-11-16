@@ -236,7 +236,10 @@
 
     <!-- Enable Desktop Notifications Button -->
     <div style="text-align:center; margin: 1.5em 0 1.5em 0;">
-      <button id="notif-test-btn" style="background: #2196f3; color: #fff; border: none; border-radius: 6px; padding: 10px 18px; font-size: 1em; font-weight: bold; cursor: pointer;">Enable Desktop Notifications</button>
+      <button id="notif-test-btn" style="background: linear-gradient(45deg, #2196f3, #21cbf3); color: #fff; border: none; border-radius: 8px; padding: 12px 20px; font-size: 1em; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3); transition: all 0.2s;">🔔 Enable Activity Notifications</button>
+      <div style="margin-top: 8px; font-size: 0.9em; color: #666;">
+        Get notified of new videos, events, comments, and more!
+      </div>
     </div>
 
     <!-- Most Active Member and Newest Members Section -->
@@ -1126,9 +1129,9 @@
       }
     }
     if (permission === 'granted') {
-      alert('Permission granted! Showing test notification.');
+      alert('🎉 Notifications enabled! You\'ll now get notified about:\n\n• New videos posted\n• New events created\n• New comments\n• New suggestions\n• New group projects\n• New circles\n• Personal messages');
       new Notification('🔔 Friendship Community Circle', {
-        body: 'This is a test notification! You will see real notifications here soon.',
+        body: 'Notifications enabled! You\'ll be notified of all community activity.',
         icon: '/default-avatar.png'
       });
     } else {
@@ -1231,7 +1234,7 @@
   }
   startNotificationPolling();
 
-  // Check for new "what's new" content
+  // Check for new "what's new" content and create notifications
   async function checkWhatsNewNotifications() {
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -1242,32 +1245,125 @@
       const cutoffDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
       // Check various content types for new items
-      const [circlesRes, videosRes] = await Promise.all([
-        supabase.from('circles').select('id').gte('created_at', cutoffDate),
-        supabase.from('member_video').select('id').gte('created_at', lastRead)
+      const [circlesRes, videosRes, eventsRes, commentsRes, suggestionsRes, groupProjectsRes] = await Promise.all([
+        supabase.from('circles').select('id, name, created_at').gte('created_at', lastRead),
+        supabase.from('member_video').select('id, caption, created_at, user_id').gte('created_at', lastRead),
+        supabase.from('events').select('id, title, created_at, created_by').gte('created_at', lastRead),
+        supabase.from('comments').select('id, content, created_at, author_id').gte('created_at', lastRead),
+        supabase.from('suggestions').select('id, title, created_at, author_id').gte('created_at', lastRead),
+        supabase.from('group_projects').select('id, name, created_at, proposer_id').gte('created_at', lastRead)
       ]);
 
-      const newCount = (circlesRes.error ? 0 : circlesRes.data?.length || 0) +
-                       (videosRes.error ? 0 : videosRes.data?.length || 0);
+      // Create notifications for new activity
+      const activities = [];
 
-      console.log('Whats new notification counts:', {
-        circles: circlesRes.error ? 'error' : circlesRes.data?.length || 0,
-        videos: videosRes.error ? 'error' : videosRes.data?.length || 0,
-        total: newCount
-      });
-
-      const whatsNewLink = document.getElementById('whats-new-link');
-      if (newCount > 0) {
-        whatsNewLink.innerHTML = `🆕 What's New <span style="background:#ff4444;color:white;padding:2px 6px;border-radius:10px;font-size:0.8em;margin-left:4px;">${newCount}</span>`;
-      } else {
-        whatsNewLink.innerHTML = `🆕 What's New`;
+      // New circles
+      if (!circlesRes.error && circlesRes.data) {
+        circlesRes.data.forEach(circle => {
+          activities.push({
+            type: 'circle',
+            message: `New circle "${circle.name}" was created`,
+            icon: '⭕',
+            link: 'circle-list.html'
+          });
+        });
       }
+
+      // New videos
+      if (!videosRes.error && videosRes.data) {
+        videosRes.data.forEach(video => {
+          const caption = video.caption || 'New video';
+          activities.push({
+            type: 'video',
+            message: `New video: "${caption}"`,
+            icon: '🎥',
+            link: 'community-videos.html'
+          });
+        });
+      }
+
+      // New events
+      if (!eventsRes.error && eventsRes.data) {
+        eventsRes.data.forEach(event => {
+          activities.push({
+            type: 'event',
+            message: `New event: "${event.title}"`,
+            icon: '📅',
+            link: 'events.html'
+          });
+        });
+      }
+
+      // New comments
+      if (!commentsRes.error && commentsRes.data) {
+        commentsRes.data.forEach(comment => {
+          const content = comment.content?.substring(0, 50) || 'New comment';
+          activities.push({
+            type: 'comment',
+            message: `New comment: "${content}..."`,
+            icon: '💬',
+            link: 'discussions.html'
+          });
+        });
+      }
+
+      // New suggestions
+      if (!suggestionsRes.error && suggestionsRes.data) {
+        suggestionsRes.data.forEach(suggestion => {
+          activities.push({
+            type: 'suggestion',
+            message: `New suggestion: "${suggestion.title}"`,
+            icon: '💡',
+            link: 'suggestions.html'
+          });
+        });
+      }
+
+      // New group projects
+      if (!groupProjectsRes.error && groupProjectsRes.data) {
+        groupProjectsRes.data.forEach(project => {
+          activities.push({
+            type: 'project',
+            message: `New project: "${project.name}"`,
+            icon: '🚀',
+            link: 'group-projects.html'
+          });
+        });
+      }
+
+      // Create notifications for new activities (avoid duplicates)
+      for (const activity of activities) {
+        const notifKey = `${activity.type}_${activity.message}`;
+        const existingNotif = localStorage.getItem(`notified_${userId}_${notifKey}`);
+
+        if (!existingNotif) {
+          await supabase.from('notifications').insert([{
+            user_id: userId,
+            message: activity.message,
+            icon: activity.icon,
+            link: activity.link,
+            read: false
+          }]);
+
+          // Mark as notified to avoid duplicates
+          localStorage.setItem(`notified_${userId}_${notifKey}`, 'true');
+
+          // Show browser notification if enabled
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Friendship Community', {
+              body: activity.message,
+              icon: '/default-avatar.png'
+            });
+          }
+        }
+      }
+
+      const newCount = activities.length;
+
     } catch (error) {
       console.warn('Error checking what\'s new:', error);
     }
   }
-
-  // Update last read time when visiting what's new
   document.getElementById('whats-new-link').addEventListener('click', async () => {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
@@ -1281,7 +1377,66 @@
 
   // Check for new content on page load and periodically
   checkWhatsNewNotifications();
-  setInterval(checkWhatsNewNotifications, 30000); // every 30 seconds
+  setInterval(checkWhatsNewNotifications, 60000); // every minute
+
+  // Real-time activity monitoring for instant notifications
+  async function setupActivityNotifications() {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return;
+
+    // Monitor various activity tables for real-time notifications
+    const tables = [
+      { name: 'member_video', icon: '🎥', message: 'New video posted', link: 'community-videos.html' },
+      { name: 'events', icon: '📅', message: 'New event created', link: 'events.html' },
+      { name: 'comments', icon: '💬', message: 'New comment posted', link: 'discussions.html' },
+      { name: 'suggestions', icon: '💡', message: 'New suggestion submitted', link: 'suggestions.html' },
+      { name: 'group_projects', icon: '🚀', message: 'New project proposed', link: 'group-projects.html' },
+      { name: 'circles', icon: '⭕', message: 'New circle created', link: 'circle-list.html' }
+    ];
+
+    tables.forEach(table => {
+      supabase
+        .channel(`${table.name}_notifications`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: table.name
+        }, async (payload) => {
+          // Create notification for new activity
+          const notifKey = `${table.name}_${payload.new.id}_${Date.now()}`;
+          const existingNotif = localStorage.getItem(`realtime_notified_${userId}_${notifKey}`);
+
+          if (!existingNotif) {
+            await supabase.from('notifications').insert([{
+              user_id: userId,
+              message: table.message,
+              icon: table.icon,
+              link: table.link,
+              read: false
+            }]);
+
+            // Mark as notified
+            localStorage.setItem(`realtime_notified_${userId}_${notifKey}`, 'true');
+
+            // Show browser notification if enabled
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('Friendship Community', {
+                body: table.message,
+                icon: '/default-avatar.png'
+              });
+            }
+
+            // Refresh notification list
+            fetchNotifications();
+          }
+        })
+        .subscribe();
+    });
+  }
+
+  // Setup real-time notifications
+  setupActivityNotifications();
 </script>
 <a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
 </body>
