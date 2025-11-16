@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <title>Friendship Community Circle</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .main-title {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #6b4f1d;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #6b4f1d;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: normal;
+    }
+    form {
+      background-color: #fff;
+      border: 1px solid #d8bfa3;
+      border-radius: 12px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+    label {
+      display: block;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #2e8b57;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 30px;
+      width: 100%;
+      font-size: 1.1em;
+    }
+    .form-status {
+      margin-top: 1rem;
+      text-align: center;
+      font-weight: bold;
+      min-height: 1.5em;
+    }
+    .toggle-button {
+      background-color: #2e8b57;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 25px;
+      width: 100%;
+      font-size: 1em;
+      font-weight: bold;
+    }
+    .forgot-link {
+      display: block;
+      text-align: center;
+      margin-top: 1em;
+      color: #2e8b57;
+      text-decoration: underline;
+      font-size: 1em;
+      font-weight: bold;
+    }
+    .forgot-link:hover {
+      color: #6b4f1d;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/sign-in-_tZoMe2R.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="main-title">The Friendship Community Circle</div>
+  <h2>🌿 Welcome to the Circle</h2>
+  
+  <form id="auth-form">
+    <!-- Button moved to the top of the form -->
+    <button type="button" id="toggle-register-btn" class="toggle-button">Register as a New User</button>
+
+    <div id="registration-fields" style="display: none;">
+  <label for="name">🪶 Your Name</label>
+  <input type="text" id="name" name="name">
+
+  <label for="invited-by">Who invited you?</label>
+  <input type="text" id="invited-by" name="invited-by" placeholder="Enter name or email of inviter">
+
+  <label for="phone">📱 Phone (optional)</label>
+  <input type="tel" id="phone" name="phone">
+    </div>
+
+    <label for="email">📬 Email Address</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">🔑 Password</label>
+    <input type="password" id="password" name="password" required minlength="6">
+
+    <button type="submit" id="submit-button">Enter the Circle</button>
+    <div id="form-status"></div>
+    <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
+  </form>
+
+</body>
+</html>

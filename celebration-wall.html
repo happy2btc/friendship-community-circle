@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Celebration & Gratitude Wall</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .wall-form { margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px #eee; }
+    .story-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .headline { font-weight: bold; font-size: 1.2em; margin-bottom: 0.5em; }
+    .read-more { color: #007bff; text-decoration: underline; cursor: pointer; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/celebration-wall-kiaap3sC.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h1>Celebration & Gratitude Wall</h1>
+  <a href="main-menu.html" class="back-menu-btn" style="display:inline-block;margin-bottom:1.5rem;padding:12px 24px;background:#2e8b57;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.1em;box-shadow:0 2px 6px #eee;transition:background 0.2s;">← Back to Menu</a>
+  <form id="wall-form" class="wall-form">
+    <div>
+      <label for="headline">Headline</label><br>
+      <input type="text" id="headline" maxlength="80" style="width:100%;" required>
+    </div>
+    <div>
+      <label for="story">Your Story</label><br>
+  <textarea id="story" rows="4" style="width:100%;" required></textarea>
+    </div>
+    <button type="submit">Share Your Story</button>
+    <span id="wall-status"></span>
+  </form>
+  <div id="stories"></div>
+</script>
+</body>
+</html>

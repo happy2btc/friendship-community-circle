@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📬 Message Center / Inbox</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .inbox-container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
+    .message-list { margin-bottom: 2rem; }
+    .message-item { border-bottom: 1px solid #eee; padding: 1em 0; display: flex; flex-direction: column; gap: 0.5em; }
+    .message-item.unread { background: #e6f7f2; font-weight: bold; }
+    .sender { color: #2e8b57; font-weight: bold; }
+    .message-body { margin: 0.5em 0; }
+    .message-footer { display: flex; justify-content: space-between; align-items: center; }
+    .message-date { color: #888; font-size: 0.9em; }
+      .open-chat-btn { background: #2e8b57; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+      .menu-btn {
+        display: block;
+        width: 100%;
+        background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.1em;
+        padding: 14px 0;
+        margin-top: 2em;
+        text-align: center;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .menu-btn:hover {
+        background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+        box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+      }
+    .clear-inbox-btn {
+      background: linear-gradient(90deg, #d9534f 60%, #c9302c 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 12px 0;
+      margin-bottom: 18px;
+      margin-top: 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(217,83,79,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      width: 100%;
+      display: block;
+    }
+    .clear-inbox-btn:hover {
+      background: linear-gradient(90deg, #c9302c 60%, #d9534f 100%);
+      box-shadow: 0 4px 16px rgba(217,83,79,0.18);
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/inbox-D-XVgoi-.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="inbox-container">
+  <h2>📬 Your Inbox</h2>
+  <button id="clear-inbox-btn" class="clear-inbox-btn">🗑️ Clear Inbox</button>
+  <div id="message-list" class="message-list"></div>
+  <a href="main-menu.html" class="menu-btn">🔙 Back to Menu</a>
+  </div>
+</body>
+</html>

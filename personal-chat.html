@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Personal Chat</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; color: #222; }
+    .chat-container { max-width: 500px; margin: 2em auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 2em; }
+    .chat-header { font-size: 1.2em; font-weight: bold; color: #4a7c59; margin-bottom: 1em; }
+    .chat-messages { min-height: 200px; max-height: 300px; overflow-y: auto; margin-bottom: 1em; border: 1px solid #eee; border-radius: 6px; padding: 1em; background: #fafafa; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 1em; }
+    .chat-send { background: #4a7c59; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .chat-send:disabled { background: #ccc; }
+    .chat-message-self { text-align: right; color: #2e8b57; }
+    .chat-message-other { text-align: left; color: #333; }
+    .chat-message-meta { font-size: 0.85em; color: #888; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/personal-chat-DRlSzlXg.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header" id="chat-header">Personal Chat</div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Type your message..." />
+      <button id="chat-send" class="chat-send">Send</button>
+    </div>
+    <div id="chat-status" style="margin-top:0.5em;color:#a94442;font-weight:bold;"></div>
+  </div>
+  <a href="main-menu.html" class="menu-button" style="display:block;margin:2em auto 0 auto;width:fit-content;">⬅️ Back to Menu</a>
+</body>
+</html>

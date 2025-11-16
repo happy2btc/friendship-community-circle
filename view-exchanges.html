@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico">
+  <title>Browse the Circle of Exchange</title>
+  <style>
+    body { font-family: sans-serif; background-color: #f9f9f9; padding: 2rem; position: relative; }
+    .main-content-wrap {
+      margin-right: 340px; /* width of image + some gap */
+      transition: margin 0.3s;
+    }
+    .wizard-image-right {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      height: 90vh;
+      max-height: 700px;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.93;
+    }
+    h1 { text-align: center; color: #6b4f1d; }
+    .offerings-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    .offering-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .offering-card h3 { margin-top: 0; color: #3b2f2f; }
+    .offering-card p { margin: 0.5rem 0; }
+    .offering-card strong { color: #8c6f4e; }
+    .respond-button { background-color: #2e8b57; color: white; text-decoration: none; padding: 10px 15px; border-radius: 6px; display: inline-block; margin-top: 1rem; font-weight: bold; }
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      position: fixed;
+      top: 20px;
+      right: 30px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px #eee;
+      width: fit-content;
+      margin: 0;
+    }
+    .self-note { color: #2e8b57; font-weight: bold; margin-top: 1rem; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/view-exchanges-VwexeAWN.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <img src="/friendship-community-circle/assets/wizard-right-dRurn9of.jpg" alt="Wizard" class="wizard-image-right" />
+  <div class="main-content-wrap">
+    <h1>🎁 Offerings in the Circle</h1>
+    <div id="offerings-container">
+      <p>Loading offerings...</p>
+    </div>
+  </div>
+  <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

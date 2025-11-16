@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👥 Helper Applications Admin</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .admin-panel {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.2em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-style: italic;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #f8f5f0 0%, #fff 100%);
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #2e8b57;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .stat-label {
+      color: #8b6f47;
+      font-size: 0.9em;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #f8f5f0;
+      border-radius: 8px;
+    }
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .filter-group label {
+      display: block;
+      font-weight: bold;
+      color: #6b4f1d;
+      margin-bottom: 0.5rem;
+    }
+    .filter-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #e8dcc0;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+    .applications-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .application-card {
+      background: #fff;
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .application-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: #6b4f1d;
+    }
+    .application-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .applicant-info h3 {
+      margin: 0 0 0.5rem 0;
+      color: #6b4f1d;
+    }
+    .applicant-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+      color: #666;
+    }
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-approved {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .status-rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status-contacted {
+      background: #d4edda;
+      color: #155724;
+    }
+    .application-content {
+      margin-bottom: 1rem;
+    }
+    .skills-section {
+      margin-bottom: 1rem;
+    }
+    .skills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .skill-tag {
+      background: #e8dcc0;
+      color: #6b4f1d;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    .application-text {
+      background: #f8f5f0;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+    .application-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9em;
+    }
+    .btn-approve {
+      background: #28a745;
+      color: #fff;
+    }
+    .btn-approve:hover {
+      background: #218838;
+    }
+    .btn-reject {
+      background: #dc3545;
+      color: #fff;
+    }
+    .btn-reject:hover {
+      background: #c82333;
+    }
+    .btn-contact {
+      background: #17a2b8;
+      color: #fff;
+    }
+    .btn-contact:hover {
+      background: #138496;
+    }
+    .btn-email {
+      background: #6b4f1d;
+      color: #fff;
+    }
+    .btn-email:hover {
+      background: #5a3f15;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #8b6f47;
+    }
+    .no-applications {
+      text-align: center;
+      padding: 3rem;
+      color: #8b6f47;
+      font-style: italic;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/helper-applications-admin-CEESMPHu.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="admin-panel">
+    <a href="main-menu.html" class="menu-btn">🔙 Back to Menu</a>
+
+    <div class="header">
+      <h1>👥 Helper Applications Admin</h1>
+      <p>Review and manage helper applications from your community</p>
+    </div>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <span class="stat-number" id="total-apps">0</span>
+        <span class="stat-label">Total Applications</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="pending-apps">0</span>
+        <span class="stat-label">Pending Review</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="approved-apps">0</span>
+        <span class="stat-label">Approved</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number" id="contacted-apps">0</span>
+        <span class="stat-label">Contacted</span>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label for="status-filter">Filter by Status</label>
+        <select id="status-filter">
+          <option value="">All Applications</option>
+          <option value="pending">Pending Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="contacted">Contacted</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="skill-filter">Filter by Skills</label>
+        <select id="skill-filter">
+          <option value="">All Skills</option>
+          <option value="forms">Form Assistance</option>
+          <option value="technical">Technical Help</option>
+          <option value="administrative">Administrative</option>
+          <option value="guidance">Guidance & Advice</option>
+          <option value="translation">Translation</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="sort-filter">Sort By</label>
+        <select id="sort-filter">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name">Name (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="applications-container">
+      <div class="loading">Loading applications...</div>
+    </div>
+  </div>
+
+</body>
+</html>

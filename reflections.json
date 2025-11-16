@@ -1,0 +1,17 @@
+[
+  {
+    "topic": "faye-ubi",
+    "voices": [
+      { "name": "Faye", "text": "UBI should be a ritual of trust." },
+      { "name": "Thomas", "text": "It could be a form of ceremonial care." }
+    ]
+  },
+  {
+    "topic": "membership",
+    "voices": [
+      { "name": "Thomas", "text": "Membership should be earned through ritual, not just wallet connection." },
+      { "name": "Ada", "text": "Accountability must feel like care, not punishment." },
+      { "name": "Jules", "text": "Welcoming rituals help me feel seen when I arrive." }
+    ]
+  }
+]

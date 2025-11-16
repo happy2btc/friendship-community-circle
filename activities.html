@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Member Activities</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+            max-width: 800px;
+            margin: auto;
+            position: relative;
+        }
+        main, .legend-container, .back-menu-btn {
+            position: relative;
+        }
+        h1 { text-align: center; }
+        .member-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+        .member-card img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #eee;
+        }
+        .member-info {
+            flex: 1;
+        }
+        .activity-breakdown {
+            font-size: 1em;
+            color: #181818;
+            font-weight: 600;
+            text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+            margin: 0.5rem 0 0 0;
+        }
+        .personal-story {
+            font-style: italic;
+            color: #4a7c59;
+            margin-top: 0.5rem;
+        }
+        .back-menu-btn {
+            background: #2e8b57;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 2px 6px #eee;
+            transition: background 0.2s;
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            z-index: 1000;
+            padding: 12px 24px;
+            margin: 0;
+        }
+        .back-menu-btn:hover {
+            background: #4a7c59;
+        }
+    </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/activities-CUn0ip3F.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+    <div class="legend-container" style="background:#f5f5e6;border:1px solid #e0dcb7;border-radius:10px;padding:1.5em 2em;margin-bottom:2em;max-width:700px;margin-left:auto;margin-right:auto;box-shadow:0 2px 8px #eee;">
+        <h2 style="margin-top:0;">Activities Legend</h2>
+        <div style="font-size:1.05em;line-height:1.7;">
+            <strong>Points awarded for an activity</strong><br>
+            Votes = 1 point per vote<br>
+            Suggestions = 1 point per suggestion<br>
+            Comments = 1 point per comment<br>
+            Wants = 1 point for entering what you want<br>
+            Offers = 1 point for entering what you offer<br>
+            Passion = 1 point for entering what your passion<br>
+            Projects & Struggles = 1 point for each line entered<br>
+            Help Given = 5 points per hour<br>
+            Profile Completed = 5 points<br>
+            Circles Created = 10 points for each circle created<br>
+            Events Created = 5 points per event created<br>
+            Events Attended = 5 points per attendance<br>
+            Member Added = 2 points per member added<br>
+            Celebration Wall Posts = 5 points per post<br>
+            Projects Proposed = 5 points per proposal<br>
+            Support Responses = 5 points per response<br>
+            Writer's Post = 1 point per 1000 words<br>
+            <span style="color:#4a7c59;font-weight:bold;">Videos Posted = 5 points per video</span><br>
+            Positive Impact = Variable points based on contribution type
+        </div>
+    </div>
+    <h1>Community Member Activities</h1>
+    <div id="members"></div>
+    <a href="main-menu.html" class="back-menu-btn">← Back to Menu</a>
+</body>
+</html>

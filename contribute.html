@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>✍️ Edit Your Scroll</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('/friendship-community-circle/assets/kelly-red-clouds-VAuPvxHc.jpg') center/cover no-repeat;
+      z-index: 0;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    form, h1, .menu-button, #status-message {
+      position: relative;
+      z-index: 1;
+    }
+    h1 { text-align: center; color: #4a7c59; }
+    form { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    label { display: block; margin-top: 1.2rem; font-weight: bold; }
+    textarea, input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background-color: #4a7c59; color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; width: 100%; }
+    button:disabled { background-color: #ccc; }
+    #status-message { margin-top: 1rem; font-weight: bold; text-align: center; }
+    .menu-button { background-color: #6b4f1d; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: block; width: fit-content; margin: 30px auto 0; }
+    .delete-button { background-color: #a94442; color: #fff; margin-top: 1rem; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/contribute-DX5ERU48.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h1>✍️ Edit Your Projects & Struggles</h1>
+
+  <form id="contribution-form">
+    <label for="project">🌱 What is your project or what are you working on?</label>
+    <textarea id="project" name="project" rows="3"></textarea>
+
+    <label for="challenge">🌀 What is your current life challenge?</label>
+    <textarea id="challenge" name="challenge" rows="3"></textarea>
+
+    <label for="help">🧭 What kind of help are you looking for?</label>
+    <textarea id="help" name="help" rows="3"></textarea>
+
+    <label for="collab">🤝 Are you willing to collaborate?</label>
+    <input type="text" id="collab" name="collab" />
+
+    <label for="skills">🛠️ What skills, tools, or resources do you already have?</label>
+    <textarea id="skills" name="skills" rows="3"></textarea>
+
+    <label for="urgency">⏳ Is there a timeline or urgency to your request?</label>
+    <input type="text" id="urgency" name="urgency" />
+
+    <label for="contact">📬 How would you like to be contacted or supported?</label>
+    <input type="text" id="contact" name="contact" />
+
+    <button type="submit" id="save-btn">Save Projects & Struggles</button>
+    <button type="button" id="delete-btn" class="delete-button" style="display:none;">Delete Projects & Struggles</button>
+  </form>
+
+  <div id="status-message"></div>
+
+  <a href="view-proj-strug.html" class="menu-button">📜 View All Projects & Struggles</a>
+  <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+import"./modulepreload-polyfill-B5Qt9EMX.js";import{s as a}from"./supabase-vDZkBp_j.js";let t=null,n={};a.auth.getUser().then(async({data:i})=>{if(t=i?.user?.id,!t){document.getElementById("message-list").innerHTML='<p style="color:red;">Please log in to view your messages.</p>',document.getElementById("clear-inbox-btn").style.display="none";return}const{data:m}=await a.from("profiles").select("id, full_name");n={},m?.forEach(e=>{n[e.id]=e.full_name});async function r(){const{data:e,error:o}=await a.from("messages").select("id, from, body, created_at, is_read").eq("to",t).order("created_at",{ascending:!1});if(o){document.getElementById("message-list").innerHTML=`<p style="color:red;">Error loading messages: ${o.message}</p>`;return}if(!e||e.length===0){document.getElementById("message-list").innerHTML="<p>No messages yet.</p>";return}let l="";for(const s of e){const d=n[s.from]||s.from||"Unknown";l+=`<div class="message-item${s.is_read===!1?" unread":""}">
+            <span class="sender">From: ${d}</span>
+            <div class="message-body">${s.body}</div>
+            <div class="message-footer">
+              <span class="message-date">${new Date(s.created_at).toLocaleString()}</span>
+              <a href="message-center.html?to=${s.from}" class="open-chat-btn">Open Chat</a>
+            </div>
+          </div>`}document.getElementById("message-list").innerHTML=l}await r(),document.getElementById("clear-inbox-btn").onclick=async()=>{if(!confirm("Are you sure you want to delete all messages in your inbox? This cannot be undone."))return;const{error:e}=await a.from("messages").delete().eq("to",t);e?alert("Error clearing inbox: "+e.message):await r()}});

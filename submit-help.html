@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Submit Help Given</title>
+  <style>
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+  background: url('/friendship-community-circle/mediocrity-potential.jpg'), url('/friendship-community-circle/mediocrity-potential.jpg'), url('mediocrity-potential.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border: 3px solid #ff9800;
+      z-index: 0;
+      opacity: 0.48;
+      pointer-events: none;
+    }
+    form, h1, .menu-button, #status-message {
+      position: relative;
+      z-index: 1;
+    }
+    .back-menu-btn {
+      background: #2e8b57;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+      box-shadow: 0 2px 6px #eee;
+      transition: background 0.2s;
+      position: fixed;
+      top: 20px;
+      right: 30px;
+      z-index: 1000;
+      padding: 12px 24px;
+      margin: 0;
+    }
+    .back-menu-btn:hover {
+      background: #4a7c59;
+    }
+    .form-container { max-width: 500px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
+    form label, form select, form input, form textarea, form button {
+      display: block;
+      width: 100%;
+      margin-top: 1em;
+      box-sizing: border-box;
+    }
+    form input, form select, form textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      margin-top: 8px;
+    }
+    button {
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 0;
+      margin-top: 2em;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      width: 100%;
+      display: block;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .form-status { margin-top: 1em; text-align: center; font-weight: bold; min-height: 1.5em; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/submit-help-Bl_bicPR.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <a href="main-menu.html" class="back-menu-btn">← Back to Menu</a>
+  <div class="form-container">
+    <h2>Submit Help Given</h2>
+    <form id="help-form">
+
+    <label for="helper">Who gave help?</label>
+    <input id="search-helper" type="text" placeholder="Search helper name..." style="width:100%;padding:10px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <select id="helper" name="helper" required></select>
+
+    <label for="recipient">Who received help?</label>
+    <input id="search-recipient" type="text" placeholder="Search recipient name..." style="width:100%;padding:10px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <select id="recipient" name="recipient" required></select>
+
+  <label for="hours">How many hours?</label>
+  <input type="number" id="hours" name="hours" min="0.25" step="0.25" required>
+
+  <label for="details">Details (optional)</label>
+  <textarea id="details" name="details" rows="3"></textarea>
+
+  <button type="submit">Submit & Award Tokens</button>
+  <div id="form-status" class="form-status"></div>
+    </form>
+  </div>
+</body>
+</html>

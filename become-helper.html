@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🤝 Become a Helper</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .become-helper {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.2em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-style: italic;
+    }
+    .info-section {
+      background: #f8f5f0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid #6b4f1d;
+    }
+    .info-section h3 {
+      color: #6b4f1d;
+      margin-bottom: 1rem;
+    }
+    .info-section ul {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    .info-section li {
+      margin-bottom: 0.5rem;
+      color: #666;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #6b4f1d;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e8dcc0;
+      border-radius: 6px;
+      font-size: 1em;
+      font-family: inherit;
+      transition: border-color 0.3s ease;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #6b4f1d;
+      box-shadow: 0 0 0 3px rgba(107, 79, 29, 0.1);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .skills-section {
+      margin-bottom: 1.5rem;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .skill-option {
+      padding: 12px;
+      border: 2px solid #e8dcc0;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #f8f5f0;
+    }
+    .skill-option:hover {
+      border-color: #6b4f1d;
+      background: #fff;
+    }
+    .skill-option.selected {
+      border-color: #2e8b57;
+      background: #f0f8f0;
+      color: #2e8b57;
+    }
+    .submit-btn {
+      background: linear-gradient(90deg, #2e8b57 0%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 16px 32px;
+      font-weight: bold;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .submit-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 0%, #2e8b57 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+    .status-message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 1rem;
+      display: none;
+    }
+    .status-message.success {
+      background: #f0f8f0;
+      color: #2e8b57;
+      border: 1px solid #2e8b57;
+    }
+    .status-message.error {
+      background: #fef0f0;
+      color: #d32f2f;
+      border: 1px solid #d32f2f;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/become-helper-B6qc4jjA.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="become-helper">
+    <a href="helper-directory.html" class="menu-btn">🔙 Back to Helper Directory</a>
+
+    <div class="header">
+      <h1>🤝 Become a Helper</h1>
+      <p>Join our community of helpers and make a difference</p>
+    </div>
+
+    <div class="info-section">
+      <h3>Why Become a Helper?</h3>
+      <ul>
+        <li>Share your skills and knowledge with community members</li>
+        <li>Build meaningful connections and friendships</li>
+        <li>Contribute to our collective well-being</li>
+        <li>Learn from helping others and grow personally</li>
+      </ul>
+    </div>
+
+    <form id="become-helper-form">
+      <div class="form-group">
+        <label for="helper-name">Your Name *</label>
+        <input type="text" id="helper-name" name="helper_name" required
+               placeholder="Enter your full name">
+      </div>
+
+      <div class="form-group">
+        <label for="helper-email">Email Address *</label>
+        <input type="email" id="helper-email" name="helper_email" required
+               placeholder="your.email@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="helper-phone">Phone Number (Optional)</label>
+        <input type="tel" id="helper-phone" name="helper_phone"
+               placeholder="Your phone number">
+      </div>
+
+      <div class="form-group">
+        <label>What types of help can you provide? *</label>
+        <div class="skills-grid">
+          <div class="skill-option" data-skill="forms">📋 Form Assistance</div>
+          <div class="skill-option" data-skill="technical">💻 Technical Help</div>
+          <div class="skill-option" data-skill="administrative">🏢 Administrative</div>
+          <div class="skill-option" data-skill="guidance">🧭 Guidance & Advice</div>
+          <div class="skill-option" data-skill="translation">🌐 Translation</div>
+          <div class="skill-option" data-skill="other">❓ Other</div>
+        </div>
+        <input type="hidden" id="helper-skills" name="helper_skills" required>
+      </div>
+
+      <div class="form-group">
+        <label for="experience">Your Experience Level</label>
+        <select id="experience" name="experience">
+          <option value="">Select experience level...</option>
+          <option value="beginner">Beginner - New to helping</option>
+          <option value="intermediate">Intermediate - Some experience</option>
+          <option value="experienced">Experienced - Regular helper</option>
+          <option value="expert">Expert - Professional level</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="availability">Your Availability</label>
+        <select id="availability" name="availability">
+          <option value="">Select availability...</option>
+          <option value="weekdays">Weekdays</option>
+          <option value="weekends">Weekends</option>
+          <option value="evenings">Evenings</option>
+          <option value="flexible">Flexible</option>
+          <option value="limited">Limited availability</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="background">Tell us about yourself and your helping experience</label>
+        <textarea id="background" name="background"
+                  placeholder="Share your background, skills, and why you want to help others in our community..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="motivation">Why do you want to become a helper?</label>
+        <textarea id="motivation" name="motivation"
+                  placeholder="What motivates you to help others? Any specific experiences or reasons..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        🚀 Express Interest in Helping
+      </button>
+    </form>
+
+    <div id="status-message" class="status-message"></div>
+  </div>
+
+</body>
+</html>

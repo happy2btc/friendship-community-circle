@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛟 Community Help Center</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background-color: #f9f6f1;
+      color: #3b2f2f;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .help-center {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #6b4f1d;
+      padding-bottom: 1rem;
+    }
+    .header h1 {
+      color: #6b4f1d;
+      font-size: 2.5em;
+      margin-bottom: 0.5rem;
+    }
+    .header p {
+      color: #8b6f47;
+      font-size: 1.2em;
+      font-style: italic;
+    }
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .help-card {
+      background: linear-gradient(135deg, #f8f5f0 0%, #fff 100%);
+      border: 2px solid #e8dcc0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .help-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-color: #6b4f1d;
+    }
+    .help-card h3 {
+      color: #6b4f1d;
+      margin-bottom: 0.5rem;
+      font-size: 1.4em;
+    }
+    .help-card p {
+      color: #8b6f47;
+      margin-bottom: 1rem;
+    }
+    .help-card .icon {
+      font-size: 3em;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .action-btn {
+      background: linear-gradient(90deg, #2e8b57 0%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 24px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      margin: 0.5rem;
+    }
+    .action-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 0%, #2e8b57 100%);
+      transform: scale(1.05);
+    }
+    .action-btn.secondary {
+      background: linear-gradient(90deg, #8b6f47 0%, #d4af37 100%);
+    }
+    .action-btn.secondary:hover {
+      background: linear-gradient(90deg, #d4af37 0%, #8b6f47 100%);
+    }
+    .stats-section {
+      background: #f8f5f0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      border-left: 4px solid #6b4f1d;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #2e8b57;
+      display: block;
+    }
+    .stat-label {
+      color: #8b6f47;
+      font-size: 0.9em;
+    }
+    .menu-btn {
+      display: inline-block;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 28px;
+      margin: 1rem 0.5rem 0 0;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+</head>
+<body>
+  <div class="help-center">
+    <a href="main-menu.html" class="menu-btn">🔙 Back to Menu</a>
+
+    <div class="header">
+      <h1>🛟 Community Help Center</h1>
+      <p>"Alone we can do so little; together we can do so much." - Helen Keller</p>
+    </div>
+
+    <div class="help-grid">
+      <div class="help-card" onclick="window.location.href='help-request.html'">
+        <span class="icon">📝</span>
+        <h3>Request Help</h3>
+        <p>Need assistance with forms, applications, or understanding community processes? Submit a help request.</p>
+        <button class="action-btn">Get Help Now</button>
+      </div>
+
+      <div class="help-card" onclick="window.location.href='helper-directory.html'">
+        <span class="icon">👥</span>
+        <h3>Helper Directory</h3>
+        <p>Browse community helpers and their specialties. Connect with someone who can assist you.</p>
+        <button class="action-btn">Find Helpers</button>
+      </div>
+
+      <div class="help-card" onclick="window.location.href='help-given.html'">
+        <span class="icon">📊</span>
+        <h3>Help History</h3>
+        <p>View help that has been given in our community. See how members are supporting each other.</p>
+        <button class="action-btn secondary">View History</button>
+      </div>
+
+      <div class="help-card" onclick="window.location.href='submit-help.html'">
+        <span class="icon">🤝</span>
+        <h3>Record Help Given</h3>
+        <p>Have you helped someone in the community? Record your contribution to help build our collective impact.</p>
+        <button class="action-btn secondary">Record Help</button>
+      </div>
+
+      <div class="help-card" onclick="window.location.href='help-resources.html'">
+        <span class="icon">📚</span>
+        <h3>Help Resources</h3>
+        <p>Access guides, templates, and resources to help you help others.</p>
+        <button class="action-btn">View Resources</button>
+      </div>
+
+      <div class="help-card" onclick="window.location.href='help-categories.html'">
+        <span class="icon">🏷️</span>
+        <h3>Help Categories</h3>
+        <p>Explore different types of help available in our community.</p>
+        <button class="action-btn secondary">Browse Categories</button>
+      </div>
+    </div>
+
+    </div>
+
+</body>
+</html>

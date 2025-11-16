@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All Profiles</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+      background:
+        linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)),
+        url('/friendship-community-circle/assets/c37057d7-5ab4-4f14-abcb-8bb990ad7b92-l42V34m2.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+    }
+    h1 { text-align: center; color: #4a7c59; }
+    ul.profiles-list {
+      list-style: none;
+      padding: 0;
+      max-width: 600px;
+      margin: 2rem auto;
+    }
+    li.profile-item {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 1.2rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .profile-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #4a7c59;
+      background: #eee;
+      flex-shrink: 0;
+    }
+    .avatar-placeholder {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #ddd;
+      border: 2px dashed #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 1.5em;
+      flex-shrink: 0;
+    }
+    .profile-details {
+      flex: 1;
+    }
+    .profile-name {
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #4a7c59;
+      margin-bottom: 0.3em;
+    }
+    .profile-bio {
+      font-size: 0.98em;
+      color: #555;
+      margin-bottom: 0.2em;
+    }
+    .menu-button {
+      display: block;
+      margin: 30px auto 0 auto;
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 1.1em;
+      width: fit-content;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        position: fixed;
+        top: 20px;
+        right: 30px;
+        z-index: 1000;
+        box-shadow: 0 2px 8px #eee;
+        margin: 0;
+    }
+    .menu-button:hover {
+      background-color: #4a7c59;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/view-profiles-CVNcKEqt.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h1>All Profiles</h1>
+  <ul class="profiles-list" id="profiles-list"></ul>
+  <a href="main-menu.html" class="menu-button">⬅️ Back to Menu</a>
+</body>
+</html>

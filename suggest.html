@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>💡 Make a Suggestion</title>
+  <style>
+    .tip-box {
+      background: linear-gradient(90deg, #fffbe6 80%, #ffe7b3 100%);
+      border: 2px solid #ffd36b;
+      color: #7a5a00;
+      font-weight: bold;
+      font-size: 1.13em;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px #ffd36b33;
+      padding: 1.1em 1.2em 1em 1.2em;
+      margin-bottom: 1.5em;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8em;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    .tip-box .tip-icon {
+      font-size: 1.7em;
+      flex-shrink: 0;
+      margin-top: 0.1em;
+      filter: drop-shadow(0 1px 2px #fff8);
+    }
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('/friendship-community-circle/assets/suggest-brain-Bvbe9cx7.png') center/cover no-repeat;
+      z-index: 0;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    form, h1, .menu-button, #status-message {
+      position: relative;
+      z-index: 1;
+    }
+    h1 {
+      text-align: center;
+      color: #181818;
+      font-size: 2.5em;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 12px #fff, 0 1px 2px #0002;
+      margin-bottom: 1.2em;
+    }
+    form { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    label {
+      display: block;
+      margin-top: 1.2rem;
+      font-weight: bold;
+      color: #181818;
+      font-size: 1.08em;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      color: #181818;
+      font-weight: 600;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+      background: rgba(255,255,255,0.92);
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #4a7c59;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    button:disabled { background-color: #ccc; }
+    #status-message {
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+      color: #181818;
+      font-size: 1.1em;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: block;
+      width: fit-content;
+      margin: 30px auto 0;
+      font-size: 1.08em;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/suggest-DWp3CXzn.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+
+  <h1>💡 Make a Suggestion</h1>
+
+  <div class="tip-box">
+    <span class="tip-icon">✨</span>
+    <span>
+      <b>Tip:</b> Suggest anything that could help our community grow, connect, or improve! Be as specific or creative as you like—your ideas matter.
+    </span>
+  </div>
+
+  <form id="suggestion-form">
+    <label for="circle-select">Circle</label>
+    <select id="circle-select" name="circle-select" required>
+      <option value="">Loading...</option>
+    </select>
+
+    <label for="title">Suggestion Title</label>
+    <input type="text" id="title" name="title" placeholder="Short summary or title" required />
+
+    <label for="description">Describe your suggestion</label>
+    <textarea id="description" name="description" rows="4" placeholder="Describe your idea or suggestion..." required></textarea>
+
+    <button type="submit" id="submit-btn">Submit Suggestion</button>
+  </form>
+
+  <div id="status-message"></div>
+
+  <a href="discussions.html" class="menu-button">🗣️ View Current Discussions</a>
+  <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

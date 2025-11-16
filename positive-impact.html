@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Positive Community Impact</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2e7d32;
+    }
+    form {
+      display: grid;
+      gap: 1rem;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #2e7d32;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #276628;
+    }
+    .back-to-menu {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 1000;
+      background: #2e7d32;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .back-to-menu:hover {
+      background: #276628;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/positive-impact-DRlMW-pn.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
+  <div class="container">
+    <h1>Positive Community Impact</h1>
+    <form id="pci-form">
+      <label for="contributor">Contributor Name</label>
+      <select id="contributor" name="contributor" required>
+      </select>
+
+      <label for="type">Type of Contribution</label>
+      <select id="type" name="type" required>
+        <option value="time">Time Shared</option>
+        <option value="item">Item Donated</option>
+        <option value="money">Money Donated</option>
+      </select>
+
+      <label for="details">Details</label>
+      <textarea id="details" name="details" rows="3" required></textarea>
+
+      <label for="points">Points Awarded</label>
+      <input type="number" id="points" name="points" readonly>
+
+      <button type="submit">Submit Contribution</button>
+    </form>
+    <p style="font-size: 0.9em; color: #555; margin-top: 10px;">
+      <strong>Utility Rating:</strong>
+      <ul>
+        <li><strong>1:</strong> Low utility (e.g., decorative items, non-essential) - 2 points.</li>
+        <li><strong>2:</strong> Moderate utility (e.g., slightly useful, but not impactful) - 4 points.</li>
+        <li><strong>3:</strong> Average utility (e.g., useful for daily tasks) - 6 points.</li>
+        <li><strong>4:</strong> High utility (e.g., important for well-being or productivity) - 8 points.</li>
+        <li><strong>5:</strong> Essential utility (e.g., critical supplies, life-enhancing) - 10 points.</li>
+      </ul>
+      <strong>Effort Rating:</strong>
+      <ul>
+        <li><strong>1:</strong> Minimal effort (e.g., easily available, inexpensive) - Multiplier: x1.</li>
+        <li><strong>2:</strong> Low effort (e.g., requires some planning or cost) - Multiplier: x2.</li>
+        <li><strong>3:</strong> Moderate effort (e.g., requires time, moderate cost) - Multiplier: x3.</li>
+        <li><strong>4:</strong> High effort (e.g., significant time or cost) - Multiplier: x4.</li>
+        <li><strong>5:</strong> Exceptional effort (e.g., rare, expensive, or time-intensive) - Multiplier: x5.</li>
+      </ul>
+      <strong>Point Calculation:</strong> Utility points × Effort multiplier × 2.<br>
+      <strong>Time Shared:</strong> Hours × 5 (e.g., 1 hour = 5 points).<br>
+      <strong>Money Donated:</strong> Amount ÷ 10 (e.g., $10 = 1 point).
+    </p>
+  </div>
+
+</body>
+</html>

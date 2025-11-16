@@ -245,7 +245,7 @@
         activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
         try{
           // Fetch from all activity tables in parallel
-          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes] = await Promise.all([
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes] = await Promise.all([
             supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100),
@@ -255,7 +255,8 @@
             supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('profiles').select('id,full_name'),
-            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100)
+            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100),
+            supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100)
           ]);
         // ...existing code...
         // Map profiles for display names
@@ -279,7 +280,20 @@
             created_at: v.created_at
           });
         });
-          // ...existing code...
+
+        // Add skill share video activities
+        (skillSharesRes.data || []).forEach(ss => {
+          if(!ss || !ss.presenter_id || !ss.video_url) return; // Only include skill shares with videos
+          const t = new Date(ss.created_at).getTime();
+          if (t < weekAgo || t > now) return;
+          items.push({
+            display_name: idToName[ss.presenter_id] || 'Member',
+            action: 'Shared a skill with video',
+            meta: ss.skill_name ? `Skill: ${ss.skill_name}` : 'Skill shared with video',
+            points: 5,
+            created_at: ss.created_at
+          });
+        });
 
 
           // Map profiles for display names
@@ -394,6 +408,10 @@
             t = row.created_at ? new Date(row.created_at).getTime() : null;
             if (!(row.author_id || row.author_name) || t === null || t < weekAgo || t > now) return null;
             return { display_name: (row.author_id && idToName[row.author_id]) || row.author_name || row.author_id, action: 'Wrote for Writers Wall', meta: row.title || '', points: 1, created_at: row.created_at };
+          case 'skill_shares':
+            t = row.created_at ? new Date(row.created_at).getTime() : null;
+            if (!row.presenter_id || !row.video_url || t === null || t < weekAgo || t > now) return null; // Only include skill shares with videos
+            return { display_name: idToName[row.presenter_id] || row.presenter_id, action: 'Shared a skill with video', meta: row.skill_name ? `Skill: ${row.skill_name}` : 'Skill shared with video', points: 5, created_at: row.created_at };
           default: return null;
         }
       }
@@ -407,7 +425,7 @@
           (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
         } catch(e) {}
 
-  const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','event_attendance'];
+  const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','event_attendance','skill_shares'];
         try{
           if(typeof supabase.channel === 'function'){
             const channel = supabase.channel('realtime-activity');

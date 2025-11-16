@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Community Menu</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #e6f7f2;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            color: #2e8b57;
+        }
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .menu-button, .logout-button {
+            background-color: #6b4f1d;
+            color: #fff;
+            padding: 16px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.1em;
+            transition: background-color 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+        .menu-button:hover, .logout-button:hover {
+            background-color: #8c6f4e;
+        }
+        .logout-button {
+            background-color: #a94442;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+            grid-column: 1 / -1;
+        }
+        #featured-member {
+            max-width: 400px;
+            margin: 2rem auto 0 auto;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #eee;
+            text-align: center;
+        }
+        #featured-member img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            background: #eee;
+        }
+        #featured-member h3 {
+            margin: 0.5rem 0 0.5rem 0;
+        }
+        #featured-member .activity-breakdown {
+            margin-top: 1rem;
+            font-size: 0.95em;
+            color: #555;
+            text-align: left;
+        }
+        #featured-member .personal-story {
+            font-style: italic;
+            color: #4a7c59;
+            margin-top: 0.5rem;
+        }
+    </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/menu-BrW8xX4C.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+
+        <h1 style="text-align: center; color: #2e8b57;">🌸 Welcome to the Community</h1>
+
+            <div class="menu-container" style="display:block;max-width:800px;margin:0 auto;">
+                <details style="margin-bottom:12px;">
+                        <summary style="background:#cce3fa;color:#234;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">👤 Profiles & Members</summary>
+                        <div style="background:#eaf4fb;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="profile.html" class="menu-button" style="background:#cce3fa;color:#234;">My Profile</a>
+                            <a href="view-profiles.html" class="menu-button" style="background:#cce3fa;color:#234;">View All Profiles</a>
+                            <a href="new-members.html" class="menu-button" style="background:#cce3fa;color:#234;">New Members</a>
+                            <a href="activities.html" class="menu-button" style="background:#cce3fa;color:#234;">Member Activities</a>
+                             <a href="message-center.html" class="menu-button" style="background:#cce3fa;color:#234;">Message Center</a>
+                        </div>
+            </details>
+            <details style="margin-bottom:12px;">
+                        <summary style="background:#e6d6f7;color:#432;font-weight:bold;padding:16px 20px;border-radius:8px;cursor:pointer;font-size:1.1em;">🎁 Wants & Offers</summary>
+                        <div style="background:#f4eafd;padding:10px 18px 10px 32px;border-radius:0 0 8px 8px;">
+                            <a href="exchange.html" class="menu-button" style="background:#e6d6f7;color:#432;">Wants and Offers</a>
+                            <a href="view-exchanges.html" class="menu-button" style="background:#e6d6f7;color:#432;">Browse All Offerings</a>
+                        </div>
+            </details>
+            <div style="margin-bottom:12px;background:#eafbf4;padding:0 0 18px 0;border-radius:8px;">
+                <div style="background:#d2f7e6;color:#234;font-weight:bold;padding:16px 20px 0 20px;border-radius:8px 8px 0 0;font-size:1.1em;">🛠️ Projects & Contributions</div>
+                <div id="proj-tabs" style="display:flex;gap:0.5em;padding:0 20px 0 20px;margin-top:10px;">
+                    <button class="proj-tab-btn" data-tab="submit" style="flex:1;padding:8px 0;background:#ffe082;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Submit</button>
+                    <button class="proj-tab-btn" data-tab="view" style="flex:1;padding:8px 0;background:#b3c6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">View</button>
+                    <button class="proj-tab-btn" data-tab="groupskill" style="flex:1;padding:8px 0;background:#e6d6f7;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Group/Skill</button>
+                </div>
+                <div id="proj-tab-content" style="background:#eafbf4;padding:10px 18px 10px 18px;border-radius:0 0 8px 8px;">
+                    <!-- Tab content will be injected here -->
+                </div>
+            </div>
+            <div style="margin-bottom:12px;background:#fffbe6;padding:0 0 18px 0;border-radius:8px;">
+                <div style="background:#fff3cd;color:#654;font-weight:bold;padding:16px 20px 0 20px;border-radius:8px 8px 0 0;font-size:1.1em;">💡 Suggestions & Agreements</div>
+                <div id="sugg-tabs" style="display:flex;gap:0.5em;padding:0 20px 0 20px;margin-top:10px;">
+                    <button class="sugg-tab-btn" data-tab="suggest" style="flex:1;padding:8px 0;background:#ffe082;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Suggestions</button>
+                    <button class="sugg-tab-btn" data-tab="discuss" style="flex:1;padding:8px 0;background:#b3c6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Discussions</button>
+                    <button class="sugg-tab-btn" data-tab="agreements" style="flex:1;padding:8px 0;background:#e6d6f7;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Agreements</button>
+                </div>
+                <div id="sugg-tab-content" style="background:#fffbe6;padding:10px 18px 10px 18px;border-radius:0 0 8px 8px;">
+                    <!-- Tab content will be injected here -->
+                </div>
+            </div>
+            <div style="margin-bottom:12px;background:#fbeaf4;padding:0 0 18px 0;border-radius:8px;">
+                <div style="background:#f7d6e6;color:#543;font-weight:bold;padding:16px 20px 0 20px;border-radius:8px 8px 0 0;font-size:1.1em;">➕ Circles</div>
+                <div id="circle-tabs" style="display:flex;gap:0.5em;padding:0 20px 0 20px;margin-top:10px;">
+                    <button class="circle-tab-btn" data-tab="create" style="flex:1;padding:8px 0;background:#ffe082;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Create</button>
+                    <button class="circle-tab-btn" data-tab="manage" style="flex:1;padding:8px 0;background:#b3c6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Manage</button>
+                    <button class="circle-tab-btn" data-tab="special" style="flex:1;padding:8px 0;background:#e6d6f7;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Special</button>
+                </div>
+                <div id="circle-tab-content" style="background:#fbeaf4;padding:10px 18px 10px 18px;border-radius:0 0 8px 8px;">
+                    <!-- Tab content will be injected here -->
+                </div>
+            </div>
+            <div style="margin-bottom:12px;background:#eafafb;padding:0 0 18px 0;border-radius:8px;">
+                <div style="background:#d6f7f7;color:#234;font-weight:bold;padding:16px 20px 0 20px;border-radius:8px 8px 0 0;font-size:1.1em;">📅 Events & Community</div>
+                <div id="event-tabs" style="display:flex;gap:0.5em;padding:0 20px 0 20px;margin-top:10px;">
+                    <button class="event-tab-btn" data-tab="calendar" style="flex:1;padding:8px 0;background:#ffe082;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Calendar</button>
+                    <button class="event-tab-btn" data-tab="details" style="flex:1;padding:8px 0;background:#b3c6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Details</button>
+                    <button class="event-tab-btn" data-tab="chat" style="flex:1;padding:8px 0;background:#e6d6f7;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Chat</button>
+                    <button class="event-tab-btn" data-tab="other" style="flex:1;padding:8px 0;background:#f7d6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Other</button>
+                </div>
+                <div id="event-tab-content" style="background:#eafafb;padding:10px 18px 10px 18px;border-radius:0 0 8px 8px;">
+                    <!-- Tab content will be injected here -->
+                </div>
+            </div>
+            <div style="margin-bottom:12px;background:#fff4ea;padding:0 0 18px 0;border-radius:8px;">
+                <div style="background:#ffe0cc;color:#543;font-weight:bold;padding:16px 20px 0 20px;border-radius:8px 8px 0 0;font-size:1.1em;">💸 Support & Help</div>
+                <div id="support-tabs" style="display:flex;gap:0.5em;padding:0 20px 0 20px;margin-top:10px;">
+                    <button class="support-tab-btn" data-tab="request" style="flex:1;padding:8px 0;background:#ffe082;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Request</button>
+                    <button class="support-tab-btn" data-tab="received" style="flex:1;padding:8px 0;background:#b3c6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Received</button>
+                    <button class="support-tab-btn" data-tab="given" style="flex:1;padding:8px 0;background:#e6d6f7;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Given</button>
+                    <button class="support-tab-btn" data-tab="mutual" style="flex:1;padding:8px 0;background:#f7d6e6;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Mutual Aid</button>
+                    <button class="support-tab-btn" data-tab="other" style="flex:1;padding:8px 0;background:#d6f7f7;border:none;border-radius:6px 6px 0 0;font-weight:bold;cursor:pointer;">Other</button>
+                </div>
+                <div id="support-tab-content" style="background:#fff4ea;padding:10px 18px 10px 18px;border-radius:0 0 8px 8px;">
+                    <!-- Tab content will be injected here -->
+                </div>
+            </div>
+            <button id="logout-button" class="logout-button" style="margin-top:16px;">Log Out</button>
+
+                </div>
+        </div>
+
+        <div style="width:100%;max-width:480px;margin:32px auto 0 auto;text-align:center;">
+        </div>
+
+<script>
+// Tab content for Events & Community
+const eventTabContent = {
+    calendar: `
+        <a href="events-calendar.html" class="menu-button" style="background:#d6f7f7;color:#234;">Events Calendar</a>
+    `,
+    details: `
+        <a href="event-details.html" class="menu-button" style="background:#d6f7f7;color:#234;">Event Details & Attendance</a>
+    `,
+    chat: `
+        <a href="community-chat.html" class="menu-button" style="background:#d6f7f7;color:#234;">Community Chat</a>
+        <a href="personal-chat.html" class="menu-button" style="background:#d6f7f7;color:#234;">Personal Messages</a>
+    `,
+    other: `
+        <a href="celebration-wall.html" class="menu-button" style="background:#d6f7f7;color:#234;">Celebration Wall</a>
+        <a href="inbox.html" class="menu-button" style="background:#d6f7f7;color:#234;">Inbox</a>
+    `
+};
+
+function setEventTab(tab) {
+    document.querySelectorAll('.event-tab-btn').forEach(btn => {
+        btn.style.boxShadow = btn.dataset.tab === tab ? '0 2px 8px #bbb' : 'none';
+        btn.style.opacity = btn.dataset.tab === tab ? '1' : '0.7';
+    });
+    document.getElementById('event-tab-content').innerHTML = eventTabContent[tab];
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const eventTabBtns = document.querySelectorAll('.event-tab-btn');
+    if (eventTabBtns.length) {
+        eventTabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                setEventTab(this.dataset.tab);
+            });
+        });
+        setEventTab('calendar'); // Default tab
+    }
+});
+</script>
+<script>
+// Tab content for Support & Help
+const supportTabContent = {
+    request: `
+        <a href="request-support.html" class="menu-button" style="background:#ffe0cc;color:#543;">Request Support</a>
+        <a href="view-support-requests.html" class="menu-button" style="background:#ffe0cc;color:#543;">View Support Requests</a>
+    `,
+    received: `
+        <a href="support-received.html" class="menu-button" style="background:#ffe0cc;color:#543;">Support Received</a>
+    `,
+    given: `
+        <a href="submit-help.html" class="menu-button" style="background:#ffe0cc;color:#543;">Submit Help Given</a>
+        <a href="help-given.html" class="menu-button" style="background:#ffe0cc;color:#543;">Help Given</a>
+    `,
+    mutual: `
+        <a href="mutual-aid.html" class="menu-button" style="background:#ffe0cc;color:#543;">Mutual Aid</a>
+    `,
+    other: `<span style='color:#888;'>No additional links</span>`
+};
+
+function setSupportTab(tab) {
+    document.querySelectorAll('.support-tab-btn').forEach(btn => {
+        btn.style.boxShadow = btn.dataset.tab === tab ? '0 2px 8px #bbb' : 'none';
+        btn.style.opacity = btn.dataset.tab === tab ? '1' : '0.7';
+    });
+    document.getElementById('support-tab-content').innerHTML = supportTabContent[tab];
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const supportTabBtns = document.querySelectorAll('.support-tab-btn');
+    if (supportTabBtns.length) {
+        supportTabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                setSupportTab(this.dataset.tab);
+            });
+        });
+        setSupportTab('request'); // Default tab
+    }
+});
+</script>
+<div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; justify-content:center; margin-top: 2em;">
+    <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
+        <h2>🌟 Most Active Member</h2>
+        <div id="most-active-member"></div>
+    </div>
+    <div style="flex: 1; min-width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #eee; padding: 1rem;">
+        <h2>🆕 Newest Member</h2>
+        <div id="newest-member"></div>
+    </div>
+</div>
+<div style="width:100%;max-width:480px;margin:32px auto 0 auto;text-align:center;">
+    <a href="main-menu.html" class="menu-button" style="background:#2e8b57;color:#fff;margin-top:24px;">🏠 Home Page</a>
+</div>
+</body>
+</html>

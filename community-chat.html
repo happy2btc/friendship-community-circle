@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Community Chat</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .chat-form { margin-bottom: 2rem; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px #eee; }
+    .message-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .username { font-weight: bold; color: #2e8b57; }
+    .timestamp { color: #888; font-size: 0.9em; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/community-chat-CdHXvY5E.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h1>Community Chat</h1>
+  <a href="main-menu.html" class="back-menu-btn" style="display:inline-block;margin-bottom:1.5rem;padding:12px 24px;background:#2e8b57;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;font-size:1.1em;box-shadow:0 2px 6px #eee;transition:background 0.2s;">← Back to Menu</a>
+  <div id="chat-section" style="max-width:600px;margin:auto;">
+    <h2>Chat Room</h2>
+    <div id="chat-messages" style="height:300px;overflow-y:auto;border:1px solid #ccc;padding:1em;background:#fff;margin-bottom:1em;"></div>
+    <form id="chat-form" style="display:flex;gap:1em;">
+      <textarea id="message" rows="3" style="flex:1;resize:vertical;" placeholder="Type your message..." required></textarea>
+      <button type="submit">Send</button>
+    </form>
+    <span id="chat-status"></span>
+  </div>
+</body>
+</html>

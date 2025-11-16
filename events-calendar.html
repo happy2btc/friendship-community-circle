@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Events Calendar</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
+  <style>
+    body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; padding: 2rem; }
+    .container { max-width: 900px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.07); padding: 2em; }
+    h1 { color: #4a7c59; text-align: center; margin-bottom: 1em; }
+    #calendar { margin: 2em auto; }
+    .menu-button { display: block; width: fit-content; margin: 2em auto 0 auto; background-color: #4a7c59; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+    .menu-button:hover { background: #388e3c; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/events-calendar-kR3Y6233.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="container">
+    <h1>Community Events Calendar</h1>
+    <form id="event-form" style="margin-bottom:2em;background:#f3e7d3;padding:1em 2em;border-radius:8px;max-width:600px;margin:auto;">
+      <h2 style="color:#4a7c59;">Add / Edit Event</h2>
+      <input type="hidden" id="event-id">
+      <div style="margin-bottom:1em;"><label>Title:<br><input type="text" id="event-title" required style="width:100%;padding:8px;"></label></div>
+      <div style="margin-bottom:1em;"><label>Description:<br><textarea id="event-description" rows="2" style="width:100%;padding:8px;"></textarea></label></div>
+  <div style="margin-bottom:1em;"><label>Location:<br><input type="text" id="event-location" style="width:100%;padding:8px;"></label></div>
+  <div style="margin-bottom:1em;"><label>Zoom Link:<br><input type="url" id="event-zoom" style="width:100%;padding:8px;" placeholder="https://us02web.zoom.us/j/..." ></label></div>
+      <div style="margin-bottom:1em;display:flex;gap:1em;"><label>Start Time:<br><input type="datetime-local" id="event-start" required></label><label>End Time:<br><input type="datetime-local" id="event-end"></label></div>
+      <div style="margin-bottom:1em;"><label>Time Zone:<br>
+        <select id="event-timezone" style="width:100%;padding:8px;">
+          <option value="UTC">UTC</option>
+          <option value="America/New_York">America/New_York</option>
+          <option value="America/Chicago">America/Chicago</option>
+          <option value="America/Denver">America/Denver</option>
+          <option value="America/Los_Angeles">America/Los_Angeles</option>
+          <option value="Europe/London">Europe/London</option>
+          <option value="Europe/Paris">Europe/Paris</option>
+          <option value="Asia/Tokyo">Asia/Tokyo</option>
+          <option value="Australia/Sydney">Australia/Sydney</option>
+        </select>
+      </label></div>
+      <div style="margin-bottom:1em;"><label>Repeats:<br>
+        <select id="event-repeat" style="width:100%;padding:8px;">
+          <option value="none">Does not repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </label></div>
+      <button type="submit" style="background:#4a7c59;color:#fff;padding:10px 18px;border-radius:6px;font-weight:bold;">Save Event</button>
+      <button type="button" id="event-cancel" style="margin-left:1em;background:#aaa;color:#fff;padding:10px 18px;border-radius:6px;font-weight:bold;">Cancel</button>
+      <div id="event-status" style="margin-top:1em;color:#a94442;font-weight:bold;"></div>
+    </form>
+    <div id="calendar"></div>
+  <a href="main-menu.html" class="menu-button">← Back to Menu</a>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+</body>
+</html>

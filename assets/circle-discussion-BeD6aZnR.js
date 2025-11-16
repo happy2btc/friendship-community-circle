@@ -1,0 +1,11 @@
+import"./modulepreload-polyfill-B5Qt9EMX.js";import{s as n}from"./supabase-vDZkBp_j.js";function l(){return new URLSearchParams(window.location.search).get("discussion_id")}const a=l();async function c(){const{data:e,error:i}=await n.from("suggestions").select("title, description, author_id, created_at").eq("id",a).single();if(i||!e){document.getElementById("discussion-title").textContent="Discussion not found.",document.getElementById("discussion-details").textContent="";return}document.getElementById("discussion-title").textContent=e.title,document.getElementById("discussion-details").innerHTML=`<div>${e.description||""}</div>
+         <div style="margin-top:0.5em;color:#888;">
+           Posted by: <span id="author-name">Loading...</span>
+           <span class="reply-date">${new Date(e.created_at).toLocaleString()}</span>
+         </div>`;const{data:s}=await n.from("profiles").select("full_name").eq("id",e.author_id).single();document.getElementById("author-name").textContent=s?.full_name||"Unknown"}async function d(){const{data:e}=await n.from("discussion_replies").select("reply_text, created_at, author_id").eq("discussion_id",a).order("created_at",{ascending:!0}),i=document.getElementById("replies-list");if(!e||e.length===0){i.innerHTML="<em>No replies yet.</em>";return}const s=[...new Set(e.map(t=>t.author_id))],{data:r}=await n.from("profiles").select("id, full_name").in("id",s),o={};r?.forEach(t=>{o[t.id]=t.full_name}),i.innerHTML=e.map(t=>`<div class="reply-card">
+          <span class="reply-author">${o[t.author_id]||"Unknown"}</span>
+          <div style="color:#666;font-size:0.8em;margin:4px 0;">
+            ${new Date(t.created_at).toLocaleDateString()} at ${new Date(t.created_at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+          </div>
+          <div>${t.reply_text}</div>
+        </div>`).join("")}document.getElementById("submit-reply").onclick=async()=>{const e=document.getElementById("reply-text").value.trim();if(!e)return;const{data:i}=await n.auth.getUser();if(!i?.user?.id){alert("You must be signed in to reply.");return}await n.from("discussion_replies").insert([{discussion_id:a,author_id:i.user.id,reply_text:e}]),document.getElementById("reply-text").value="",d()};c();d();

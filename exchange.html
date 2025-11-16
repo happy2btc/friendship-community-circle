@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net;">
+  <title>🌐 Circle of Exchange</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+  background: url('/friendship-community-circle/assets/badge-ribbons-BzsGa03G.png') center/cover no-repeat;
+      z-index: 0;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    main, form, h2, .menu-button, #confirmation {
+      position: relative;
+      z-index: 1;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #000;
+  background: rgba(255,255,255,0.85);
+  padding: 0.25em 0.5em;
+  border-radius: 4px;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input[readonly] {
+      background-color: #eee;
+      cursor: not-allowed;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #8c6f4e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:disabled {
+      background-color: #ccc;
+    }
+    #confirmation {
+      margin-top: 1rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: block;
+      width: fit-content;
+      margin: 30px auto 0;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/exchange-D_x5lo7X.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h2>🌐 Circle of Exchange</h2>
+
+  <form id="exchangeForm">
+    <label for="email">📬 Your Email</label>
+    <input type="text" id="email" name="email" readonly />
+
+    <label for="want">🌱 What do you seek?</label>
+    <textarea id="want" name="want" rows="3"></textarea>
+
+    <label for="give">🌾 What do you offer?</label>
+    <textarea id="give" name="give" rows="3"></textarea>
+
+    <label for="passion">🔥 What is your passion?</label>
+    <textarea id="passion" name="passion" rows="3"></textarea>
+
+    <label for="offer-images">🖼️ Offer Images (optional)</label>
+    <input type="file" id="offer-images" accept="image/*" multiple />
+    <div id="image-thumbnails" style="margin-top:10px;"></div>
+
+    <label>
+      <input type="checkbox" id="visible" checked />
+      Make this visible to others in the Circle
+    </label>
+
+    <button type="submit">Update My Offering</button>
+  </form>
+
+  <div id="confirmation"></div>
+
+  <a href="view-exchanges.html" class="menu-button">🎁 Browse All Offerings</a>
+  <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

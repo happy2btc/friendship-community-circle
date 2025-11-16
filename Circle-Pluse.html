@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Circle Pulse — What's Happening This Week</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--accent:#2e8b57;--muted:#666;--card:#fff;--bg:#f7faf7}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;padding:1.25rem;background:var(--bg);color:#111}
+    .wrap{max-width:900px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:1rem}
+    h1{margin:0;font-size:1.5rem}
+    .lead{color:var(--muted);margin-top:0.25rem}
+    .card{background:var(--card);border:1px solid #eee;border-radius:10px;padding:1rem;margin-bottom:1rem;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
+    form{display:grid;gap:8px}
+    input,textarea,select{padding:10px;border-radius:6px;border:1px solid #ddd;font-size:1rem}
+    button{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700}
+    .small{font-size:0.9rem;color:var(--muted)}
+    .ann-list{display:grid;gap:8px}
+    .ann{border-left:4px solid var(--accent);padding:8px 12px;background:#fff;border-radius:6px}
+    .meta{font-size:0.85rem;color:var(--muted)}
+    .empty{color:var(--muted);padding:8px}
+    .status{font-size:0.95rem;color:var(--muted)}
+    .actions{display:flex;gap:8px}
+  .visit-banner{background:var(--accent);color:#fff;padding:12px;border-radius:10px;margin-bottom:12px;display:flex;gap:18px;align-items:center;justify-content:space-between}
+  .visit-banner .big{font-size:1.15rem;font-weight:800}
+  .visit-banner .small{color:rgba(255,255,255,0.95);font-weight:600}
+  .activity-item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .activity-left{flex:1}
+  .activity-right{white-space:nowrap;color:var(--muted);font-size:0.85rem}
+    @media (max-width:600px){body{padding:0.75rem}} 
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/Circle-Pluse-BF-rgHKq.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <a href="main-menu.html" aria-label="Back to Menu" style="position:fixed; top:16px; left:16px; z-index:1200; background:#2b6b4f; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; box-shadow:0 2px 6px rgba(0,0,0,0.15);">🔙 Back to Menu</a>
+  <div class="wrap">
+    <!-- Prominent visit banner (first thing on the page) -->
+    <div class="visit-banner" id="visit-banner">
+      <div>
+        <div class="small">Visits today</div>
+        <div class="big" id="visits-today-banner">…</div>
+      </div>
+      <div style="text-align:right">
+        <div class="small">Visits this week</div>
+        <div class="big" id="visits-week-banner">…</div>
+      </div>
+      <div style="margin-left:12px;display:flex;align-items:center;gap:8px">
+        <button id="sync-visits-btn" type="button" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:6px 8px;border-radius:6px;font-weight:700">Sync visits</button>
+        <div id="sync-status" class="small" style="color:rgba(255,255,255,0.9)"></div>
+      </div>
+    </div>
+    <header>
+      <div>
+        <h1>Activity Pulse</h1>
+        <div class="lead">Recent member activity that awarded points (most recent actions appear first).</div>
+      </div>
+    </header>
+
+    <!-- Posting form removed — this page now focuses on activity and site metrics -->
+
+    <!-- Activity feed: show member actions that awarded points -->
+    <section class="card" id="activity-section">
+      <h2 style="margin-top:0">Recent activity (points awarded)</h2>
+      <div id="activity-feed" class="ann-list">
+        <div class="empty">Loading activity...</div>
+      </div>
+    </section>
+
+    <!-- footer removed per request -->
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Circles</title>
+  <style>
+    .fixed-menu-btn {
+      position: fixed;
+      top: 24px;
+      right: 32px;
+      z-index: 100;
+      background-color: #6c757d;
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 7px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.08em;
+      box-shadow: 0 2px 8px #0002;
+      transition: background 0.2s;
+      display: block;
+    }
+    .fixed-menu-btn:hover, .fixed-menu-btn:focus {
+      background-color: #495057;
+    }
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .circle-card { background: #fff; border: 1px solid #bdbdbd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .circle-actions { margin-top: 1rem; }
+    button { margin-right: 1rem; }
+    /* Quick access circles */
+    .quick-circles { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0 18px 0; }
+    .quick-circle-btn { background: linear-gradient(180deg,#fff8ef,#f3e7d3); border:1px solid #d8bfa3; padding:8px 12px; border-radius:8px; color:#3b2f2f; text-decoration:none; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,0.06); display:inline-flex; gap:8px; align-items:center; }
+    .quick-circle-btn:hover { transform: translateY(-2px); }
+    .quick-circle-count { font-size:0.8rem; color:#666; margin-left:6px; }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/circle-list-CBAx0sSU.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h1>Circles</h1>
+  <!-- Quick Access Circles -->
+  <div id="quick-access-wrapper">
+    <h3 style="margin:6px 0 8px 0;">Quick Access — Circles</h3>
+    <div id="quick-circles" class="quick-circles"></div>
+  </div>
+  <!-- original static Coven Community Network button removed; quick-access list shows all circles below -->
+  <div id="circles"></div>
+  <a href="main-menu.html" class="fixed-menu-btn">🔙 Return to Menu</a>
+</body>
+</html>

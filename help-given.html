@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🤝 Help Given</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .help-container { max-width: 700px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; padding: 2rem; }
+    .help-item { border-bottom: 1px solid #eee; padding: 1em 0; }
+    .helper { font-weight: bold; color: #2e8b57; }
+    .help-details { margin: 0.5em 0; }
+    .help-date { color: #888; font-size: 0.9em; }
+    .menu-btn {
+      display: block;
+      width: 100%;
+      background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 0;
+      margin-top: 2em;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(46,139,87,0.10);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #6b4f1d 60%, #2e8b57 100%);
+      box-shadow: 0 4px 16px rgba(107,79,29,0.18);
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/help-given-Bh2plFmO.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <div class="help-container">
+  <a href="main-menu.html" class="menu-btn" style="margin-top:0;margin-bottom:1.5em;">🔙 Back to Menu</a>
+    <h2>🤝 Help Given</h2>
+    <div style="margin-bottom:1em;">
+      <input id="search-helper" type="text" placeholder="Search helper name..." style="width:100%;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    </div>
+    <div id="help-list"></div>
+  <!-- Back to Menu button moved to top -->
+  </div>
+</body>
+</html>

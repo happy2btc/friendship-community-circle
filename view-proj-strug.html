@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📜 Personal Projects & Struggles</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('/friendship-community-circle/assets/sun-35edT4An.jpg') center/cover no-repeat;
+      z-index: 0;
+      opacity: 0.28;
+      pointer-events: none;
+    }
+
+    .scrolls-container, h1, .menu-button {
+      position: relative;
+      z-index: 1;
+    }
+    h1 {
+      text-align: center;
+      color: #181818;
+      font-weight: 800;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    .scrolls-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
+    .scroll-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    .scroll-card h3 {
+      margin-top: 0;
+      color: #181818;
+      font-weight: 700;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    .scroll-card p {
+      margin: 0.5rem 0;
+      line-height: 1.4;
+      color: #181818;
+      font-weight: 600;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    .scroll-card strong {
+      color: #181818;
+      font-weight: 800;
+      text-shadow: 0 1px 4px #fff8, 0 0px 1px #fff8;
+    }
+    .scroll-card .spacer { flex-grow: 1; }
+    .respond-button { background-color: #2e8b57; color: white; text-decoration: none; padding: 10px 15px; border-radius: 6px; display: inline-block; margin-top: 1rem; font-weight: bold; text-align: center; }
+    .menu-button {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      display: block;
+      width: fit-content;
+      position: fixed; 
+      top: 20px;
+      right: 30px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px #eee;
+    }
+  </style>
+  <script type="module" crossorigin src="/friendship-community-circle/assets/view-proj-strug-DDV330Ru.js"></script>
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
+</head>
+<body>
+  <h1>📜 Personal Projects & Struggles</h1>
+  <div id="scrolls-container">
+  <p>Loading projects & struggles...</p>
+  </div>
+  <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
+
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Connect Your Wallet – New Paradigm Friendship Community</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fef9e7;
+      color: #333;
+      margin: 40px;
+      font-size: 1.2em;
+    }
+
+    h1, h2, p {
+      text-align: center;
+    }
+
+    .wallet-box {
+      background-color: #fff;
+      border: 1px solid #eecf6a;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      width: 80%;
+      max-width: 700px;
+    }
+
+    .wallet-box strong {
+      color: #6b4f1d;
+    }
+
+    button {
+      background-color: #d64d35;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+    }
+
+    #walletStatus {
+      text-align: center;
+      font-style: italic;
+      margin-top: 10px;
+    }
+
+    .next-button {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .next-button a {
+      background-color: #6b4f1d;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body> 
+    <h1>🧭 Connect Your Wallet</h1>
+  <p>Your wallet is your passport to the New Paradigm Friendship Community.</p>
+
+  <div class="wallet-box">
+    <h2>🌿 What Is a Digital Wallet?</h2>
+    <p>A digital wallet is a secure tool that lets you interact with blockchain-based communities. It stores your identity, not just your crypto.</p>
+
+    <h2>💡 Why Do I Need One?</h2>
+    <ul>
+      <li>It’s your membership badge—your way of showing up.</li>
+      <li>It lets you affirm your values and participate in decisions.</li>
+      <li>It enables meaningful engagement and solid agreements with the group.</li>
+      <li>It can hold tokens of care, belonging, and accountability—not just currency.</li>
+    </ul>
+
+    <h2>🔐 Is It Safe?</h2>
+    <p>Yes, if you keep your recovery phrase private and only connect to trusted sites. MetaMask is widely used and respected.</p>
+
+    <button id="connectWalletBtn">🌈 Connect Wallet</button>
+    <p style="margin-top:20px; font-style:italic; text-align:center;">
+  📱 On mobile? Open this site inside the MetaMask app’s browser:<br>
+  1. Open MetaMask<br>
+  2. Tap the globe icon 🌐 at the bottom<br>
+  3. Paste this link: <br>
+  <a href="https://happy2btc.github.io/friendship-community-contract/">https://happy2btc.github.io/friendship-community-contract/</a><br>
+  This ensures your wallet connects smoothly.
+</p>
+    <p id="walletStatus">Waiting to connect...</p>
+<p style="text-align:center; margin-top:30px;">
+  🌼 New here? <a href="welcome.html">Read the Welcome Guide</a>
+</p>
+    <div class="next-button" id="nextStep" style="display:none;">
+      <a href="affirm.html">Next: Affirm Your Values</a>
+    </div>
+  </div>
+
+  <script>
+    let walletAddress = null;
+
+    document.getElementById('connectWalletBtn').onclick = async () => {
+      document.getElementById('walletStatus').innerText = "🔍 Looking for your wallet...";
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          walletAddress = accounts[0];
+          document.getElementById('walletStatus').innerText = `✅ Wallet found: ${walletAddress.slice(0, 6)}... You are witnessed.`;
+          document.getElementById('nextStep').style.display = "block";
+        } catch (error) {
+          document.getElementById('walletStatus').innerText = `⚠️ Connection declined. You are still held in care.`;
+        }
+      } else {
+        document.getElementById('walletStatus').innerText = `😿 Please install MetaMask to connect.`;
+      }
+    };
+  </script>
+</body>
+</html>

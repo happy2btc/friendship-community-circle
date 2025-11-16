@@ -1245,13 +1245,14 @@
       const cutoffDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
       // Check various content types for new items
-      const [circlesRes, videosRes, eventsRes, commentsRes, suggestionsRes, groupProjectsRes] = await Promise.all([
+      const [circlesRes, videosRes, eventsRes, commentsRes, suggestionsRes, groupProjectsRes, skillSharesRes] = await Promise.all([
         supabase.from('circles').select('id, name, created_at').gte('created_at', lastRead),
         supabase.from('member_video').select('id, caption, created_at, user_id').gte('created_at', lastRead),
         supabase.from('events').select('id, title, created_at, created_by').gte('created_at', lastRead),
         supabase.from('comments').select('id, content, created_at, author_id').gte('created_at', lastRead),
         supabase.from('suggestions').select('id, title, created_at, author_id').gte('created_at', lastRead),
-        supabase.from('group_projects').select('id, name, created_at, proposer_id').gte('created_at', lastRead)
+        supabase.from('group_projects').select('id, name, created_at, proposer_id').gte('created_at', lastRead),
+        supabase.from('skill_shares').select('id, skill_name, created_at, presenter_id, video_url').gte('created_at', lastRead)
       ]);
 
       // Create notifications for new activity
@@ -1331,6 +1332,20 @@
         });
       }
 
+      // New skill shares with videos
+      if (!skillSharesRes.error && skillSharesRes.data) {
+        skillSharesRes.data.forEach(skillShare => {
+          if (skillShare.video_url) { // Only notify for skill shares that have videos
+            activities.push({
+              type: 'skill_share',
+              message: `New skill shared: "${skillShare.skill_name}"`,
+              icon: '🎥',
+              link: 'skill-shares.html'
+            });
+          }
+        });
+      }
+
       // Create notifications for new activities (avoid duplicates)
       for (const activity of activities) {
         const notifKey = `${activity.type}_${activity.message}`;
@@ -1392,7 +1407,8 @@
       { name: 'comments', icon: '💬', message: 'New comment posted', link: 'discussions.html' },
       { name: 'suggestions', icon: '💡', message: 'New suggestion submitted', link: 'suggestions.html' },
       { name: 'group_projects', icon: '🚀', message: 'New project proposed', link: 'group-projects.html' },
-      { name: 'circles', icon: '⭕', message: 'New circle created', link: 'circle-list.html' }
+      { name: 'circles', icon: '⭕', message: 'New circle created', link: 'circle-list.html' },
+      { name: 'skill_shares', icon: '🎥', message: 'New skill shared with video', link: 'skill-shares.html' }
     ];
 
     tables.forEach(table => {
