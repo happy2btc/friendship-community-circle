@@ -245,19 +245,96 @@
         activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
         try{
           console.log('Starting to load activities...');
-          // Fetch from all activity tables in parallel, with error handling for each
+          // Fetch from all activity tables with proper error handling
           const queryPromises = [
-            supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('agreement_votes query failed:', err); return { data: [], error: err }; }),
-            supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('suggestions query failed:', err); return { data: [], error: err }; }),
-            supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('comments query failed:', err); return { data: [], error: err }; }),
-            supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('celebrations query failed:', err); return { data: [], error: err }; }),
-            supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('events query failed:', err); return { data: [], error: err }; }),
-            supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('group_projects query failed:', err); return { data: [], error: err }; }),
-            supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('writers_wall query failed:', err); return { data: [], error: err }; }),
-            supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('event_attendance query failed:', err); return { data: [], error: err }; }),
-            supabase.from('profiles').select('id,full_name').catch(err => { console.warn('profiles query failed:', err); return { data: [], error: err }; }),
-            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('member_video query failed:', err); return { data: [], error: err }; }),
-            supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('skill_shares query failed:', err); return { data: [], error: err }; })
+            (async () => {
+              try {
+                return await supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('agreement_votes query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('suggestions query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('comments query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('celebrations query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('events query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('group_projects query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('writers_wall query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('event_attendance query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('profiles').select('id,full_name');
+              } catch(err) {
+                console.warn('profiles query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('member_video query failed:', err);
+                return { data: [], error: err };
+              }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('skill_shares query failed:', err);
+                return { data: [], error: err };
+              }
+            })()
           ];
 
           const results = await Promise.all(queryPromises);
