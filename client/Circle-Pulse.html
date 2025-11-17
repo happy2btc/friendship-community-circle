@@ -244,29 +244,25 @@
       async function loadActivities(){
         activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
         try{
-          // Fetch from all activity tables in parallel, with skill_shares being optional
-          const queries = [
-            supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100),
-            supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
-            supabase.from('profiles').select('id,full_name'),
-            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100)
+          console.log('Starting to load activities...');
+          // Fetch from all activity tables in parallel, with error handling for each
+          const queryPromises = [
+            supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('agreement_votes query failed:', err); return { data: [], error: err }; }),
+            supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('suggestions query failed:', err); return { data: [], error: err }; }),
+            supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('comments query failed:', err); return { data: [], error: err }; }),
+            supabase.from('celebrations').select('user_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('celebrations query failed:', err); return { data: [], error: err }; }),
+            supabase.from('events').select('created_by,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('events query failed:', err); return { data: [], error: err }; }),
+            supabase.from('group_projects').select('proposer_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('group_projects query failed:', err); return { data: [], error: err }; }),
+            supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('writers_wall query failed:', err); return { data: [], error: err }; }),
+            supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('event_attendance query failed:', err); return { data: [], error: err }; }),
+            supabase.from('profiles').select('id,full_name').catch(err => { console.warn('profiles query failed:', err); return { data: [], error: err }; }),
+            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('member_video query failed:', err); return { data: [], error: err }; }),
+            supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100).catch(err => { console.warn('skill_shares query failed:', err); return { data: [], error: err }; })
           ];
 
-          // Add skill_shares query with error handling
-          let skillSharesPromise = supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100);
-          skillSharesPromise = skillSharesPromise.catch(err => {
-            console.warn('skill_shares query failed (table may not exist):', err);
-            return { data: [], error: err };
-          });
-          queries.push(skillSharesPromise);
-
-          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes] = await Promise.all(queries);
+          const results = await Promise.all(queryPromises);
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes] = results;
+          console.log('All queries completed, processing results...');
         // ...existing code...
         // Map profiles for display names
         const idToName = {};
@@ -370,11 +366,14 @@
           });
 
           // Sort by created_at desc and limit to 50
+          console.log(`Collected ${items.length} total activity items`);
           items.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
           const recent = items.slice(0,50);
           currentItems = recent.slice();
+          console.log(`Rendering ${currentItems.length} recent activity items`);
           renderActivities(currentItems);
         }catch(e){
+          console.error('Failed to load activity:', e);
           activityContainer.innerHTML = '<div class="empty">Failed to load activity.</div>';
         }
       }
