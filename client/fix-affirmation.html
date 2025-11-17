@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fix Affirmation Text for Existing Members</title>
+  <script type="module" src="/lib/supabase.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    .container { background: #fff; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px #eee; max-width: 800px; margin: auto; }
+    h1 { color: #2e8b57; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    input, button { padding: 0.5rem; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #2e8b57; color: white; cursor: pointer; margin-right: 0.5rem; }
+    button:hover { background: #3a9d6b; }
+    .result { margin-top: 1rem; padding: 1rem; border-radius: 4px; }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .member-list { margin-top: 2rem; }
+    .member-item { background: #f8f9fa; padding: 1rem; margin-bottom: 0.5rem; border-radius: 4px; border-left: 4px solid #2e8b57; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Fix Affirmation Text for Existing Members</h1>
+
+    <div class="form-group">
+      <button id="findNullAffirmations">Find Members with NULL Affirmation Text</button>
+      <button id="fixAllNullAffirmations">Fix ALL Members with NULL Affirmation Text</button>
+    </div>
+
+    <div class="form-group">
+      <label for="userId">Or Fix Specific User by ID:</label>
+      <input type="text" id="userId" placeholder="Enter user ID">
+      <button id="fixSpecificUser">Fix This User</button>
+    </div>
+
+    <div class="form-group">
+      <label for="userEmail">Or Fix User by Email:</label>
+      <input type="email" id="userEmail" placeholder="Enter user email">
+      <button id="fixUserByEmail">Fix This User</button>
+    </div>
+
+    <div id="result"></div>
+
+    <div class="member-list">
+      <h2>Members with NULL Affirmation Text:</h2>
+      <div id="membersList"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    const resultDiv = document.getElementById('result');
+    const membersListDiv = document.getElementById('membersList');
+
+    function showResult(message, isSuccess = true) {
+      resultDiv.innerHTML = `<div class="result ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+    }
+
+    async function findMembersWithNullAffirmation() {
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, created_at')
+          .is('affirmation_text', null)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!profiles || profiles.length === 0) {
+          membersListDiv.innerHTML = '<p>No members found with NULL affirmation_text.</p>';
+          return;
+        }
+
+        membersListDiv.innerHTML = profiles.map(profile => `
+          <div class="member-item">
+            <strong>${profile.full_name || 'No Name'}</strong><br>
+            ID: ${profile.id}<br>
+            Email: ${profile.email || 'No Email'}<br>
+            Created: ${new Date(profile.created_at).toLocaleDateString()}<br>
+            <button onclick="fixUser('${profile.id}')">Fix This Member</button>
+          </div>
+        `).join('');
+
+        showResult(`Found ${profiles.length} members with NULL affirmation_text.`, true);
+
+      } catch (error) {
+        showResult(`Error finding members: ${error.message}`, false);
+      }
+    }
+
+    async function fixAffirmationText(userId) {
+      try {
+        const affirmationValue = new Date().toISOString();
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            affirmation_text: affirmationValue,
+            affirmation_date: affirmationValue
+          })
+          .eq('id', userId);
+
+        if (error) throw error;
+
+        showResult(`Successfully updated affirmation_text for user ${userId}`, true);
+        // Refresh the list
+        findMembersWithNullAffirmation();
+
+      } catch (error) {
+        showResult(`Error updating user ${userId}: ${error.message}`, false);
+      }
+    }
+
+    async function fixAllNullAffirmations() {
+      try {
+        const affirmationValue = new Date().toISOString();
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            affirmation_text: affirmationValue,
+            affirmation_date: affirmationValue
+          })
+          .is('affirmation_text', null);
+
+        if (error) throw error;
+
+        showResult('Successfully updated affirmation_text for ALL members with NULL values!', true);
+        // Refresh the list
+        findMembersWithNullAffirmation();
+
+      } catch (error) {
+        showResult(`Error updating all members: ${error.message}`, false);
+      }
+    }
+
+    async function fixUserByEmail(email) {
+      try {
+        // First find the user by email
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        if (authError) throw authError;
+
+        const user = authUsers.users.find(u => u.email === email);
+        if (!user) {
+          showResult(`No user found with email: ${email}`, false);
+          return;
+        }
+
+        await fixAffirmationText(user.id);
+
+      } catch (error) {
+        showResult(`Error finding user by email: ${error.message}`, false);
+      }
+    }
+
+    // Make fixUser function global so it can be called from onclick
+    window.fixUser = fixUser;
+
+    // Event listeners
+    document.getElementById('findNullAffirmations').addEventListener('click', findMembersWithNullAffirmation);
+    document.getElementById('fixAllNullAffirmations').addEventListener('click', fixAllNullAffirmations);
+    document.getElementById('fixSpecificUser').addEventListener('click', () => {
+      const userId = document.getElementById('userId').value.trim();
+      if (!userId) {
+        showResult('Please enter a user ID', false);
+        return;
+      }
+      fixAffirmationText(userId);
+    });
+    document.getElementById('fixUserByEmail').addEventListener('click', () => {
+      const email = document.getElementById('userEmail').value.trim();
+      if (!email) {
+        showResult('Please enter an email address', false);
+        return;
+      }
+      fixUserByEmail(email);
+    });
+
+    // Load members with NULL affirmation on page load
+    findMembersWithNullAffirmation();
+  </script>
+</body>
+</html>
