@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Check Pamela's Affirmation Date</title>
+  <script type="module" src="/lib/supabase.js"></script>
+</head>
+<body>
+  <h1>Checking Pamela Waisanen's Affirmation Date</h1>
+  <div id="result"></div>
+
+  <script type="module">
+    import { supabase } from '/lib/supabase.js';
+
+    async function checkPamela() {
+      const resultDiv = document.getElementById('result');
+
+      try {
+        // First, find Pamela's profile
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, affirmation_text, affirmation_date')
+          .ilike('full_name', '%Pamela%');
+
+        if (error) {
+          resultDiv.textContent = `Error: ${error.message}`;
+          return;
+        }
+
+        if (!profiles || profiles.length === 0) {
+          resultDiv.textContent = 'No profiles found with "Pamela" in the name.';
+          return;
+        }
+
+        resultDiv.innerHTML = '<h2>Found Profiles:</h2>';
+
+        profiles.forEach(profile => {
+          const affirmationDate = profile.affirmation_date;
+          const cutoffDate = new Date('2025-09-19T00:00:00Z');
+          const isAfterCutoff = affirmationDate && new Date(affirmationDate) >= cutoffDate;
+
+          resultDiv.innerHTML += `
+            <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+              <strong>Name:</strong> ${profile.full_name}<br>
+              <strong>ID:</strong> ${profile.id}<br>
+              <strong>Affirmation Date:</strong> ${affirmationDate || 'NULL'}<br>
+              <strong>Formatted Date:</strong> ${affirmationDate ? new Date(affirmationDate).toLocaleString() : 'N/A'}<br>
+              <strong>After Cutoff (9/19/2025)?</strong> ${isAfterCutoff ? 'YES' : 'NO'}<br>
+              <strong>Avatar URL:</strong> ${profile.avatar_url || 'None'}<br>
+              <strong>Affirmation Text:</strong> ${profile.affirmation_text || 'None'}
+            </div>
+          `;
+        });
+
+      } catch (err) {
+        resultDiv.textContent = `Unexpected error: ${err.message}`;
+      }
+    }
+
+    checkPamela();
+  </script>
+</body>
+</html>
