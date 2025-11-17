@@ -39,6 +39,7 @@
     .skill-presenter { color: #4a7c59; font-weight: bold; }
     .skill-date { color: #888; font-size: 0.95em; margin-left: 1em; }
     .menu-button { display: block; width: fit-content; margin: 2em auto 0 auto; background-color: #4a7c59; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; text-align: center; }
+    .menu-button.fixed-top-right { position: fixed; top: 20px; right: 20px; margin: 0; z-index: 1000; }
     video { max-width: 100%; border-radius: 6px; margin-top: 1em; }
     label { display: block; margin-top: 1em; }
     input, textarea, select { width: 100%; padding: 0.5em; margin-top: 0.2em; border-radius: 4px; border: 1px solid #ccc; font-size: 1em; }
@@ -48,6 +49,7 @@
 </head>
 <body>
   <div class="container">
+    <a href="main-menu.html" class="menu-button fixed-top-right">🔙 Return to Menu</a>
     <h1>Skill Sharing</h1>
     <form id="skill-share-form" class="skill-form">
       <label for="skill_name">Skill Name</label>
@@ -77,7 +79,6 @@
     </form>
 
     <div class="skill-list" id="skill-list"></div>
-  <a href="main-menu.html" class="menu-button">🔙 Return to Menu</a>
   </div>
   <script type="module">
     import { supabase } from '/lib/supabase.js';
