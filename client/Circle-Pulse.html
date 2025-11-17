@@ -256,7 +256,10 @@
             supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('profiles').select('id,full_name'),
             supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100),
-            supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100)
+            supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100).catch(err => {
+              console.warn('skill_shares query failed:', err);
+              return { data: [], error: err };
+            })
           ]);
         // ...existing code...
         // Map profiles for display names
@@ -282,7 +285,8 @@
         });
 
         // Add skill share video activities
-        (skillSharesRes.data || []).forEach(ss => {
+        const skillSharesData = skillSharesRes.error ? [] : (skillSharesRes.data || []);
+        skillSharesData.forEach(ss => {
           if(!ss || !ss.presenter_id || !ss.video_url) return; // Only include skill shares with videos
           const t = new Date(ss.created_at).getTime();
           if (t < weekAgo || t > now) return;
@@ -450,7 +454,7 @@
                 } catch(e){ console.warn('realtime payload error', e); }
               });
             });
-            await channel.subscribe();
+            await channel.subscribe().catch(e => console.warn('Realtime subscription failed:', e));
             return;
           }
         }catch(e){ console.warn('realtime channel subscribe failed', e); }
@@ -467,7 +471,7 @@
                 currentItems = currentItems.slice(0,50);
                 renderActivities(currentItems);
               } catch(e){}
-            }).subscribe();
+            }).subscribe().catch(e => console.warn(`Realtime subscription failed for ${table}:`, e));
           });
         }catch(e){ console.warn('realtime fallback failed', e); }
       }
@@ -499,6 +503,8 @@
           case 'events': return row.created_by ? { display_name: row.created_by, action: 'Created event', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
           case 'group_projects': return row.proposer_id ? { display_name: row.proposer_id, action: 'Proposed a project', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
           case 'writers_wall': return (row.author_id || row.author_name) ? { display_name: (row.author_id || row.author_name), action: 'Wrote for Writers Wall', meta: row.title || '', points: 1, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'event_attendance': return row.user_id ? { display_name: row.user_id, action: 'Attended an event', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'skill_shares': return (row.presenter_id && row.video_url) ? { display_name: row.presenter_id, action: 'Shared a skill with video', meta: row.skill_name ? `Skill: ${row.skill_name}` : 'Skill shared with video', points: 5, created_at: row.created_at || new Date().toISOString() } : null;
           case 'site_visits': return { created_at: row.created_at || new Date().toISOString(), visit:true };
           default: return null;
         }
@@ -536,7 +542,7 @@
     }
 
     async function setupRealtime(){
-      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits'];
+      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits','event_attendance','skill_shares'];
       try{
         // Preferred API (supabase-js v2+): channel with postgres_changes
         if(typeof supabase.channel === 'function'){
