@@ -244,8 +244,8 @@
       async function loadActivities(){
         activityContainer.innerHTML = '<div class="empty">Loading activity...</div>';
         try{
-          // Fetch from all activity tables in parallel
-          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes] = await Promise.all([
+          // Fetch from all activity tables in parallel, with skill_shares being optional
+          const queries = [
             supabase.from('agreement_votes').select('voter_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('suggestions').select('id,author_id,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('comments').select('author_id,created_at,reply_text').order('created_at',{ascending:false}).limit(100),
@@ -255,12 +255,18 @@
             supabase.from('writers_wall').select('author_id,author_name,title,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('event_attendance').select('user_id,created_at').order('created_at',{ascending:false}).limit(100),
             supabase.from('profiles').select('id,full_name'),
-            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100),
-            supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100).catch(err => {
-              console.warn('skill_shares query failed:', err);
-              return { data: [], error: err };
-            })
-          ]);
+            supabase.from('member_video').select('user_id,created_at,caption').order('created_at',{ascending:false}).limit(100)
+          ];
+
+          // Add skill_shares query with error handling
+          let skillSharesPromise = supabase.from('skill_shares').select('presenter_id,created_at,skill_name,video_url').order('created_at',{ascending:false}).limit(100);
+          skillSharesPromise = skillSharesPromise.catch(err => {
+            console.warn('skill_shares query failed (table may not exist):', err);
+            return { data: [], error: err };
+          });
+          queries.push(skillSharesPromise);
+
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes] = await Promise.all(queries);
         // ...existing code...
         // Map profiles for display names
         const idToName = {};
@@ -429,7 +435,7 @@
           (profilesRes.data || []).forEach(p => { if(p && p.id) idToName[p.id] = p.full_name || p.id; });
         } catch(e) {}
 
-  const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','event_attendance','skill_shares'];
+  const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','event_attendance'];
         try{
           if(typeof supabase.channel === 'function'){
             const channel = supabase.channel('realtime-activity');
@@ -454,6 +460,30 @@
                 } catch(e){ console.warn('realtime payload error', e); }
               });
             });
+            // Add skill_shares subscription with error handling
+            try {
+              channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'skill_shares' }, (payload)=>{
+                try {
+                  const item = normalizeInsert('skill_shares', payload.new, idToName);
+                  if(!item) return;
+                  // Avoid duplicates
+                  const key = `${item.display_name}|${item.action}|${item.created_at}`;
+                  if(currentItems.some(it => `${it.display_name}|${it.action}|${it.created_at}` === key)) return;
+                  currentItems.unshift(item);
+                  // Remove activities older than 7 days
+                  const now = Date.now();
+                  const weekAgo = now - 7*24*60*60*1000;
+                  currentItems = currentItems.filter(it => {
+                    if (!it.created_at) return false;
+                    const t = new Date(it.created_at).getTime();
+                    return t >= weekAgo && t <= now;
+                  }).slice(0,50);
+                  renderActivities(currentItems);
+                } catch(e){ console.warn('skill_shares realtime payload error', e); }
+              });
+            } catch(e) {
+              console.warn('Failed to subscribe to skill_shares realtime (table may not exist):', e);
+            }
             await channel.subscribe().catch(e => console.warn('Realtime subscription failed:', e));
             return;
           }
@@ -473,6 +503,22 @@
               } catch(e){}
             }).subscribe().catch(e => console.warn(`Realtime subscription failed for ${table}:`, e));
           });
+          // Add skill_shares subscription with error handling for fallback
+          try {
+            supabase.from('skill_shares').on('INSERT', payload => {
+              try {
+                const item = normalizeInsert('skill_shares', payload.new, idToName);
+                if(!item) return;
+                const key = `${item.display_name}|${item.action}|${item.created_at}`;
+                if(currentItems.some(it => `${it.display_name}|${it.action}|${it.created_at}` === key)) return;
+                currentItems.unshift(item);
+                currentItems = currentItems.slice(0,50);
+                renderActivities(currentItems);
+              } catch(e){ console.warn('skill_shares realtime fallback error', e); }
+            }).subscribe().catch(e => console.warn('Realtime subscription failed for skill_shares:', e));
+          } catch(e) {
+            console.warn('Failed to subscribe to skill_shares realtime fallback (table may not exist):', e);
+          }
         }catch(e){ console.warn('realtime fallback failed', e); }
       }
 
@@ -542,7 +588,7 @@
     }
 
     async function setupRealtime(){
-      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits','event_attendance','skill_shares'];
+      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits','event_attendance'];
       try{
         // Preferred API (supabase-js v2+): channel with postgres_changes
         if(typeof supabase.channel === 'function'){
@@ -552,6 +598,14 @@
               try{ handleRealtimeInsert(table, payload.new); }catch(e){ console.warn('realtime payload handling error', e); }
             });
           });
+          // Add skill_shares subscription with error handling
+          try {
+            channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'skill_shares' }, (payload)=>{
+              try{ handleRealtimeInsert('skill_shares', payload.new); }catch(e){ console.warn('skill_shares realtime payload handling error', e); }
+            });
+          } catch(e) {
+            console.warn('Failed to subscribe to skill_shares realtime (table may not exist):', e);
+          }
           await channel.subscribe();
           console.log('Realtime channel subscribed for activity tables');
           return;
@@ -566,6 +620,12 @@
             // note: older SDKs return a subscription object; we don't need to store it here for simple pages
           }catch(e){ /* ignore per-table subscription error */ }
         });
+        // Add skill_shares subscription with error handling for fallback
+        try {
+          const sub = supabase.from('skill_shares').on('INSERT', payload => { try{ handleRealtimeInsert('skill_shares', payload.new); }catch(e){ console.warn('skill_shares realtime fallback error', e); }}).subscribe();
+        } catch(e) {
+          console.warn('Failed to subscribe to skill_shares realtime fallback (table may not exist):', e);
+        }
         console.log('Realtime fallback subscriptions registered');
       }catch(e){ console.warn('realtime fallback failed', e); }
     }
