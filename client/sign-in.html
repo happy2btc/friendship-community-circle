@@ -185,19 +185,8 @@
 
           if (signUpError) throw signUpError;
 
-          // SIGN UP SUCCESS: Create profile with affirmation_date and redirect to main menu
+          // SIGN UP SUCCESS: enqueue welcome on server as a fallback, then redirect to affirm page
           try {
-            // Set affirmation_date to current date for new members
-            const affirmationDate = new Date().toISOString();
-            await supabase
-              .from('profiles')
-              .upsert({
-                id: signUpData.user?.id,
-                full_name: name,
-                affirmation_text: affirmationDate,
-                affirmation_date: affirmationDate
-              }, { onConflict: 'id' });
-
             // Compute functions URL from the Supabase URL so this works across projects
             // e.g. supabaseUrl: https://project-ref.supabase.co -> functions URL: https://project-ref.functions.supabase.co
             import('./lib/supabase.js').then(({ supabaseUrl }) => {
@@ -221,11 +210,11 @@
               }
             }).catch(e => console.warn('Failed to import supabaseUrl for fallback', e));
           } catch (e) {
-            console.warn('Profile creation failed (non-fatal):', e);
+            console.warn('register-user fallback exception:', e);
           }
 
-          // Redirect the user directly to the main menu
-          window.location.href = 'main-menu.html';
+          // Redirect the user to the affirmation page
+          window.location.href = 'affirm.html';
 
         } else {
           // --- LOGIN LOGIC ---
@@ -236,8 +225,24 @@
 
           if (loginError) throw loginError;
 
-          // LOGIN SUCCESS: Go directly to main menu
-          window.location.href = 'main-menu.html';
+          // LOGIN SUCCESS: Check if they have affirmed
+          const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('affirmation_text')
+              .eq('id', loginData.user.id)
+              .single();
+
+          if (profileError && profileError.code !== 'PGRST116') { // Ignore 'exact one row' error for new users
+            throw profileError;
+          }
+
+          if (profile && profile.affirmation_text) {
+              // They have affirmed, go to home page
+              window.location.href = 'main-menu.html';
+          } else {
+              // They have not affirmed, go to affirm page
+              window.location.href = 'affirm.html';
+          }
         }
       } catch (error) {
         formStatus.textContent = `⚠️ Error: ${error.message}`;
