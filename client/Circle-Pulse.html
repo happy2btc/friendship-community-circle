@@ -334,11 +334,19 @@
                 console.warn('skill_shares query failed:', err);
                 return { data: [], error: err };
               }
+            })(),
+            (async () => {
+              try {
+                return await supabase.from('positive_impact').select('contributor_id,date,type,details,points_awarded').order('date',{ascending:false}).limit(100);
+              } catch(err) {
+                console.warn('positive_impact query failed:', err);
+                return { data: [], error: err };
+              }
             })()
           ];
 
           const results = await Promise.all(queryPromises);
-          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes] = results;
+          const [votesRes, suggRes, commentsRes, celebrRes, eventsRes, groupProjRes, writersRes, attendanceRes, profilesRes, videosRes, skillSharesRes, positiveImpactRes] = results;
           console.log('All queries completed, processing results...');
         // ...existing code...
         // Map profiles for display names
@@ -375,6 +383,22 @@
             meta: ss.skill_name ? `Skill: ${ss.skill_name}` : 'Skill shared with video',
             points: 5,
             created_at: ss.created_at
+          });
+        });
+
+        // Add positive impact activities
+        const positiveImpactData = positiveImpactRes.error ? [] : (positiveImpactRes.data || []);
+        positiveImpactData.forEach(pi => {
+          if(!pi || !pi.contributor_id) return;
+          const t = new Date(pi.date).getTime();
+          if (t < weekAgo || t > now) return;
+          const meta = pi.details ? pi.details.slice(0,120) : (pi.type || 'Positive impact contribution');
+          items.push({
+            display_name: idToName[pi.contributor_id] || 'Member',
+            action: 'Made positive impact',
+            meta: meta,
+            points: pi.points_awarded || 1,
+            created_at: pi.date
           });
         });
 

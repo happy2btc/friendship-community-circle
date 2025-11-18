@@ -1245,14 +1245,15 @@
       const cutoffDate = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
       // Check various content types for new items
-      const [circlesRes, videosRes, eventsRes, commentsRes, suggestionsRes, groupProjectsRes, skillSharesRes] = await Promise.all([
+      const [circlesRes, videosRes, eventsRes, commentsRes, suggestionsRes, groupProjectsRes, skillSharesRes, positiveImpactRes] = await Promise.all([
         supabase.from('circles').select('id, name, created_at').gte('created_at', lastRead),
         supabase.from('member_video').select('id, caption, created_at, user_id').gte('created_at', lastRead),
         supabase.from('events').select('id, title, created_at, created_by').gte('created_at', lastRead),
         supabase.from('comments').select('id, content, created_at, author_id').gte('created_at', lastRead),
         supabase.from('suggestions').select('id, title, created_at, author_id').gte('created_at', lastRead),
         supabase.from('group_projects').select('id, name, created_at, proposer_id').gte('created_at', lastRead),
-        supabase.from('skill_shares').select('id, skill_name, created_at, presenter_id, video_url').gte('created_at', lastRead)
+        supabase.from('skill_shares').select('id, skill_name, created_at, presenter_id, video_url').gte('created_at', lastRead),
+        supabase.from('positive_impact').select('id, type, details, date, contributor_id').gte('date', lastRead)
       ]);
 
       // Create notifications for new activity
@@ -1346,6 +1347,19 @@
         });
       }
 
+      // New positive impact contributions
+      if (!positiveImpactRes.error && positiveImpactRes.data) {
+        positiveImpactRes.data.forEach(impact => {
+          const details = impact.details?.substring(0, 50) || 'Positive impact contribution';
+          activities.push({
+            type: 'positive_impact',
+            message: `New positive impact: "${details}..."`,
+            icon: '⭐',
+            link: 'positive-impact.html'
+          });
+        });
+      }
+
       // Create notifications for new activities (avoid duplicates)
       for (const activity of activities) {
         const notifKey = `${activity.type}_${activity.message}`;
@@ -1408,7 +1422,8 @@
       { name: 'suggestions', icon: '💡', message: 'New suggestion submitted', link: 'suggestions.html' },
       { name: 'group_projects', icon: '🚀', message: 'New project proposed', link: 'group-projects.html' },
       { name: 'circles', icon: '⭕', message: 'New circle created', link: 'circle-list.html' },
-      { name: 'skill_shares', icon: '🎥', message: 'New skill shared with video', link: 'skill-shares.html' }
+      { name: 'skill_shares', icon: '🎥', message: 'New skill shared with video', link: 'skill-shares.html' },
+      { name: 'positive_impact', icon: '⭐', message: 'New positive impact contribution', link: 'positive-impact.html' }
     ];
 
     tables.forEach(table => {

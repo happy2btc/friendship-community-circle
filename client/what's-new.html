@@ -52,9 +52,9 @@
         }
       } catch (e) { console.warn('Prune static cards failed', e); }
       // Fetch from all actual tables, including events and new tables
-  let agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes, memberOfferingsRes, skillSharesRes, memberVideoRes, contributionsRes;
+  let agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes, memberOfferingsRes, skillSharesRes, memberVideoRes, contributionsRes, positiveImpactRes;
       try {
-        [agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes, memberOfferingsRes, skillSharesRes, memberVideoRes, contributionsRes] = await Promise.all([
+        [agreementsRes, circlesRes, commentsRes, discussionsRes, groupProjectsRes, suggestionsRes, eventsRes, supportRequestsRes, memberOfferingsRes, skillSharesRes, memberVideoRes, contributionsRes, positiveImpactRes] = await Promise.all([
           supabase.from('agreements').select('id, created_at, agreement_text').gte('created_at', cutoff),
           supabase.from('circles').select('id, created_at, name, description').gte('created_at', cutoff),
           supabase.from('comments').select('id, created_at, content, project_id, discussion_id').gte('created_at', cutoff),
@@ -66,12 +66,13 @@
           supabase.from('member_offerings').select('id, created_at, title, description').gte('created_at', cutoff),
           supabase.from('skill_shares').select('id, created_at, skill_name, skill_description, video_url').gte('created_at', cutoff),
           supabase.from('member_video').select('id, created_at, caption, video_url').gte('created_at', cutoff),
-          supabase.from('contributions').select('id, created_at, title, description').gte('created_at', cutoff)
+          supabase.from('contributions').select('id, created_at, title, description').gte('created_at', cutoff),
+          supabase.from('positive_impact').select('id, date, type, details').gte('date', cutoff)
         ]);
       } catch (e) {
         console.error('Failed fetching whats-new data:', e);
         // fall back to empty responses so feed can render static cards
-        agreementsRes = circlesRes = commentsRes = discussionsRes = groupProjectsRes = suggestionsRes = eventsRes = supportRequestsRes = memberOfferingsRes = skillSharesRes = memberVideoRes = contributionsRes = { data: [] };
+        agreementsRes = circlesRes = commentsRes = discussionsRes = groupProjectsRes = suggestionsRes = eventsRes = supportRequestsRes = memberOfferingsRes = skillSharesRes = memberVideoRes = contributionsRes = positiveImpactRes = { data: [] };
       }
 
 
@@ -94,6 +95,8 @@
   if (memberVideoRes.error) console.error('Member Video error:', memberVideoRes.error);
   console.log('Contributions response:', contributionsRes);
   if (contributionsRes.error) console.error('Contributions error:', contributionsRes.error);
+  console.log('Positive Impact response:', positiveImpactRes);
+  if (positiveImpactRes.error) console.error('Positive Impact error:', positiveImpactRes.error);
 
   const allNews = [];
       // Events (calendar)
@@ -219,6 +222,16 @@
           created_at: cont.created_at
         });
       });
+      // Positive Impact
+      positiveImpactRes.data?.forEach(pi => {
+        allNews.push({
+          type: 'Positive Impact',
+          id: pi.id,
+          title: pi.type || 'Positive Impact Contribution',
+          description: pi.details || '',
+          created_at: pi.date
+        });
+      });
       // Suggestions
       // Show suggestions as discussions
       suggestionsRes.data?.forEach(sg => {
@@ -286,6 +299,9 @@
         }
         if (item.type === 'Support Request' && item.id) {
           autoLink = `<a href="view-support-request.html?id=${item.id}">View Support Request</a>`;
+        }
+        if (item.type === 'Positive Impact' && item.id) {
+          autoLink = `<a href="positive-impact.html">View Positive Impact</a>`;
         }
         // If a manual link is present, use it instead
         if (item.link) {
