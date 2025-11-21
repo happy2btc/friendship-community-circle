@@ -1427,7 +1427,7 @@
     ];
 
     tables.forEach(table => {
-      supabase
+      const channel = supabase
         .channel(`${table.name}_notifications`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -1439,30 +1439,42 @@
           const existingNotif = localStorage.getItem(`realtime_notified_${userId}_${notifKey}`);
 
           if (!existingNotif) {
-            await supabase.from('notifications').insert([{
-              user_id: userId,
-              message: table.message,
-              icon: table.icon,
-              link: table.link,
-              read: false
-            }]);
+            try {
+              await supabase.from('notifications').insert([{
+                user_id: userId,
+                message: table.message,
+                icon: table.icon,
+                link: table.link,
+                read: false
+              }]);
 
-            // Mark as notified
-            localStorage.setItem(`realtime_notified_${userId}_${notifKey}`, 'true');
+              // Mark as notified
+              localStorage.setItem(`realtime_notified_${userId}_${notifKey}`, 'true');
 
-            // Show browser notification if enabled
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('Friendship Community', {
-                body: table.message,
-                icon: '/default-avatar.png'
-              });
+              // Show browser notification if enabled
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Friendship Community', {
+                  body: table.message,
+                  icon: '/default-avatar.png'
+                });
+              }
+
+              // Refresh notification list
+              fetchNotifications();
+            } catch (error) {
+              console.warn(`Failed to create notification for ${table.name}:`, error);
             }
-
-            // Refresh notification list
-            fetchNotifications();
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`Subscribed to ${table.name} notifications`);
+          } else if (status === 'CLOSED') {
+            console.log(`Unsubscribed from ${table.name} notifications`);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn(`Channel error for ${table.name} notifications`);
+          }
+        });
     });
   }
 

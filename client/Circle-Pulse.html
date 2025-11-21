@@ -651,6 +651,7 @@
           case 'writers_wall': return (row.author_id || row.author_name) ? { display_name: (row.author_id || row.author_name), action: 'Wrote for Writers Wall', meta: row.title || '', points: 1, created_at: row.created_at || new Date().toISOString() } : null;
           case 'event_attendance': return row.user_id ? { display_name: row.user_id, action: 'Attended an event', meta:'', points:5, created_at: row.created_at || new Date().toISOString() } : null;
           case 'skill_shares': return (row.presenter_id && row.video_url) ? { display_name: row.presenter_id, action: 'Shared a skill with video', meta: row.skill_name ? `Skill: ${row.skill_name}` : 'Skill shared with video', points: 5, created_at: row.created_at || new Date().toISOString() } : null;
+          case 'positive_impact': return row.contributor_id ? { display_name: row.contributor_id, action: 'Made positive impact', meta: row.details ? row.details.slice(0,120) : (row.type || 'Positive impact contribution'), points: row.points_awarded || 1, created_at: row.date || new Date().toISOString() } : null;
           case 'site_visits': return { created_at: row.created_at || new Date().toISOString(), visit:true };
           default: return null;
         }
@@ -688,46 +689,43 @@
     }
 
     async function setupRealtime(){
-      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits','event_attendance'];
+      const tables = ['agreement_votes','suggestions','comments','celebrations','events','group_projects','writers_wall','site_visits','event_attendance', 'positive_impact'];
       try{
-        // Preferred API (supabase-js v2+): channel with postgres_changes
-        if(typeof supabase.channel === 'function'){
-          const channel = supabase.channel('realtime-activity');
-          tables.forEach(table => {
-            channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table }, (payload)=>{
-              try{ handleRealtimeInsert(table, payload.new); }catch(e){ console.warn('realtime payload handling error', e); }
-            });
-          });
-          // Add skill_shares subscription with error handling
-          try {
-            channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'skill_shares' }, (payload)=>{
-              try{ handleRealtimeInsert('skill_shares', payload.new); }catch(e){ console.warn('skill_shares realtime payload handling error', e); }
-            });
-          } catch(e) {
-            console.warn('Failed to subscribe to skill_shares realtime (table may not exist):', e);
-          }
-          await channel.subscribe();
-          console.log('Realtime channel subscribed for activity tables');
-          return;
-        }
-      }catch(e){ console.warn('channel subscribe failed', e); }
+        // Use the modern Supabase realtime API
+        const channel = supabase.channel('circle-pulse-activity');
 
-      // Fallback: older API using from().on()
-      try{
         tables.forEach(table => {
-          try{
-            const sub = supabase.from(table).on('INSERT', payload => { try{ handleRealtimeInsert(table, payload.new); }catch(e){}}).subscribe();
-            // note: older SDKs return a subscription object; we don't need to store it here for simple pages
-          }catch(e){ /* ignore per-table subscription error */ }
+          channel.on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: table
+          }, (payload) => {
+            try {
+              handleRealtimeInsert(table, payload.new);
+            } catch(e) {
+              console.warn(`Realtime payload handling error for ${table}:`, e);
+            }
+          });
         });
-        // Add skill_shares subscription with error handling for fallback
-        try {
-          const sub = supabase.from('skill_shares').on('INSERT', payload => { try{ handleRealtimeInsert('skill_shares', payload.new); }catch(e){ console.warn('skill_shares realtime fallback error', e); }}).subscribe();
-        } catch(e) {
-          console.warn('Failed to subscribe to skill_shares realtime fallback (table may not exist):', e);
-        }
-        console.log('Realtime fallback subscriptions registered');
-      }catch(e){ console.warn('realtime fallback failed', e); }
+
+        // Subscribe with status callback
+        channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Circle Pulse realtime channel subscribed successfully');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn('Circle Pulse realtime channel error:', status);
+          } else if (status === 'TIMED_OUT') {
+            console.warn('Circle Pulse realtime channel timed out');
+          } else if (status === 'CLOSED') {
+            console.log('Circle Pulse realtime channel closed');
+          }
+        });
+
+        console.log('Circle Pulse realtime setup completed');
+        return;
+      } catch(e) {
+        console.warn('Circle Pulse realtime setup failed:', e);
+      }
     }
 
     // Initial load + periodic refresh and realtime setup
