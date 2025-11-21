@@ -12,7 +12,7 @@ const htmlFiles = readdirSync(__dirname)
 
 export default defineConfig({
   envDir: __dirname, // Explicitly set the environment directory to the client folder
-  base: '/friendship-community-circle/',
+  base: '/',
   publicDir: 'public',
   build: {
     outDir: '../dist',
