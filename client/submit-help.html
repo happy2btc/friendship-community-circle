@@ -115,41 +115,113 @@
   <script type="module">
     import { supabase } from '/lib/supabase.js';
 
+    // Test connection and table existence
+    async function testConnection() {
+      console.log('Testing Supabase connection...');
+      try {
+        // Try profiles table first
+        let { data, error } = await supabase.from('profiles').select('id, full_name').limit(1);
+        if (error) {
+          console.log('Profiles table error:', error.message);
+          // Try user_profiles table
+          const result = await supabase.from('user_profiles').select('user_id, display_name').limit(1);
+          if (result.error) {
+            console.error('Both tables failed. Profiles error:', error.message, 'User_profiles error:', result.error.message);
+            document.getElementById('form-status').textContent = 'Database table issue: ' + error.message;
+            document.getElementById('form-status').style.color = 'red';
+          } else {
+            console.log('User_profiles table accessible, switching to it');
+            // Update the populateMembers function to use user_profiles
+            window.useUserProfiles = true;
+          }
+        } else {
+          console.log('Profiles table accessible');
+          window.useUserProfiles = false;
+        }
+      } catch (err) {
+        console.error('Connection test failed:', err);
+      }
+    }
+
+    testConnection();
+
     // Populate member dropdowns for helper and recipient
     async function populateMembers() {
-      const { data: profiles, error } = await supabase.from('profiles').select('id, full_name');
-      if (error) {
-        console.error('Error loading profiles:', error);
-        return;
-      }
-      
-      const helperSelect = document.getElementById('helper');
-      const recipientSelect = document.getElementById('recipient');
-      
-      // Clear existing options
-      helperSelect.innerHTML = '<option value="">Select a helper...</option>';
-      recipientSelect.innerHTML = '<option value="">Select a recipient...</option>';
-      
-      // Sort profiles alphabetically by full_name
-      profiles.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+      console.log('Starting populateMembers function...');
+      try {
+        const tableName = window.useUserProfiles ? 'user_profiles' : 'profiles';
+        const selectFields = window.useUserProfiles ? 'user_id, display_name' : 'id, full_name';
+        const nameField = window.useUserProfiles ? 'display_name' : 'full_name';
+        const idField = window.useUserProfiles ? 'user_id' : 'id';
+        
+        console.log('Loading member profiles from', tableName);
+        const { data: profiles, error } = await supabase.from(tableName).select(selectFields);
+        
+        console.log('Supabase query result:', { profiles, error });
+        
+        if (error) {
+          console.error('Error loading profiles:', error);
+          document.getElementById('form-status').textContent = 'Error loading member list: ' + error.message;
+          document.getElementById('form-status').style.color = 'red';
+          return;
+        }
+        
+        if (!profiles || profiles.length === 0) {
+          console.warn('No profiles found in database');
+          document.getElementById('form-status').textContent = 'No members found in database';
+          document.getElementById('form-status').style.color = 'orange';
+          return;
+        }
+        
+        // Filter out profiles with null or empty names
+        const validProfiles = profiles.filter(profile => {
+          const name = profile[nameField];
+          return name && name.trim() !== '';
+        });
+        
+        if (validProfiles.length === 0) {
+          console.warn('No profiles with valid names found');
+          document.getElementById('form-status').textContent = 'No members with valid names found in database';
+          document.getElementById('form-status').style.color = 'orange';
+          return;
+        }
+        
+        console.log('Loaded', validProfiles.length, 'valid profiles out of', profiles.length, 'total');
+        
+        const helperSelect = document.getElementById('helper');
+        const recipientSelect = document.getElementById('recipient');
+        
+        // Clear existing options
+        helperSelect.innerHTML = '<option value="">Select a helper...</option>';
+        recipientSelect.innerHTML = '<option value="">Select a recipient...</option>';
+        
+        // Sort profiles alphabetically by name (with null safety)
+        validProfiles.sort((a, b) => {
+          const nameA = a[nameField] || '';
+          const nameB = b[nameField] || '';
+          return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+        });
       
       // Store all options for filtering
       const allHelperOptions = [];
       const allRecipientOptions = [];
       
-      profiles.forEach(profile => {
+      console.log('Adding profiles to dropdowns...');
+      validProfiles.forEach(profile => {
+        console.log('Adding member:', profile[nameField], '(ID:', profile[idField] + ')');
+        
         // Helper options
         const helperOption = document.createElement('option');
-        helperOption.value = profile.id;
-        helperOption.textContent = profile.full_name;
-        helperOption.dataset.name = profile.full_name.toLowerCase();
+        helperOption.value = profile[idField];
+        helperOption.textContent = profile[nameField];
+        helperOption.dataset.name = profile[nameField].toLowerCase();
         allHelperOptions.push(helperOption);
         
         // Recipient options
         const recipientOption = document.createElement('option');
-        recipientOption.value = profile.id;
-        recipientOption.textContent = profile.full_name;
-        recipientOption.dataset.name = profile.full_name.toLowerCase();
+        recipientOption.value = profile[idField];
+        recipientOption.textContent = profile[nameField];
+        recipientOption.dataset.name = profile[nameField].toLowerCase();
         allRecipientOptions.push(recipientOption);
       });
       
@@ -161,9 +233,14 @@
       allRecipientOptions.push(communityOption);
       
       // Initially populate dropdowns with all options
+      console.log('Populating helper dropdown with', allHelperOptions.length, 'options');
       allHelperOptions.forEach(option => helperSelect.appendChild(option.cloneNode(true)));
+      
+      console.log('Populating recipient dropdown with', allRecipientOptions.length, 'options');
       allRecipientOptions.forEach(option => recipientSelect.appendChild(option.cloneNode(true)));
-
+      
+      console.log('Dropdowns populated successfully');
+      
       // Add search functionality for helper
       const searchHelper = document.getElementById('search-helper');
       searchHelper.addEventListener('input', function() {
@@ -177,6 +254,18 @@
         const searchTerm = searchRecipient.value.trim().toLowerCase();
         filterDropdown(recipientSelect, searchTerm, allRecipientOptions);
       });
+      
+      // Update status
+      document.getElementById('form-status').textContent = `Loaded ${validProfiles.length} members successfully`;
+      document.getElementById('form-status').style.color = '#2e8b57';
+      setTimeout(() => {
+        document.getElementById('form-status').textContent = '';
+      }, 3000);
+      } catch (error) {
+        console.error('Unexpected error in populateMembers:', error);
+        document.getElementById('form-status').textContent = 'Unexpected error loading members: ' + error.message;
+        document.getElementById('form-status').style.color = 'red';
+      }
     }
     
     function filterDropdown(selectElement, searchTerm, allOptions) {
@@ -213,7 +302,14 @@
         selectElement.appendChild(noResultOption);
       }
     }
-    populateMembers();
+    
+    // Initialize the app
+    async function init() {
+      await testConnection();
+      populateMembers();
+    }
+
+    init();
 
     document.getElementById('help-form').onsubmit = async (e) => {
       e.preventDefault();
