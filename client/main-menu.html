@@ -139,6 +139,7 @@
   <a href="new-members.html">New Members</a>
   <a href="activities.html">Member Activities</a>
   <a href="message-center.html">Message Center</a>
+  <a href="#" id="change-password-link">Change Password</a>
       </div>
     </div>
     <div class="menu-dropdown">
@@ -1480,6 +1481,127 @@
 
   // Setup real-time notifications
   setupActivityNotifications();
+
+  // Change Password Modal Functionality
+  document.getElementById('change-password-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    // Create change password modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    modal.innerHTML = `
+      <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; position: relative;">
+        <h3 style="margin-top: 0; color: #6b4f1d;">Change Password</h3>
+        <form id="change-password-form">
+          <input type="password" id="current-password" placeholder="Current Password" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <input type="password" id="new-password" placeholder="New Password" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <input type="password" id="confirm-password" placeholder="Confirm New Password" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="submit" style="flex: 1; background: #2e8b57; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Change Password</button>
+            <button type="button" id="cancel-change-password" style="flex: 1; background: #ccc; color: black; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+          </div>
+        </form>
+        <div id="password-status" style="margin-top: 15px; font-weight: bold;"></div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Handle form submission
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const statusEl = document.getElementById('password-status');
+      
+      // Validation
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        statusEl.textContent = 'Please fill in all fields';
+        statusEl.style.color = 'red';
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        statusEl.textContent = 'New passwords do not match';
+        statusEl.style.color = 'red';
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        statusEl.textContent = 'New password must be at least 6 characters';
+        statusEl.style.color = 'red';
+        return;
+      }
+      
+      statusEl.textContent = 'Changing password...';
+      statusEl.style.color = 'black';
+      
+      try {
+        // First verify current password by attempting to sign in
+        const { data: userData } = await supabase.auth.getUser();
+        const email = userData.user.email;
+        
+        // Sign in with current password to verify
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: currentPassword
+        });
+        
+        if (signInError) {
+          statusEl.textContent = 'Current password is incorrect';
+          statusEl.style.color = 'red';
+          return;
+        }
+        
+        // Update password
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: newPassword
+        });
+        
+        if (updateError) {
+          statusEl.textContent = 'Failed to update password: ' + updateError.message;
+          statusEl.style.color = 'red';
+        } else {
+          statusEl.textContent = 'Password changed successfully!';
+          statusEl.style.color = 'green';
+          
+          // Close modal after 2 seconds
+          setTimeout(() => {
+            document.body.removeChild(modal);
+          }, 2000);
+        }
+      } catch (error) {
+        statusEl.textContent = 'Error changing password: ' + error.message;
+        statusEl.style.color = 'red';
+      }
+    });
+    
+    // Handle cancel
+    document.getElementById('cancel-change-password').addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+      }
+    });
+  });
 </script>
 <a href="main-menu.html" class="back-to-menu">Back to Main Menu</a>
 </body>
