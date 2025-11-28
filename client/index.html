@@ -50,12 +50,14 @@
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
             const signUpLink = document.getElementById('sign-up-link');
+            const forgotPasswordLink = document.getElementById('forgot-password-link');
             const confirmBtn = document.getElementById('confirm-btn');
             
             console.log('Sign-in button found:', signInBtn);
             console.log('Email input found:', emailInput);
             console.log('Password input found:', passwordInput);
             console.log('Sign-up link found:', signUpLink);
+            console.log('Forgot password link found:', forgotPasswordLink);
             
             signInBtn.addEventListener('click', async () => {
                 const email = emailInput.value;
@@ -88,6 +90,31 @@
                 } finally {
                     signInBtn.disabled = false;
                     signInBtn.textContent = 'Sign In';
+                }
+            });
+
+            // Handle forgot password
+            forgotPasswordLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const email = emailInput.value;
+                
+                if (!email) {
+                    alert('Please enter your email address first');
+                    return;
+                }
+                
+                try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.origin + '/reset-password.html'
+                    });
+                    
+                    if (error) {
+                        alert('Password reset failed: ' + error.message);
+                    } else {
+                        alert('Password reset email sent! Check your inbox.');
+                    }
+                } catch (error) {
+                    alert('Password reset error: ' + error.message);
                 }
             });
 
@@ -170,6 +197,8 @@
         .sign-in-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .sign-in-form button { background: #2e8b57; color: #fff; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
         .sign-in-form button:disabled { background: #ccc; }
+        .sign-in-form .forgot-password { display: block; margin-top: 10px; color: #2e8b57; text-decoration: none; font-size: 0.9em; }
+        .sign-in-form .forgot-password:hover { text-decoration: underline; }
         .instructions { text-align: left; margin: 2em auto; max-width: 600px; line-height: 1.6; }
         .instructions h3 { color: #6b4f1d; margin-top: 30px; }
         button { background: #2e8b57; color: #fff; padding: 15px 30px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.2em; }
