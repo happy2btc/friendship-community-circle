@@ -57,6 +57,9 @@
       font-size: 1em;
       margin-top: 8px;
     }
+    form input[type="text"] {
+      margin-bottom: 0.5em;
+    }
     button {
       background: linear-gradient(90deg, #2e8b57 60%, #6b4f1d 100%);
       color: #fff;
@@ -88,12 +91,16 @@
     <form id="help-form">
 
     <label for="helper">Who gave help?</label>
-    <input id="search-helper" type="text" placeholder="Search helper name..." style="width:100%;padding:10px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
-    <select id="helper" name="helper" required></select>
+    <input id="search-helper" type="text" placeholder="Type to search helper names..." style="width:100%;padding:10px;margin-top:8px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <select id="helper" name="helper" required>
+      <option value="">Select a helper...</option>
+    </select>
 
     <label for="recipient">Who received help?</label>
-    <input id="search-recipient" type="text" placeholder="Search recipient name..." style="width:100%;padding:10px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
-    <select id="recipient" name="recipient" required></select>
+    <input id="search-recipient" type="text" placeholder="Type to search recipient names..." style="width:100%;padding:10px;margin-top:8px;margin-bottom:0.5em;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+    <select id="recipient" name="recipient" required>
+      <option value="">Select a recipient...</option>
+    </select>
 
   <label for="hours">How many hours?</label>
   <input type="number" id="hours" name="hours" min="0.25" step="0.25" required>
@@ -111,53 +118,100 @@
     // Populate member dropdowns for helper and recipient
     async function populateMembers() {
       const { data: profiles, error } = await supabase.from('profiles').select('id, full_name');
-      if (error) return;
+      if (error) {
+        console.error('Error loading profiles:', error);
+        return;
+      }
+      
       const helperSelect = document.getElementById('helper');
       const recipientSelect = document.getElementById('recipient');
+      
+      // Clear existing options
+      helperSelect.innerHTML = '<option value="">Select a helper...</option>';
+      recipientSelect.innerHTML = '<option value="">Select a recipient...</option>';
+      
       // Sort profiles alphabetically by full_name
       profiles.sort((a, b) => a.full_name.localeCompare(b.full_name, undefined, { sensitivity: 'base' }));
+      
+      // Store all options for filtering
+      const allHelperOptions = [];
+      const allRecipientOptions = [];
+      
       profiles.forEach(profile => {
-        const option1 = document.createElement('option');
-        option1.value = profile.id;
-        option1.textContent = profile.full_name;
-        helperSelect.appendChild(option1);
-        const option2 = document.createElement('option');
-        option2.value = profile.id;
-        option2.textContent = profile.full_name;
-        recipientSelect.appendChild(option2);
+        // Helper options
+        const helperOption = document.createElement('option');
+        helperOption.value = profile.id;
+        helperOption.textContent = profile.full_name;
+        helperOption.dataset.name = profile.full_name.toLowerCase();
+        allHelperOptions.push(helperOption);
+        
+        // Recipient options
+        const recipientOption = document.createElement('option');
+        recipientOption.value = profile.id;
+        recipientOption.textContent = profile.full_name;
+        recipientOption.dataset.name = profile.full_name.toLowerCase();
+        allRecipientOptions.push(recipientOption);
       });
+      
       // Add the community as a recipient option
       const communityOption = document.createElement('option');
       communityOption.value = 'community';
       communityOption.textContent = 'The Friendship Community Circle';
-      recipientSelect.appendChild(communityOption);
+      communityOption.dataset.name = 'the friendship community circle';
+      allRecipientOptions.push(communityOption);
+      
+      // Initially populate dropdowns with all options
+      allHelperOptions.forEach(option => helperSelect.appendChild(option.cloneNode(true)));
+      allRecipientOptions.forEach(option => recipientSelect.appendChild(option.cloneNode(true)));
 
       // Add search functionality for helper
       const searchHelper = document.getElementById('search-helper');
-      searchHelper.oninput = function() {
-        const val = searchHelper.value.trim().toLowerCase();
-        if (!val) return;
-        for (let i = 0; i < helperSelect.options.length; i++) {
-          if (helperSelect.options[i].text.toLowerCase().startsWith(val)) {
-            helperSelect.selectedIndex = i;
-            helperSelect.options[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            break;
-          }
-        }
-      };
+      searchHelper.addEventListener('input', function() {
+        const searchTerm = searchHelper.value.trim().toLowerCase();
+        filterDropdown(helperSelect, searchTerm, allHelperOptions);
+      });
+      
       // Add search functionality for recipient
       const searchRecipient = document.getElementById('search-recipient');
-      searchRecipient.oninput = function() {
-        const val = searchRecipient.value.trim().toLowerCase();
-        if (!val) return;
-        for (let i = 0; i < recipientSelect.options.length; i++) {
-          if (recipientSelect.options[i].text.toLowerCase().startsWith(val)) {
-            recipientSelect.selectedIndex = i;
-            recipientSelect.options[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            break;
-          }
+      searchRecipient.addEventListener('input', function() {
+        const searchTerm = searchRecipient.value.trim().toLowerCase();
+        filterDropdown(recipientSelect, searchTerm, allRecipientOptions);
+      });
+    }
+    
+    function filterDropdown(selectElement, searchTerm, allOptions) {
+      // Clear current options except the placeholder
+      const placeholder = selectElement.querySelector('option[value=""]');
+      selectElement.innerHTML = '';
+      if (placeholder) {
+        selectElement.appendChild(placeholder);
+      }
+      
+      if (!searchTerm) {
+        // Show all options when search is empty
+        allOptions.forEach(option => {
+          selectElement.appendChild(option.cloneNode(true));
+        });
+        return;
+      }
+      
+      // Filter and show matching options
+      let hasMatches = false;
+      allOptions.forEach(option => {
+        if (option.dataset.name && option.dataset.name.includes(searchTerm)) {
+          selectElement.appendChild(option.cloneNode(true));
+          hasMatches = true;
         }
-      };
+      });
+      
+      // If no matches, show a "no results" option
+      if (!hasMatches) {
+        const noResultOption = document.createElement('option');
+        noResultOption.value = '';
+        noResultOption.textContent = 'No matches found';
+        noResultOption.disabled = true;
+        selectElement.appendChild(noResultOption);
+      }
     }
     populateMembers();
 
@@ -169,22 +223,54 @@
       const details = document.getElementById('details').value;
       const tokens = Math.round(hours * 5);
       const formStatus = document.getElementById('form-status');
+      
+      // Validation
+      if (!helper || !recipient) {
+        formStatus.textContent = 'Please select both helper and recipient';
+        formStatus.style.color = 'red';
+        return;
+      }
+      
+      if (!hours || hours <= 0) {
+        formStatus.textContent = 'Please enter a valid number of hours';
+        formStatus.style.color = 'red';
+        return;
+      }
+      
       formStatus.textContent = 'Submitting...';
       formStatus.style.color = '#333';
 
+      // Prepare data for insertion
+      const helpData = {
+        helper_id: helper,
+        details: details || null,
+        hours: hours,
+        tokens: tokens
+      };
+      
+      // Handle recipient - if it's 'community', don't set recipient_id
+      if (recipient !== 'community') {
+        helpData.recipient_id = recipient;
+      }
+
       // Insert help_given record
-      const { error } = await supabase.from('help_given').insert([
-        { helper_id: helper, recipient_id: recipient, details, hours, tokens }
-      ]);
+      const { error } = await supabase.from('help_given').insert([helpData]);
+      
       if (error) {
+        console.error('Error submitting help:', error);
         formStatus.textContent = 'Error: ' + error.message;
         formStatus.style.color = 'red';
       } else {
         formStatus.textContent = `Success! ${tokens} tokens awarded for ${hours} hours of help.`;
         formStatus.style.color = '#2e8b57';
-            document.getElementById('help-form').reset();
+        document.getElementById('help-form').reset();
+        // Reset search fields too
+        document.getElementById('search-helper').value = '';
+        document.getElementById('search-recipient').value = '';
+        // Re-populate dropdowns to show all options again
+        populateMembers();
       }
-        };
+    };
   </script>
 </body>
 </html>
