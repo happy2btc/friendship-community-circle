@@ -8,7 +8,7 @@ const PORT = 3000;
 app.use(express.static(path.join(__dirname)));
 
 // Fallback route for unmatched paths
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
