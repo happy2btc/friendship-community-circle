@@ -1,411 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to the Community Union/Co-op!</title>
-    <script type="module">
-        import { supabase } from '/lib/supabase.js';
-        
-        // Wait for DOM to be fully loaded before initializing
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check for password reset parameters in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const isReset = urlParams.get('reset');
-            const resetEmail = urlParams.get('email');
-            
-            if (isReset) {
-                // Show password reset completion modal
-                showPasswordResetModal(resetEmail);
-                // Clean up URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-            
-            // Debug: Check if elements exist
-            console.log('Page loaded, checking elements...');
-            console.log('Welcome section:', document.querySelector('.welcome-section'));
-            console.log('Community description:', document.querySelector('.community-description'));
-            console.log('Sign-in form:', document.querySelector('.sign-in-form'));
-            console.log('Instructions:', document.querySelector('.instructions'));
-            
-            // Make sure elements are visible
-            const welcomeSection = document.querySelector('.welcome-section');
-            const communityDesc = document.querySelector('.community-description');
-            const signInForm = document.querySelector('.sign-in-form');
-            const instructions = document.querySelector('.instructions');
-            
-            if (welcomeSection) {
-                welcomeSection.style.display = 'block';
-                console.log('Welcome section made visible');
-            }
-            if (communityDesc) {
-                communityDesc.style.display = 'block';
-                console.log('Community description made visible');
-            }
-            if (signInForm) {
-                signInForm.style.display = 'block';
-                console.log('Sign-in form made visible');
-            }
-            if (instructions) {
-                instructions.style.display = 'block';
-                console.log('Instructions made visible');
-            }
-            
-            console.log('Elements visibility set');
-            console.log('Supabase loaded:', supabase);
-            
-            // Initialize sign-in functionality
-            initializeSignIn();
-        });
-        
-        function showPasswordResetModal(email) {
-            // Create password reset completion modal
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-            `;
-            
-            modal.innerHTML = `
-                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; position: relative;">
-                    <h3 style="margin-top: 0; color: #6b4f1d;">Complete Password Reset</h3>
-                    <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter your new password below.</p>
-                    <form id="complete-reset-form">
-                        <input type="password" id="reset-new-password" placeholder="New Password" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                        <input type="password" id="reset-confirm-password" placeholder="Confirm New Password" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button type="submit" style="flex: 1; background: #2e8b57; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Update Password</button>
-                            <button type="button" id="cancel-reset" style="flex: 1; background: #ccc; color: black; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
-                        </div>
-                    </form>
-                    <div id="reset-status" style="margin-top: 15px; font-weight: bold;"></div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Handle form submission
-            document.getElementById('complete-reset-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const newPassword = document.getElementById('reset-new-password').value;
-                const confirmPassword = document.getElementById('reset-confirm-password').value;
-                const statusEl = document.getElementById('reset-status');
-                
-                // Validation
-                if (!newPassword || !confirmPassword) {
-                    statusEl.textContent = 'Please fill in all fields';
-                    statusEl.style.color = 'red';
-                    return;
-                }
-                
-                if (newPassword !== confirmPassword) {
-                    statusEl.textContent = 'Passwords do not match';
-                    statusEl.style.color = 'red';
-                    return;
-                }
-                
-                if (newPassword.length < 6) {
-                    statusEl.textContent = 'Password must be at least 6 characters';
-                    statusEl.style.color = 'red';
-                    return;
-                }
-                
-                statusEl.textContent = 'Updating password...';
-                statusEl.style.color = 'black';
-                
-                try {
-                    const { error } = await supabase.auth.updateUser({
-                        password: newPassword
-                    });
-                    
-                    if (error) {
-                        statusEl.textContent = 'Failed to update password: ' + error.message;
-                        statusEl.style.color = 'red';
-                    } else {
-                        statusEl.textContent = 'Password updated successfully! You can now sign in.';
-                        statusEl.style.color = 'green';
-                        
-                        // Close modal after 3 seconds
-                        setTimeout(() => {
-                            document.body.removeChild(modal);
-                        }, 3000);
-                    }
-                } catch (error) {
-                    statusEl.textContent = 'Error updating password: ' + error.message;
-                    statusEl.style.color = 'red';
-                }
-            });
-            
-            // Handle cancel
-            document.getElementById('cancel-reset').addEventListener('click', () => {
-                document.body.removeChild(modal);
-            });
-            
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            });
-        }
-        
-        function initializeSignIn() {
-            const signInBtn = document.getElementById('sign-in-btn');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const signUpLink = document.getElementById('sign-up-link');
-            const forgotPasswordLink = document.getElementById('forgot-password-link');
-            const confirmBtn = document.getElementById('confirm-btn');
-            
-            console.log('Sign-in button found:', signInBtn);
-            console.log('Email input found:', emailInput);
-            console.log('Password input found:', passwordInput);
-            console.log('Sign-up link found:', signUpLink);
-            console.log('Forgot password link found:', forgotPasswordLink);
-            
-            signInBtn.addEventListener('click', async () => {
-                const email = emailInput.value;
-                const password = passwordInput.value;
-                
-                console.log('Sign-in button clicked with email:', email);
-                
-                if (!email || !password) {
-                    alert('Please enter both email and password');
-                    return;
-                }
-                
-                signInBtn.disabled = true;
-                signInBtn.textContent = 'Signing In...';
-                
-                try {
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email: email,
-                        password: password
-                    });
-                    
-                    if (error) {
-                        alert('Sign in failed: ' + error.message);
-                    } else {
-                        // Redirect directly to main menu
-                        window.location.href = 'main-menu.html';
-                    }
-                } catch (error) {
-                    alert('Sign in error: ' + error.message);
-                } finally {
-                    signInBtn.disabled = false;
-                    signInBtn.textContent = 'Sign In';
-                }
-            });
+    <title>Welcome to the Community!</title>
 
-            // Handle forgot password - sends password reset email
-            forgotPasswordLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // Create password reset modal
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 10000;
-                `;
-                
-                modal.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; position: relative;">
-                        <h3 style="margin-top: 0; color: #6b4f1d;">Reset Password</h3>
-                        <p style="color: #666; font-size: 0.9em; margin-bottom: 20px;">Enter your email address and we'll send you a link to reset your password.</p>
-                        <form id="reset-password-form">
-                            <input type="email" id="reset-email" placeholder="Email Address" required style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                <button type="submit" style="flex: 1; background: #2e8b57; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Send Reset Link</button>
-                                <button type="button" id="cancel-reset" style="flex: 1; background: #ccc; color: black; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
-                            </div>
-                        </form>
-                        <div id="reset-status" style="margin-top: 15px; font-weight: bold;"></div>
-                    </div>
-                `;
-                
-                document.body.appendChild(modal);
-                
-                // Handle form submission
-                document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    
-                    const email = document.getElementById('reset-email').value;
-                    const statusEl = document.getElementById('reset-status');
-                    
-                    // Validation
-                    if (!email) {
-                        statusEl.textContent = 'Please enter your email address';
-                        statusEl.style.color = 'red';
-                        return;
-                    }
-                    
-                    statusEl.textContent = 'Sending reset link...';
-                    statusEl.style.color = 'black';
-                    
-                    try {
-                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                            redirectTo: window.location.origin + window.location.pathname + '?reset=true&email=' + encodeURIComponent(email)
-                        });
-                        
-                        if (error) {
-                            statusEl.textContent = 'Failed to send reset email: ' + error.message;
-                            statusEl.style.color = 'red';
-                        } else {
-                            statusEl.textContent = 'Password reset email sent! Check your inbox and follow the link to reset your password.';
-                            statusEl.style.color = 'green';
-                            
-                            // Close modal after 3 seconds
-                            setTimeout(() => {
-                                document.body.removeChild(modal);
-                            }, 3000);
-                        }
-                    } catch (error) {
-                        statusEl.textContent = 'Error sending reset email: ' + error.message;
-                        statusEl.style.color = 'red';
-                    }
-                });
-                
-                // Handle cancel
-                document.getElementById('cancel-reset').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-                
-                // Close modal when clicking outside
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        document.body.removeChild(modal);
-                    }
-                });
-            });
-
-            // Handle sign up link (could redirect to a sign up page if needed)
-            signUpLink.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent the link from navigating
-                console.log('Sign-up link clicked');
-                
-                // Create a simple sign-up form
-                const signUpForm = document.createElement('div');
-                signUpForm.innerHTML = `
-                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-                        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
-                            <h3>Sign Up</h3>
-                            <input type="email" id="signup-email" placeholder="Email" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
-                            <input type="password" id="signup-password" placeholder="Password" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
-                            <input type="text" id="signup-inviter" placeholder="Who invited you?" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
-                            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                <button id="submit-signup" style="flex: 1; background: #2e8b57; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Sign Up</button>
-                                <button id="cancel-signup" style="flex: 1; background: #ccc; color: black; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(signUpForm);
-                
-                // Handle form submission
-                document.getElementById('submit-signup').addEventListener('click', async () => {
-                    const email = document.getElementById('signup-email').value;
-                    const password = document.getElementById('signup-password').value;
-                    const inviter = document.getElementById('signup-inviter').value;
-                    
-                    if (!email || !password || !inviter) {
-                        alert('Please fill in all fields.');
-                        return;
-                    }
-                    
-                    try {
-                        const { data, error } = await supabase.auth.signUp({
-                            email: email,
-                            password: password,
-                            options: {
-                                data: {
-                                    inviter: inviter
-                                }
-                            }
-                        });
-                        
-                        if (error) {
-                            alert('Sign up failed: ' + error.message);
-                        } else {
-                            alert('Sign up successful! Please check your email to confirm your account.');
-                            document.body.removeChild(signUpForm);
-                        }
-                    } catch (error) {
-                        alert('Sign up error: ' + error.message);
-                    }
-                });
-                
-                // Handle cancel
-                document.getElementById('cancel-signup').addEventListener('click', () => {
-                    document.body.removeChild(signUpForm);
-                });
-            });
-
-            // Hide confirm button since sign-in is now on this page
-            if (confirmBtn) {
-                confirmBtn.style.display = 'none';
-            }
-        }
-    </script>
     <style>
-        body { font-family: Georgia, serif; background: #f9f6f1; color: #3b2f2f; margin: 40px; }
-        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        h1 { color: #6b4f1d; text-align: center; margin-bottom: 30px; }
-        .welcome-section { text-align: center; margin-bottom: 30px; }
-        .community-description { text-align: left; margin: 2em auto; max-width: 600px; font-style: italic; color: #666; line-height: 1.6; }
-        .sign-in-form { text-align: left; margin: 2em auto; max-width: 400px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f9f9f9; }
-        .sign-in-form h2 { margin-top: 0; color: #6b4f1d; }
-        .sign-in-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .sign-in-form button { background: #2e8b57; color: #fff; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
-        .sign-in-form button:disabled { background: #ccc; }
-        .sign-in-form .forgot-password { display: block; margin-top: 10px; color: #2e8b57; text-decoration: none; font-size: 0.9em; }
-        .sign-in-form .forgot-password:hover { text-decoration: underline; }
-        .instructions { text-align: left; margin: 2em auto; max-width: 600px; line-height: 1.6; }
-        .instructions h3 { color: #6b4f1d; margin-top: 30px; }
-        button { background: #2e8b57; color: #fff; padding: 15px 30px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.2em; }
-        button:disabled { background: #ccc; }
+        body {
+            font-family: Georgia, serif;
+            background: #f9f6f1;
+            color: #3b2f2f;
+            margin: 40px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: #6b4f1d;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .community-description {
+            text-align: left;
+            margin: 2em auto;
+            max-width: 600px;
+            font-style: italic;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .sign-in-form {
+            text-align: left;
+            margin: 2em auto;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .sign-in-form h2 {
+            margin-top: 0;
+            color: #6b4f1d;
+        }
+
+        .sign-in-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .sign-in-form button {
+            background: #2e8b57;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .sign-in-form button:disabled {
+            background: #ccc;
+        }
+
+        .instructions {
+            text-align: left;
+            margin: 2em auto;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #6b4f1d;
+            margin-top: 30px;
+        }
+
+        button {
+            background: #2e8b57;
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            font-size: 1.2em;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
     </style>
+    <script type="module" crossorigin src="/friendship-community-circle/assets/index-Cwv0-pTW.js"></script>
+    <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/modulepreload-polyfill-B5Qt9EMX.js">
+    <link rel="modulepreload" crossorigin href="/friendship-community-circle/assets/supabase-vDZkBp_j.js">
 </head>
+
 <body>
     <div class="container">
         <div class="welcome-section">
-            <h1>Welcome to the Community Union/Co-op</h1>
-          <p class="community-description">
-                The Community Union/Co-op is a Union/Co-op of unemployed individuals. We gather as members, to improve and uplift the community,by action taken, Everything that promotes wellbeing from general infasturcture maintainence and repair. to health and welbeing services. The goal is to have a decenteralized network of autonomous, self starting, open minded,individuals who believe impoving the community Improve their safety and wellbeing
-                The Community union/co-op is a community union/co-op of unemployed individuals. We gather as members, support community health and wellbeing, through direct action. There are activities ranging from general infrastructure,to community health and wellbeing, The goal is to have a well vetted <union>
-               union co-op of decentralized self-sovereign autonomous indiviuals. 
-                The purpose is to establish an environment of positive thought, good cheer, natural giving, non violent communication, and unconditional acceptance of what is and each other. 
+            <h1>Welcome to the Circle of Friends</h1>
+
+            <p class="community-description">
+                The WEALL.US Hub is a node in The Wellbeing Economy Alliance (WEAll). The WEALL.US Hub is a diverse community of my friends. We gather as members, practice mutual support, encourage action, and award points for activities. Our immediate goal is to become a hub for the United States in the leading collaboration of organisations,alliances, movements and individuals working towards a Wellbeing Economy, delivering
+                human and ecological wellbeing. Our long-term goal is to have a network of small interconnected communities, like mycelium, to self-govern from a grass roots decentralized self-sovereign autonomous level. We are joining with a time-bound project to catalyse a transition towards a Wellbeing Economy by promoting radical connection and collaboration between different actors of the new economy ecosystem, we can achieve an impact larger than the sum of our parts.
+                Through our alliance with WEAll we are global in scope, local in focus, and individual in practice. As a hub the purpose is to establish an environment of positive thought, good cheer, natural giving, non violent communication, and unconditional acceptance of what is and each other.
             </p>
         </div>
-        
+
         <div class="sign-in-form">
             <h2>Sign In</h2>
             <input type="email" id="email" placeholder="Email" required>
             <input type="password" id="password" placeholder="Password" required>
             <button id="sign-in-btn">Sign In</button>
-            <a href="#" id="forgot-password-link" class="forgot-password">Forgot Password?</a>
             <p>Don't have an account? <a href="#" id="sign-up-link">Sign Up</a></p>
         </div>
-                
-        
-        
-        
+
+        <div class="instructions">
+            <h3>Getting Started</h3>
+            <p>Thank you for affirming our community values. Here's how to get started:</p>
+            <ul>
+                <li>🌐 <strong>Explore Circles:</strong> Join groups that match your interests.</li>
+                <li>🗓️ <strong>Events Calendar:</strong> Attend events and earn points for participation.</li>
+                <li>🧑‍🤝‍🧑 <strong>Profiles:</strong> Connect with other members and share your skills.</li>
+                <li>💬 <strong>Discussions:</strong> Start or join conversations on topics you care about.</li>
+                <li>🎉 <strong>Celebrations:</strong> Share and celebrate community milestones.</li>
+                <li>🏆 <strong>Points & Activities:</strong> Earn points for contributing and participating.</li>
+            </ul>
+            <p>Please take a moment to explore the menu and familiarize yourself with the features. If you have
+                questions, reach out to a community guide or check the help section.</p>
+        </div>
+
         <button id="confirm-btn" style="display:none;">I have read and understand</button>
     </div>
 </body>
+ 
 </html>
