@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: migration-scroll
-          path: migration-scroll.txt
+          path: migration-scroll.txt  
 
       - name: Discover and Deploy Supabase Edge Functions
         run: |
