@@ -4,12 +4,14 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-// Serve static files from the root directory
-app.use(express.static(path.join(__dirname)));
+const distPath = path.join(__dirname, 'dist');
 
-// Fallback route for unmatched paths
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// Serve static files from the 'dist' directory
+app.use(express.static(distPath));
+
+// Fallback route for unmatched paths, serves index.html
+app.get(/.* /, (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(PORT, () => {

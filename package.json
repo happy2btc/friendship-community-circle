@@ -4,6 +4,8 @@
     "multer": "^2.0.2"
   },
   "scripts": {
-    "dev": "node server.js"
+    "build": "cd client && npm install && npm run build",
+    "start": "node server.js",
+    "dev": "npm run build && npm run start"
   }
 }
