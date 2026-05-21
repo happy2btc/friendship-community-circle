@@ -42,14 +42,15 @@ jobs:
         with:
           version: latest
 
-      - name: Upload protected-pages to Supabase Storage
-        uses: brendenehlers/supabase-storage-upload@v1
+      - name: Upload to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
         with:
-          upload_directory_path: 'supabase/storage/protected-files'
-          bucket_name: 'protected-files'
-        env:
-          SUPABASE_API_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+          directory: client/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: 📦 Upload migration scroll
         uses: actions/upload-artifact@v4
