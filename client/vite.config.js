@@ -15,7 +15,7 @@ export default defineConfig({
   base: '/',
   publicDir: 'public',
   build: {
-    outDir: '../dist',
+    outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
       input: htmlFiles
